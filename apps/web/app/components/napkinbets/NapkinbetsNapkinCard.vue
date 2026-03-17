@@ -294,7 +294,14 @@ async function copyPaymentToClipboard() {
                 {{ wager.description }}
               </p>
               <div class="napkinbets-meta-row">
-                <span>{{ wager.eventTitle || 'Custom bet' }}</span>
+                <ULink
+                  v-if="wager.eventId"
+                  :to="`/events/${encodeURIComponent(wager.eventId)}`"
+                  class="text-inherit hover:underline"
+                >
+                  {{ wager.eventTitle }}
+                </ULink>
+                <span v-else>{{ wager.eventTitle || 'Custom bet' }}</span>
                 <span v-if="wager.groupName">{{ wager.groupName }}</span>
                 <span>{{ wager.venueName || 'Remote group' }}</span>
                 <span>Host: {{ wager.creatorName }}</span>

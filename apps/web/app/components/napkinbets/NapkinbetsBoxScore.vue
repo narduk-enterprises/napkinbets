@@ -72,6 +72,24 @@ const badgeLabel = computed(() => {
   if (isFinished.value) return 'Final'
   return 'Upcoming'
 })
+
+function formatLocalTime(isoString: string) {
+  try {
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return ''
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    })
+      .format(date)
+      .replace(/,\s*/, ' - ')
+  } catch {
+    return ''
+  }
+}
 </script>
 
 <template>
@@ -87,7 +105,17 @@ const badgeLabel = computed(() => {
             {{ countdownString }}
           </span>
           <span v-else class="text-sm font-medium text-muted">
-            {{ status }}
+            <template v-if="isUpcoming && startTime">
+              <ClientOnly fallback-tag="span">
+                <template #fallback>
+                  {{ status }}
+                </template>
+                {{ formatLocalTime(startTime) || status }}
+              </ClientOnly>
+            </template>
+            <template v-else>
+              {{ status }}
+            </template>
           </span>
         </div>
 

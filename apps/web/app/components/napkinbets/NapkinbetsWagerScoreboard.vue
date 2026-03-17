@@ -96,22 +96,37 @@ const winningSideLabel = computed(() => {
       :home-score="wager.homeScore"
     >
       <template #footer>
-        <!-- BOTTOM: Pick Distribution -->
-        <div v-if="showPickDistribution" class="pt-2 border-t border-dashed border-default">
-          <div class="flex items-center justify-between text-xs text-muted mb-1.5 font-medium">
-            <span>{{ awayPickPercentage }}% Picked Away</span>
-            <span>{{ homePickPercentage }}% Picked Home</span>
+        <div class="pt-2 border-t border-dashed border-default">
+          <!-- BOTTOM: Pick Distribution -->
+          <div v-if="showPickDistribution" class="mb-3">
+            <div class="flex items-center justify-between text-xs text-muted mb-1.5 font-medium">
+              <span>{{ awayPickPercentage }}% Picked Away</span>
+              <span>{{ homePickPercentage }}% Picked Home</span>
+            </div>
+            <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                class="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-500"
+                :style="{ width: `${awayPickPercentage}%` }"
+              ></div>
+              <div
+                class="absolute inset-y-0 right-0 bg-info/80 transition-all duration-500"
+                :style="{ width: `${homePickPercentage}%` }"
+              ></div>
+              <div class="absolute inset-y-0 left-1/2 w-px bg-white/50 -translate-x-1/2"></div>
+            </div>
           </div>
-          <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              class="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-500"
-              :style="{ width: `${awayPickPercentage}%` }"
-            ></div>
-            <div
-              class="absolute inset-y-0 right-0 bg-info/80 transition-all duration-500"
-              :style="{ width: `${homePickPercentage}%` }"
-            ></div>
-            <div class="absolute inset-y-0 left-1/2 w-px bg-white/50 -translate-x-1/2"></div>
+
+          <div class="flex justify-center -mb-2 pb-1">
+            <UButton
+              :to="`/events/${encodeURIComponent(wager.eventId!)}`"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              icon="i-lucide-arrow-right"
+              trailing
+            >
+              View event details
+            </UButton>
           </div>
         </div>
       </template>

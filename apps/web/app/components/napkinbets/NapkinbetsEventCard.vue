@@ -131,6 +131,24 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
 
   return team.score || '—'
 }
+
+function formatLocalTime(isoString: string) {
+  try {
+    const date = new Date(isoString)
+    if (Number.isNaN(date.getTime())) return ''
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    })
+      .format(date)
+      .replace(/,\s*/, ' - ')
+  } catch {
+    return ''
+  }
+}
 </script>
 
 <template>
@@ -151,9 +169,25 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
       </div>
 
       <div class="space-y-1.5">
-        <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
+        <h3 class="napkinbets-subsection-title napkinbets-event-title">
+          <ULink :to="eventDetailLink" class="text-inherit hover:underline">
+            {{ event.eventTitle }}
+          </ULink>
+        </h3>
         <div class="napkinbets-event-meta">
-          <span>{{ timeLabel }}</span>
+          <span>
+            <template v-if="event.state === 'pre' && event.startTime">
+              <ClientOnly fallback-tag="span">
+                <template #fallback>
+                  {{ timeLabel }}
+                </template>
+                {{ formatLocalTime(event.startTime) || timeLabel }}
+              </ClientOnly>
+            </template>
+            <template v-else>
+              {{ timeLabel }}
+            </template>
+          </span>
           <span v-if="event.broadcast">{{ event.broadcast }}</span>
         </div>
         <p class="napkinbets-event-venue">{{ event.venueName }}</p>
@@ -189,19 +223,7 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
         </div>
       </div>
 
-      <div v-if="hasOdds" class="flex items-center gap-2">
-        <UButton
-          :to="eventDetailLink"
-          color="neutral"
-          variant="soft"
-          size="xs"
-          icon="i-lucide-bar-chart-3"
-        >
-          View odds
-        </UButton>
-      </div>
-
-      <div v-else-if="showInsights" class="napkinbets-event-insights">
+      <div v-if="showInsights" class="napkinbets-event-insights">
         <div
           v-for="leader in insightRows"
           :key="`${leader.label}-${leader.athlete}`"
@@ -210,6 +232,18 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
           <span>{{ leader.label }}</span>
           <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
         </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <UButton
+          :to="eventDetailLink"
+          color="neutral"
+          variant="soft"
+          size="xs"
+          :icon="hasOdds ? 'i-lucide-bar-chart-3' : 'i-lucide-arrow-right'"
+        >
+          {{ hasOdds ? 'View odds' : 'View event' }}
+        </UButton>
       </div>
 
       <div class="napkinbets-event-footer">
