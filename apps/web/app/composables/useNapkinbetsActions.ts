@@ -2,8 +2,10 @@ import type {
   CreatePaymentProfileInput,
   CreateWagerInput,
   JoinWagerInput,
+  UpdateNapkinbetsAiSettingsInput,
   WagerPickInput,
   WagerSettlementInput,
+  WagerSettlementReviewInput,
 } from '../../types/napkinbets'
 import { useNapkinbetsApi } from '../services/napkinbets-api'
 
@@ -76,6 +78,15 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         api.confirmSettlement(wagerId, settlementId),
       )
     },
+    rejectSettlement(
+      wagerId: string,
+      settlementId: string,
+      payload: WagerSettlementReviewInput,
+    ) {
+      return runAction(`settlement-reject:${settlementId}`, 'Settlement proof sent back for correction.', () =>
+        api.rejectSettlement(wagerId, settlementId, payload),
+      )
+    },
     shuffleDraftOrder(wagerId: string) {
       return runAction(`shuffle:${wagerId}`, 'Draft order rerolled.', () =>
         api.shuffleDraftOrder(wagerId),
@@ -99,6 +110,16 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
     setWagerStatus(wagerId: string, status: string) {
       return runAction(`admin-status:${wagerId}`, 'Wager status updated.', () =>
         api.setWagerStatus(wagerId, status),
+      )
+    },
+    saveAdminAiSettings(payload: UpdateNapkinbetsAiSettingsInput) {
+      return runAction('admin-ai-settings', 'AI controls updated.', () =>
+        api.saveAdminAiSettings(payload),
+      )
+    },
+    runAdminIngest(tier: string) {
+      return runAction(`admin-ingest:${tier}`, 'Event cache refresh started.', () =>
+        api.runAdminIngest(tier),
       )
     },
     savePaymentProfile(payload: CreatePaymentProfileInput) {

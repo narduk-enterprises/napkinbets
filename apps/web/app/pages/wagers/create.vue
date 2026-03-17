@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import type { CreateWagerInput } from '../../../types/napkinbets'
+import { NAPKINBETS_DEFAULT_CREATE_INPUT } from '../../composables/useNapkinbetsCreatePrefill'
 
 const { loggedIn, user } = useUserSession()
-const { prefill, eventPreview } = useNapkinbetsCreatePrefill()
+const { createMode, prefill, eventPreview } = useNapkinbetsCreatePrefill()
 const actions = useNapkinbetsActions(async () => Promise.resolve())
 const paymentProfilesState = loggedIn.value ? await useNapkinbetsPaymentProfiles() : null
 
@@ -10,12 +12,44 @@ const defaultPaymentProfile = computed(
   () => paymentProfilesState?.data.value.profiles.find((profile) => profile.isDefault) ?? null,
 )
 
-const formPrefill = computed(() => ({
-  ...prefill.value,
-  creatorName: user.value?.name || user.value?.email || prefill.value.creatorName,
-  paymentService: defaultPaymentProfile.value?.provider || prefill.value.paymentService,
-  paymentHandle: defaultPaymentProfile.value?.handle || prefill.value.paymentHandle,
+const selectedMode = ref<'event' | 'manual'>('manual')
+
+watch(
+  createMode,
+  (value) => {
+    selectedMode.value = value
+  },
+  { immediate: true },
+)
+
+const sharedDefaults = computed(() => ({
+  creatorName: user.value?.name || user.value?.email || NAPKINBETS_DEFAULT_CREATE_INPUT.creatorName,
+  paymentService:
+    defaultPaymentProfile.value?.provider || NAPKINBETS_DEFAULT_CREATE_INPUT.paymentService,
+  paymentHandle:
+    defaultPaymentProfile.value?.handle || NAPKINBETS_DEFAULT_CREATE_INPUT.paymentHandle,
 }))
+
+const eventPrefill = computed(() => ({
+  ...prefill.value,
+  ...sharedDefaults.value,
+}))
+
+const manualPrefill = computed<CreateWagerInput>(() => ({
+  ...NAPKINBETS_DEFAULT_CREATE_INPUT,
+  ...sharedDefaults.value,
+  eventSource: '',
+  eventId: '',
+  eventTitle: '',
+  eventStartsAt: '',
+  eventStatus: '',
+  homeTeamName: '',
+  awayTeamName: '',
+}))
+
+const activePrefill = computed(() =>
+  selectedMode.value === 'event' && eventPreview.value ? eventPrefill.value : manualPrefill.value,
+)
 
 async function handleCreate(payload: CreateWagerInput) {
   if (!loggedIn.value) {
@@ -32,42 +66,67 @@ async function handleCreate(payload: CreateWagerInput) {
 useSeo({
   title: 'Create a wager board',
   description:
-    'Build a friendly wager board from a live or upcoming event, set the terms, and choose how the group will settle manually.',
+    'Build a friendly wager board from discovery or start manually with your own terms and settlement rail.',
   ogImage: {
     title: 'Create a wager board',
-    description: 'Turn an event into a structured Napkinbets board.',
+    description: 'Turn an event or custom prompt into a structured Napkinbets board.',
     icon: '🎟️',
   },
 })
 
 useWebPageSchema({
   name: 'Create a wager board',
-  description:
-    'A creation workflow for building a new friendly wager board on Napkinbets.',
+  description: 'A creation workflow for building a new friendly wager board on Napkinbets.',
 })
 </script>
 
 <template>
   <div class="napkinbets-page">
     <div class="napkinbets-hero">
-      <div class="napkinbets-hero-grid">
+      <div class="napkinbets-hero-grid xl:grid-cols-[1.05fr_0.95fr]">
         <div class="space-y-4">
           <p class="napkinbets-kicker">Create</p>
-          <h1 class="napkinbets-section-title">Build the board before the window moves.</h1>
+          <h1 class="napkinbets-section-title">Build the board from a live event or start one from scratch.</h1>
           <p class="napkinbets-hero-lede">
-            Keep the UX focused on the core decision path: pick the event, set the sides and pot structure, confirm the payment rail, then share the board.
+            Napkinbets keeps the create flow down to two paths: event-backed boards when discovery already has the matchup, or a manual board for golf drafts, entertainment nights, and room-specific props.
           </p>
         </div>
 
-        <UCard v-if="eventPreview" class="napkinbets-panel">
+        <UCard class="napkinbets-panel">
           <div class="space-y-3">
-            <p class="napkinbets-kicker">Selected event</p>
-            <h2 class="napkinbets-subsection-title">
-              {{ eventPreview.awayTeamName && eventPreview.homeTeamName ? `${eventPreview.awayTeamName} at ${eventPreview.homeTeamName}` : eventPreview.title }}
-            </h2>
-            <p class="napkinbets-support-copy">
-              {{ eventPreview.status || 'Scheduled' }}{{ eventPreview.venueName ? ` • ${eventPreview.venueName}` : '' }}
-            </p>
+            <p class="napkinbets-kicker">Creation paths</p>
+            <div class="grid gap-3">
+              <UButton
+                class="napkinbets-choice-panel"
+                :class="{ 'napkinbets-choice-panel-active': selectedMode === 'event' }"
+                :disabled="!eventPreview"
+                color="neutral"
+                variant="ghost"
+                @click="selectedMode = 'event'"
+              >
+                <span class="napkinbets-surface-label">Event-backed board</span>
+                <span class="font-semibold text-default">
+                  {{ eventPreview ? eventPreview.title : 'Pick an event from discovery first' }}
+                </span>
+                <span class="text-sm text-muted">
+                  Prefills league, teams, timing, and suggested side ideas from the selected event.
+                </span>
+              </UButton>
+
+              <UButton
+                class="napkinbets-choice-panel"
+                :class="{ 'napkinbets-choice-panel-active': selectedMode === 'manual' }"
+                color="neutral"
+                variant="ghost"
+                @click="selectedMode = 'manual'"
+              >
+                <span class="napkinbets-surface-label">Manual board</span>
+                <span class="font-semibold text-default">Golf drafts, watch parties, or custom prompts</span>
+                <span class="text-sm text-muted">
+                  Use this when the board should not depend on a discovery event.
+                </span>
+              </UButton>
+            </div>
           </div>
         </UCard>
       </div>
@@ -81,6 +140,19 @@ useWebPageSchema({
       :title="actions.feedback.value.type === 'success' ? 'Board created' : 'Board creation failed'"
       :description="actions.feedback.value.text"
     />
+
+    <UAlert
+      v-if="selectedMode === 'event' && !eventPreview"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-radar"
+      title="No discovery event selected"
+      description="Choose an event from discovery first if you want the event-backed board path."
+    >
+      <template #actions>
+        <UButton to="/discover" color="primary" variant="soft">Browse discovery</UButton>
+      </template>
+    </UAlert>
 
     <UAlert
       v-if="!loggedIn"
@@ -97,7 +169,7 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-wallet-cards"
       title="No saved payment profile yet"
-      description="You can still create a board with a one-off handle, but setting a default payment profile makes create and closeout flows cleaner."
+      description="You can still create a board with a one-off handle, but a default payment profile makes create and closeout cleaner."
     >
       <template #actions>
         <UButton to="/settings/payments" color="primary" variant="soft">
@@ -108,7 +180,9 @@ useWebPageSchema({
 
     <NapkinbetsCreateForm
       :loading="actions.activeAction.value === 'create-wager'"
-      :prefill="formPrefill"
+      :prefill="activePrefill"
+      :mode="selectedMode"
+      :event-preview="eventPreview"
       :is-authenticated="loggedIn"
       @create="handleCreate"
     />

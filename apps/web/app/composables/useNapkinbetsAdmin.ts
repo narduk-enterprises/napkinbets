@@ -5,6 +5,15 @@ const EMPTY_ADMIN: NapkinbetsAdminResponse = {
   metrics: [],
   users: [],
   wagers: [],
+  totalCachedEvents: 0,
+  ingestRuns: [],
+  aiSettings: {
+    aiRecommendationsEnabled: false,
+    aiPropSuggestionsEnabled: false,
+    aiTermsAssistEnabled: false,
+    aiCloseoutAssistEnabled: false,
+    xaiConfigured: false,
+  },
   refreshedAt: '',
 }
 

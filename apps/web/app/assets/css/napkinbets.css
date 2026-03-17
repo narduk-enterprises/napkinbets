@@ -580,7 +580,8 @@ body {
 
 .napkinbets-event-team,
 .napkinbets-idea-row,
-.napkinbets-admin-board {
+.napkinbets-admin-board,
+.napkinbets-choice-panel {
   background: var(--napkinbets-surface-soft);
   border: 1px solid var(--napkinbets-border);
   border-radius: 1.25rem;
@@ -592,6 +593,25 @@ body {
 
 .napkinbets-event-team {
   align-items: center;
+}
+
+.napkinbets-admin-board,
+.napkinbets-choice-panel {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.napkinbets-choice-panel {
+  justify-content: flex-start;
+  min-height: 10rem;
+  text-align: left;
+  width: 100%;
+}
+
+.napkinbets-choice-panel-active {
+  background: rgb(190 18 60 / 0.08);
+  border-color: rgb(190 18 60 / 0.25);
+  box-shadow: inset 0 0 0 1px rgb(190 18 60 / 0.08);
 }
 
 .napkinbets-event-score {

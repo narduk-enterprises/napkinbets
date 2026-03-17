@@ -13,7 +13,7 @@ interface NapkinbetsCreateEventPreview {
   awayTeamName: string
 }
 
-const DEFAULT_CREATE_INPUT: CreateWagerInput = {
+export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
   title: 'Wednesday watch party board',
   creatorName: '',
   description:
@@ -44,7 +44,7 @@ function getQueryString(value: QueryValue) {
 
 function buildSideOptions(homeTeamName: string, awayTeamName: string) {
   if (!homeTeamName || !awayTeamName) {
-    return DEFAULT_CREATE_INPUT.sideOptions
+    return NAPKINBETS_DEFAULT_CREATE_INPUT.sideOptions
   }
 
   return `${awayTeamName} wins\n${homeTeamName} wins\nFirst featured prop`
@@ -55,7 +55,7 @@ function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: stri
     return `${awayTeamName} at ${homeTeamName} board`
   }
 
-  return eventTitle || DEFAULT_CREATE_INPUT.title
+  return eventTitle || NAPKINBETS_DEFAULT_CREATE_INPUT.title
 }
 
 export function useNapkinbetsCreatePrefill() {
@@ -91,26 +91,39 @@ export function useNapkinbetsCreatePrefill() {
     }
   })
 
+  const createMode = computed<'event' | 'manual'>(() => {
+    const requestedMode = getQueryString(route.query.createMode)
+    if (requestedMode === 'manual') {
+      return 'manual'
+    }
+
+    if (eventPreview.value || requestedMode === 'event') {
+      return 'event'
+    }
+
+    return 'manual'
+  })
+
   const prefill = computed<CreateWagerInput>(() => {
     const preview = eventPreview.value
     if (!preview) {
-      return { ...DEFAULT_CREATE_INPUT }
+      return { ...NAPKINBETS_DEFAULT_CREATE_INPUT }
     }
 
     return {
-      ...DEFAULT_CREATE_INPUT,
+      ...NAPKINBETS_DEFAULT_CREATE_INPUT,
       title: buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName),
       description:
         preview.homeTeamName && preview.awayTeamName
           ? `Friendly board for ${preview.awayTeamName} at ${preview.homeTeamName}, with a simple side market, one prop lane, and manual payment confirmation after the result is official.`
-          : DEFAULT_CREATE_INPUT.description,
-      format: getQueryString(route.query.format) || DEFAULT_CREATE_INPUT.format,
-      sport: preview.sport || DEFAULT_CREATE_INPUT.sport,
-      league: preview.league || DEFAULT_CREATE_INPUT.league,
+          : NAPKINBETS_DEFAULT_CREATE_INPUT.description,
+      format: getQueryString(route.query.format) || NAPKINBETS_DEFAULT_CREATE_INPUT.format,
+      sport: preview.sport || NAPKINBETS_DEFAULT_CREATE_INPUT.sport,
+      league: preview.league || NAPKINBETS_DEFAULT_CREATE_INPUT.league,
       sideOptions:
         getQueryString(route.query.sideOptions) ||
         buildSideOptions(preview.homeTeamName, preview.awayTeamName),
-      venueName: preview.venueName || DEFAULT_CREATE_INPUT.venueName,
+      venueName: preview.venueName || NAPKINBETS_DEFAULT_CREATE_INPUT.venueName,
       eventSource: preview.source || 'espn',
       eventId: preview.eventId,
       eventTitle: preview.title,
@@ -122,6 +135,7 @@ export function useNapkinbetsCreatePrefill() {
   })
 
   return {
+    createMode,
     eventPreview,
     prefill,
   }

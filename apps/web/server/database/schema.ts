@@ -132,6 +132,9 @@ export const napkinbetsSettlements = sqliteTable('napkinbets_settlements', {
   verificationStatus: text('verification_status').notNull().default('submitted'),
   verifiedByUserId: text('verified_by_user_id').references(() => users.id, { onDelete: 'set null' }),
   verifiedAt: text('verified_at'),
+  rejectedByUserId: text('rejected_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+  rejectedAt: text('rejected_at'),
+  rejectionNote: text('rejection_note'),
   recordedAt: text('recorded_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -153,4 +156,89 @@ export const napkinbetsUserPaymentProfiles = sqliteTable('napkinbets_user_paymen
   updatedAt: text('updated_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
+  id: integer('id').primaryKey(),
+  aiRecommendationsEnabled: integer('ai_recommendations_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  aiPropSuggestionsEnabled: integer('ai_prop_suggestions_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  aiTermsAssistEnabled: integer('ai_terms_assist_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  aiCloseoutAssistEnabled: integer('ai_closeout_assist_enabled', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsEvents = sqliteTable('napkinbets_events', {
+  id: text('id').primaryKey(),
+  source: text('source').notNull(),
+  externalEventId: text('external_event_id').notNull(),
+  sport: text('sport').notNull(),
+  sportLabel: text('sport_label').notNull(),
+  league: text('league').notNull(),
+  leagueLabel: text('league_label').notNull(),
+  state: text('state').notNull(),
+  status: text('status').notNull(),
+  shortStatus: text('short_status').notNull(),
+  startTime: text('start_time').notNull(),
+  eventTitle: text('event_title').notNull(),
+  summary: text('summary').notNull(),
+  venueName: text('venue_name').notNull(),
+  venueLocation: text('venue_location').notNull(),
+  broadcast: text('broadcast').notNull(),
+  homeTeamJson: text('home_team_json').notNull(),
+  awayTeamJson: text('away_team_json').notNull(),
+  leadersJson: text('leaders_json').notNull(),
+  ideasJson: text('ideas_json').notNull(),
+  rawPayloadJson: text('raw_payload_json'),
+  sourceUpdatedAt: text('source_updated_at'),
+  lastSyncedAt: text('last_synced_at').notNull(),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsEventSnapshots = sqliteTable('napkinbets_event_snapshots', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => napkinbetsEvents.id, { onDelete: 'cascade' }),
+  state: text('state').notNull(),
+  status: text('status').notNull(),
+  shortStatus: text('short_status').notNull(),
+  summary: text('summary').notNull(),
+  homeScore: text('home_score').notNull(),
+  awayScore: text('away_score').notNull(),
+  leadersJson: text('leaders_json').notNull(),
+  capturedAt: text('captured_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsIngestRuns = sqliteTable('napkinbets_ingest_runs', {
+  id: text('id').primaryKey(),
+  source: text('source').notNull(),
+  sport: text('sport').notNull(),
+  league: text('league').notNull(),
+  tier: text('tier').notNull(),
+  windowStartsAt: text('window_starts_at').notNull(),
+  windowEndsAt: text('window_ends_at').notNull(),
+  eventCount: integer('event_count').notNull().default(0),
+  status: text('status').notNull(),
+  errorMessage: text('error_message'),
+  startedAt: text('started_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  completedAt: text('completed_at'),
 })

@@ -24,5 +24,12 @@
       "pattern": "napkinbets.nard.uk",
       "custom_domain": true
     }
-  ]
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *",
+      "*/10 * * * *",
+      "7 */6 * * *"
+    ]
+  }
 }

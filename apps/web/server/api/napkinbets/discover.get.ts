@@ -1,5 +1,5 @@
-import { loadDiscoverData } from '#server/services/napkinbets/discover'
+import { loadCachedDiscoverData } from '#server/services/napkinbets/events'
 
-export default defineEventHandler(async () => {
-  return await loadDiscoverData()
+export default defineEventHandler(async (event) => {
+  return await loadCachedDiscoverData(event)
 })

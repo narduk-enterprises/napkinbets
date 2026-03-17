@@ -1,27 +1,20 @@
 <script setup lang="ts">
 const discoverState = await useNapkinbetsDiscover()
 const discover = computed(() => discoverState.data.value)
-
-const discoverMetrics = computed(() => [
-  {
-    label: 'Live boards to launch',
-    value: String(discover.value.liveEvents.length),
-    hint: 'events already in progress',
-    icon: 'i-lucide-activity',
-  },
-  {
-    label: 'Upcoming events',
-    value: String(discover.value.upcomingEvents.length),
-    hint: 'fresh matchups from ESPN',
-    icon: 'i-lucide-calendar-range',
-  },
-  {
-    label: 'Prop contexts',
-    value: String(discover.value.propIdeas.length),
-    hint: 'non-sportsbook style inspirations',
-    icon: 'i-lucide-lightbulb',
-  },
-])
+const {
+  selectedSport,
+  selectedLeague,
+  selectedState,
+  sportOptions,
+  leagueOptions,
+  stateOptions,
+  filteredSections,
+  metrics,
+  hasFilteredResults,
+} = useNapkinbetsDiscoverPresentation(discover)
+const refreshedAtLabel = computed(() =>
+  discover.value.refreshedAt ? discover.value.refreshedAt.replace('T', ' ').replace('Z', ' UTC') : '',
+)
 
 useNapkinbetsAutoRefresh(discoverState.refresh)
 
@@ -50,8 +43,16 @@ useWebPageSchema({
         <p class="napkinbets-kicker">Discovery</p>
         <h1 class="napkinbets-section-title">Start from current and upcoming sports events.</h1>
         <p class="napkinbets-hero-lede">
-          ESPN provides the backbone for what is on deck and what is already moving. From there, Napkinbets adds social prop angles and manual settlement rails.
+          ESPN-backed event cache first, then fast board setup. The board ideas stay social and human-readable instead of feeling like sportsbook sludge.
         </p>
+        <div class="napkinbets-card-actions">
+          <UButton to="/wagers/create?createMode=manual" color="primary" icon="i-lucide-ticket-plus">
+            Create manual board
+          </UButton>
+          <UButton to="/settings/payments" color="neutral" variant="soft" icon="i-lucide-wallet-cards">
+            Payment rails
+          </UButton>
+        </div>
       </div>
     </div>
 
@@ -64,66 +65,96 @@ useWebPageSchema({
       :description="discoverState.error.value.message"
     />
 
+    <UAlert
+      v-else-if="discover.stale"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-timer-reset"
+      title="Showing the latest cached slate"
+      :description="refreshedAtLabel ? `The event cache last refreshed at ${refreshedAtLabel}.` : 'The event cache has not refreshed yet.'"
+    />
+
     <div class="napkinbets-metric-grid">
       <NapkinbetsMetricCard
-        v-for="metric in discoverMetrics"
+        v-for="metric in metrics"
         :key="metric.label"
         :metric="metric"
       />
     </div>
 
-    <div class="napkinbets-section-stack">
-      <div class="space-y-2">
-        <p class="napkinbets-kicker">In progress</p>
-        <h2 class="napkinbets-section-title">Events that need close-to-live context</h2>
-      </div>
+    <UCard class="napkinbets-panel">
+      <div class="space-y-4">
+        <div class="space-y-2">
+          <p class="napkinbets-kicker">Filters</p>
+          <h2 class="napkinbets-subsection-title">Trim the slate to what matters right now</h2>
+        </div>
 
-      <div v-if="discover.liveEvents.length" class="napkinbets-live-grid">
-        <NapkinbetsEventCard
-          v-for="event in discover.liveEvents"
-          :key="event.id"
-          :event="event"
+        <div class="napkinbets-form-grid">
+          <UFormField name="sportFilter" label="Sport">
+            <USelect v-model="selectedSport" :items="sportOptions" class="w-full" />
+          </UFormField>
+
+          <UFormField name="leagueFilter" label="League">
+            <USelect v-model="selectedLeague" :items="leagueOptions" class="w-full" />
+          </UFormField>
+
+          <UFormField name="stateFilter" label="Status">
+            <USelect v-model="selectedState" :items="stateOptions" class="w-full" />
+          </UFormField>
+        </div>
+      </div>
+    </UCard>
+
+    <div class="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div class="space-y-6">
+        <div
+          v-for="section in filteredSections"
+          :key="section.key"
+          class="napkinbets-section-stack"
+        >
+          <div class="space-y-2">
+            <p class="napkinbets-kicker">{{ section.label }}</p>
+            <h2 class="napkinbets-section-title">{{ section.description }}</h2>
+          </div>
+
+          <div class="napkinbets-live-grid">
+            <NapkinbetsEventCard
+              v-for="event in section.events"
+              :key="event.id"
+              :event="event"
+            />
+          </div>
+        </div>
+
+        <UAlert
+          v-if="!hasFilteredResults && !discoverState.pending.value"
+          color="info"
+          variant="soft"
+          icon="i-lucide-search-x"
+          title="No events match these filters"
+          description="Try widening the league or status filter to bring the slate back in."
         />
       </div>
 
-      <UAlert
-        v-else
-        color="info"
-        variant="soft"
-        icon="i-lucide-info"
-        title="No live events were returned"
-        description="The discover service is still healthy, but there are no in-progress events in the supported leagues right now."
-      />
-    </div>
+      <UCard class="napkinbets-panel">
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <p class="napkinbets-kicker">Prop flavors</p>
+            <h2 class="napkinbets-subsection-title">Ideas beyond a straight game winner</h2>
+            <p class="napkinbets-support-copy">
+              Keep these as secondary prompts. Discovery should start from the real event, then layer on one or two social side markets.
+            </p>
+          </div>
 
-    <div class="napkinbets-section-stack">
-      <div class="space-y-2">
-        <p class="napkinbets-kicker">Upcoming</p>
-        <h2 class="napkinbets-section-title">High-signal matchups worth turning into boards</h2>
-      </div>
-
-      <div class="napkinbets-live-grid">
-        <NapkinbetsEventCard
-          v-for="event in discover.upcomingEvents"
-          :key="event.id"
-          :event="event"
-        />
-      </div>
-    </div>
-
-    <div class="napkinbets-section-stack">
-      <div class="space-y-2">
-        <p class="napkinbets-kicker">Prop flavors</p>
-        <h2 class="napkinbets-section-title">Ideas beyond a straight game winner</h2>
-      </div>
-
-      <div class="napkinbets-live-grid">
-        <NapkinbetsPropIdeaCard
-          v-for="idea in discover.propIdeas"
-          :key="idea.id"
-          :idea="idea"
-        />
-      </div>
+          <div class="space-y-3">
+            <NapkinbetsPropIdeaCard
+              v-for="idea in discover.propIdeas"
+              :key="idea.id"
+              :idea="idea"
+            />
+          </div>
+        </div>
+      </UCard>
     </div>
   </div>
 </template>

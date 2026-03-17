@@ -1,15 +1,19 @@
 import { requireAdmin } from '#layer/server/utils/auth'
 import { users } from '#server/database/schema'
+import { loadEventIngestHealth } from '#server/services/napkinbets/events'
 import { loadPoolData } from '#server/services/napkinbets/pools'
+import { loadNapkinbetsAiSettings } from '#server/services/napkinbets/settings'
 import { useAppDatabase } from '#server/utils/database'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
   const db = useAppDatabase(event)
-  const [dashboard, userRows] = await Promise.all([
+  const [dashboard, userRows, ingestHealth, aiSettings] = await Promise.all([
     loadPoolData(event),
     db.select().from(users).orderBy(users.createdAt),
+    loadEventIngestHealth(event),
+    loadNapkinbetsAiSettings(event),
   ])
 
   const ownedCountByUser = new Map<string, number>()
@@ -60,6 +64,12 @@ export default defineEventHandler(async (event) => {
         hint: 'participants still missing proof',
         icon: 'i-lucide-wallet',
       },
+      {
+        label: 'Cached events',
+        value: String(ingestHealth.totalCachedEvents),
+        hint: 'event cards ready for discovery',
+        icon: 'i-lucide-radar',
+      },
     ],
     users: userRows.map((user) => ({
       id: user.id,
@@ -84,6 +94,9 @@ export default defineEventHandler(async (event) => {
       openSettlementCount: wager.participants.filter((participant) => participant.paymentStatus !== 'confirmed').length,
       createdAt: wager.notifications[0]?.createdAt || wager.eventStartsAt || dashboard.refreshedAt,
     })),
+    totalCachedEvents: ingestHealth.totalCachedEvents,
+    ingestRuns: ingestHealth.latestRuns,
+    aiSettings,
     refreshedAt: dashboard.refreshedAt,
   }
 })

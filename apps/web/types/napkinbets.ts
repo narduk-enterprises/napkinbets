@@ -88,6 +88,9 @@ export interface NapkinbetsSettlement {
   verificationStatus: string
   verifiedByUserId: string | null
   verifiedAt: string | null
+  rejectedByUserId: string | null
+  rejectedAt: string | null
+  rejectionNote: string | null
   recordedAt: string
 }
 
@@ -179,6 +182,7 @@ export interface NapkinbetsEventCard {
   sportLabel: string
   league: string
   leagueLabel: string
+  eventTitle: string
   status: string
   state: 'pre' | 'in' | 'post'
   shortStatus: string
@@ -191,6 +195,25 @@ export interface NapkinbetsEventCard {
   awayTeam: NapkinbetsEventTeam
   leaders: NapkinbetsEventLeader[]
   ideas: NapkinbetsEventIdea[]
+  lastSyncedAt: string
+}
+
+export interface NapkinbetsDiscoverySection {
+  key: 'live-now' | 'starting-soon' | 'today' | 'next-up'
+  label: string
+  description: string
+  events: NapkinbetsEventCard[]
+}
+
+export interface NapkinbetsDiscoverFilterOption {
+  value: string
+  label: string
+}
+
+export interface NapkinbetsDiscoverFilters {
+  sports: NapkinbetsDiscoverFilterOption[]
+  leagues: NapkinbetsDiscoverFilterOption[]
+  states: NapkinbetsDiscoverFilterOption[]
 }
 
 export interface NapkinbetsPropIdea {
@@ -204,10 +227,11 @@ export interface NapkinbetsPropIdea {
 }
 
 export interface NapkinbetsDiscoveryResponse {
-  liveEvents: NapkinbetsEventCard[]
-  upcomingEvents: NapkinbetsEventCard[]
+  sections: NapkinbetsDiscoverySection[]
+  filters: NapkinbetsDiscoverFilters
   propIdeas: NapkinbetsPropIdea[]
   refreshedAt: string
+  stale: boolean
 }
 
 export interface NapkinbetsWorkspaceResponse {
@@ -252,7 +276,31 @@ export interface NapkinbetsAdminResponse {
   metrics: NapkinbetsMetric[]
   users: NapkinbetsAdminUser[]
   wagers: NapkinbetsAdminWager[]
+  totalCachedEvents: number
+  ingestRuns: NapkinbetsIngestRun[]
+  aiSettings: NapkinbetsAiSettings
   refreshedAt: string
+}
+
+export interface NapkinbetsAiSettings {
+  aiRecommendationsEnabled: boolean
+  aiPropSuggestionsEnabled: boolean
+  aiTermsAssistEnabled: boolean
+  aiCloseoutAssistEnabled: boolean
+  xaiConfigured: boolean
+}
+
+export interface NapkinbetsIngestRun {
+  id: string
+  source: string
+  sport: string
+  league: string
+  tier: string
+  status: string
+  eventCount: number
+  errorMessage: string | null
+  startedAt: string
+  completedAt: string | null
 }
 
 export interface NapkinbetsPaymentProfilesResponse {
@@ -317,10 +365,43 @@ export interface WagerSettlementInput {
   note: string
 }
 
+export interface WagerSettlementReviewInput {
+  note: string
+}
+
 export interface CreatePaymentProfileInput {
   provider: string
   handle: string
   displayLabel: string
   isDefault: boolean
   isPublicOnBoards: boolean
+}
+
+export interface NapkinbetsAiTermsInput {
+  title: string
+  description: string
+  format: string
+  paymentService: string
+  terms: string
+}
+
+export interface NapkinbetsAiCloseoutSummaryInput {
+  title: string
+  paymentService: string
+  pendingCount: number
+  submittedCount: number
+  confirmedCount: number
+  rejectedCount: number
+  leaderboard: Array<{
+    displayName: string
+    projectedPayoutCents: number
+    score: number
+  }>
+}
+
+export interface UpdateNapkinbetsAiSettingsInput {
+  aiRecommendationsEnabled: boolean
+  aiPropSuggestionsEnabled: boolean
+  aiTermsAssistEnabled: boolean
+  aiCloseoutAssistEnabled: boolean
 }

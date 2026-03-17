@@ -19,6 +19,7 @@ const emit = defineEmits<{
   addPick: [wagerId: string, payload: WagerPickInput]
   recordSettlement: [wagerId: string, payload: WagerSettlementInput]
   confirmSettlement: [wagerId: string, settlementId: string]
+  rejectSettlement: [wagerId: string, settlementId: string]
   shuffle: [wagerId: string]
   remind: [wagerId: string]
   clear: [wagerId: string]
@@ -71,6 +72,10 @@ const participantOptions = computed(() =>
   })),
 )
 
+const participantNames = computed(
+  () => new Map(props.wager.participants.map((participant) => [participant.id, participant.displayName])),
+)
+
 const selectedSettlementParticipant = computed(
   () => props.wager.participants.find((participant) => participant.id === settlementState.participantId) ?? null,
 )
@@ -115,6 +120,17 @@ function statusColor(status: string) {
 
 function isBusy(key: string) {
   return props.activeAction === key
+}
+
+function settlementBadgeColor(status: string) {
+  switch (status) {
+    case 'confirmed':
+      return 'success'
+    case 'rejected':
+      return 'error'
+    default:
+      return 'warning'
+  }
 }
 
 function submitJoin() {
@@ -544,13 +560,18 @@ function submitSettlement() {
               class="napkinbets-list-row"
             >
               <div>
-                <p class="font-semibold text-default">{{ settlement.method }}</p>
+                <p class="font-semibold text-default">
+                  {{ participantNames.get(settlement.participantId) || settlement.method }}
+                </p>
                 <p class="text-sm text-muted">
-                  {{ settlement.confirmationCode || settlement.handle || 'Manual confirmation pending' }}
+                  {{ settlement.method }} • {{ settlement.confirmationCode || settlement.handle || 'Manual confirmation pending' }}
+                </p>
+                <p v-if="settlement.rejectionNote" class="text-sm text-muted">
+                  {{ settlement.rejectionNote }}
                 </p>
               </div>
               <div class="text-right space-y-2">
-                <UBadge :color="settlement.verificationStatus === 'confirmed' ? 'success' : 'warning'" variant="soft">
+                <UBadge :color="settlementBadgeColor(settlement.verificationStatus)" variant="soft">
                   {{ settlement.verificationStatus }}
                 </UBadge>
                 <p class="font-semibold text-default">{{ formatCurrency(settlement.amountCents) }}</p>
@@ -563,6 +584,16 @@ function submitSettlement() {
                   @click="emit('confirmSettlement', wager.id, settlement.id)"
                 >
                   Confirm
+                </UButton>
+                <UButton
+                  v-if="canManage && settlement.verificationStatus !== 'confirmed'"
+                  color="error"
+                  variant="soft"
+                  size="sm"
+                  :loading="isBusy(`settlement-reject:${settlement.id}`)"
+                  @click="emit('rejectSettlement', wager.id, settlement.id)"
+                >
+                  Send back
                 </UButton>
               </div>
             </div>

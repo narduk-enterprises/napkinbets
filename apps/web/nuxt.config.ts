@@ -33,9 +33,12 @@ export default defineNuxtConfig({
     posthogApiKey: process.env.POSTHOG_PERSONAL_API_KEY || '',
     gaPropertyId: process.env.GA_PROPERTY_ID || '',
     posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
+    xaiApiKey: process.env.XAI_API_KEY || process.env.GROK_API_KEY || '',
+    xaiModel: process.env.XAI_MODEL || 'grok-4-1-fast-non-reasoning',
     public: {
       appUrl: process.env.SITE_URL || 'https://napkinbets.nard.uk',
       appName: process.env.APP_NAME || 'Napkinbets',
+      aiRecommendationsEnabled: process.env.NAPKINBETS_AI_RECOMMENDATIONS === 'true',
       // Analytics (client-side tracking)
       posthogPublicKey: process.env.POSTHOG_PUBLIC_KEY || '',
       posthogHost: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',

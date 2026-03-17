@@ -11,11 +11,13 @@ import {
 } from '#server/database/schema'
 import { requireAuth } from '#layer/server/utils/auth'
 import {
-  getESPNScores,
   getWeatherForecast,
-  type NapkinbetsLiveGame,
   type NapkinbetsWeatherSnapshot,
 } from '#server/services/napkinbets/live'
+import {
+  loadCachedEventsByIds,
+  loadFeaturedLiveGames,
+} from '#server/services/napkinbets/events'
 import { useAppDatabase } from '#server/utils/database'
 
 interface SavePoolDataInput {
@@ -84,6 +86,35 @@ interface SerializedLeaderboardRow {
   pickCount: number
   projectedPayoutCents: number
   confirmedSettlementCents: number
+}
+
+function toLiveGame(
+  cachedEvent: Awaited<ReturnType<typeof loadCachedEventsByIds>> extends Map<string, infer T>
+    ? T
+    : never,
+) {
+  return {
+    id: cachedEvent.id,
+    name: cachedEvent.eventTitle,
+    shortName: `${cachedEvent.awayTeam.abbreviation || cachedEvent.awayTeam.shortName} @ ${cachedEvent.homeTeam.abbreviation || cachedEvent.homeTeam.shortName}`,
+    status: cachedEvent.shortStatus,
+    sport: cachedEvent.sport,
+    league: cachedEvent.league,
+    competitors: [
+      {
+        name: cachedEvent.awayTeam.name,
+        abbreviation: cachedEvent.awayTeam.abbreviation,
+        score: cachedEvent.awayTeam.score,
+        homeAway: 'away',
+      },
+      {
+        name: cachedEvent.homeTeam.name,
+        abbreviation: cachedEvent.homeTeam.abbreviation,
+        score: cachedEvent.homeTeam.score,
+        homeAway: 'home',
+      },
+    ],
+  }
 }
 
 const CONCEPT = {
@@ -721,22 +752,26 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     db.select().from(napkinbetsSettlements).orderBy(asc(napkinbetsSettlements.recordedAt)),
   ])
 
-  const liveScores = new Map<string, NapkinbetsLiveGame[]>()
   const weatherSnapshots = new Map<string, NapkinbetsWeatherSnapshot>()
+  const cachedEventIds = wagers
+    .map((wager) => wager.eventId ?? '')
+    .filter((eventId): eventId is string => Boolean(eventId))
+
+  const [cachedEventsById, featuredLiveGames] =
+    options.includeContext !== false
+      ? await Promise.all([
+          loadCachedEventsByIds(event, cachedEventIds),
+          loadFeaturedLiveGames(event),
+        ])
+      : [new Map(), []]
 
   if (options.includeContext !== false) {
-    const liveScoreRequests = new Map<string, { sport: string; league: string }>()
     const weatherRequests = new Map<
       string,
       { latitude: string; longitude: string; label: string }
     >()
 
     for (const wager of wagers) {
-      const sportKey = `${wager.sport}:${wager.league}`
-      if (wager.sport && wager.league) {
-        liveScoreRequests.set(sportKey, { sport: wager.sport, league: wager.league })
-      }
-
       const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
       if (wager.latitude && wager.longitude) {
         weatherRequests.set(weatherKey, {
@@ -745,13 +780,6 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
           label: wager.venueName ?? wager.title,
         })
       }
-    }
-
-    const liveScorePromises: Array<Promise<readonly [string, NapkinbetsLiveGame[]]>> = []
-    for (const [sportKey, request] of liveScoreRequests.entries()) {
-      liveScorePromises.push(
-        getESPNScores(request.sport, request.league).then((games) => [sportKey, games] as const),
-      )
     }
 
     const weatherPromises: Array<
@@ -766,14 +794,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       )
     }
 
-    const [liveScoreResults, weatherResults] = await Promise.all([
-      Promise.all(liveScorePromises),
-      Promise.all(weatherPromises),
-    ])
-
-    for (const [sportKey, games] of liveScoreResults) {
-      liveScores.set(sportKey, games)
-    }
+    const weatherResults = await Promise.all(weatherPromises)
 
     for (const [weatherKey, forecast] of weatherResults) {
       if (forecast) {
@@ -802,8 +823,8 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       wagerPots,
       wagerSettlements,
     )
-    const liveKey = `${wager.sport}:${wager.league}`
     const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
+    const eventContext = wager.eventId ? cachedEventsById.get(wager.eventId) ?? null : null
 
     serializedWagers.push({
       id: wager.id,
@@ -836,19 +857,10 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       notifications: wagerNotifications,
       settlements: wagerSettlements,
       leaderboard,
-      liveGames: liveScores.get(liveKey) ?? [],
+      liveGames: eventContext ? [toLiveGame(eventContext)] : [],
       weather: weatherSnapshots.get(weatherKey) ?? null,
       totalPotCents: wagerPots.reduce((sum, pot) => sum + pot.amountCents, 0),
     })
-  }
-
-  const uniqueGames = new Map<string, NapkinbetsLiveGame>()
-  for (const games of liveScores.values()) {
-    for (const game of games) {
-      if (!uniqueGames.has(game.id)) {
-        uniqueGames.set(game.id, game)
-      }
-    }
   }
 
   const metrics = [
@@ -887,7 +899,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
   return {
     concept: CONCEPT,
     metrics,
-    liveGames: Array.from(uniqueGames.values()).slice(0, 6),
+    liveGames: featuredLiveGames,
     weather: Array.from(weatherSnapshots.values()).slice(0, 4),
     wagers: serializedWagers,
     refreshedAt: nowIso(),
@@ -1179,16 +1191,19 @@ export async function recordSettlement(event: H3Event, wagerId: string, input: S
     handle: input.handle.trim() || null,
     confirmationCode: input.confirmationCode.trim() || null,
     note: input.note.trim() || null,
-    verificationStatus: canManage ? 'confirmed' : 'submitted',
-    verifiedByUserId: canManage ? authUser.id : null,
-    verifiedAt: canManage ? createdAt : null,
+    verificationStatus: 'submitted',
+    verifiedByUserId: null,
+    verifiedAt: null,
+    rejectedByUserId: null,
+    rejectedAt: null,
+    rejectionNote: null,
     recordedAt: createdAt,
   })
 
   await db
     .update(napkinbetsParticipants)
     .set({
-      paymentStatus: canManage ? 'confirmed' : 'submitted',
+      paymentStatus: 'submitted',
       paymentReference: input.confirmationCode.trim() || input.handle.trim() || null,
       updatedAt: createdAt,
     })
@@ -1223,6 +1238,9 @@ export async function confirmSettlement(event: H3Event, wagerId: string, settlem
       verificationStatus: 'confirmed',
       verifiedByUserId: user.id,
       verifiedAt,
+      rejectedByUserId: null,
+      rejectedAt: null,
+      rejectionNote: null,
     })
     .where(eq(napkinbetsSettlements.id, settlementId))
 
@@ -1239,6 +1257,57 @@ export async function confirmSettlement(event: H3Event, wagerId: string, settlem
     wagerId,
     'Settlement confirmed',
     'A board owner verified submitted payment proof.',
+    'settlement',
+    settlement.participantId,
+  )
+
+  return { ok: true }
+}
+
+export async function rejectSettlement(
+  event: H3Event,
+  wagerId: string,
+  settlementId: string,
+  note: string,
+) {
+  const { user } = await requireOwnerOrAdmin(event, wagerId)
+  const db = useAppDatabase(event)
+  const settlement = await getSettlementOrThrow(event, settlementId)
+
+  if (settlement.wagerId !== wagerId) {
+    throw createError({ statusCode: 400, message: 'Settlement does not belong to this wager.' })
+  }
+
+  const rejectedAt = nowIso()
+  const rejectionNote =
+    note.trim() || 'Proof needs a clearer handle, amount, or confirmation reference before closeout.'
+
+  await db
+    .update(napkinbetsSettlements)
+    .set({
+      verificationStatus: 'rejected',
+      verifiedByUserId: null,
+      verifiedAt: null,
+      rejectedByUserId: user.id,
+      rejectedAt,
+      rejectionNote,
+    })
+    .where(eq(napkinbetsSettlements.id, settlementId))
+
+  await db
+    .update(napkinbetsParticipants)
+    .set({
+      paymentStatus: 'pending',
+      paymentReference: null,
+      updatedAt: rejectedAt,
+    })
+    .where(eq(napkinbetsParticipants.id, settlement.participantId))
+
+  await createNotification(
+    event,
+    wagerId,
+    'Settlement rejected',
+    rejectionNote,
     'settlement',
     settlement.participantId,
   )

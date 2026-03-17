@@ -11,7 +11,7 @@ const bodySchema = z.object({
   sport: z.string().max(40),
   league: z.string().max(40),
   sideOptions: z.string().min(3).max(500),
-  participantNames: z.string().min(3).max(500),
+  participantNames: z.string().max(500),
   potRules: z.string().min(3).max(500),
   entryFeeDollars: z.coerce.number().min(0).max(1000),
   paymentService: z.string().min(2).max(40),

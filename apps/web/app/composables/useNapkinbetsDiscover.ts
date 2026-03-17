@@ -2,10 +2,15 @@ import type { NapkinbetsDiscoveryResponse } from '../../types/napkinbets'
 import { useNapkinbetsApi } from '../services/napkinbets-api'
 
 const EMPTY_DISCOVERY: NapkinbetsDiscoveryResponse = {
-  liveEvents: [],
-  upcomingEvents: [],
+  sections: [],
+  filters: {
+    sports: [],
+    leagues: [],
+    states: [],
+  },
   propIdeas: [],
   refreshedAt: '',
+  stale: false,
 }
 
 export function useNapkinbetsDiscover() {

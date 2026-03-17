@@ -2,14 +2,18 @@ import type {
   CreateWagerInput,
   CreatePaymentProfileInput,
   JoinWagerInput,
+  NapkinbetsAiCloseoutSummaryInput,
+  NapkinbetsAiTermsInput,
   NapkinbetsAdminResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
   NapkinbetsPaymentProfilesResponse,
   NapkinbetsWorkspaceResponse,
+  UpdateNapkinbetsAiSettingsInput,
   WagerPickInput,
   NapkinbetsWagerResponse,
   WagerSettlementInput,
+  WagerSettlementReviewInput,
 } from '../../types/napkinbets'
 
 export function useNapkinbetsApi() {
@@ -28,11 +32,35 @@ export function useNapkinbetsApi() {
     getAdminOverview() {
       return fetch<NapkinbetsAdminResponse>('/api/napkinbets/admin/overview')
     },
+    saveAdminAiSettings(payload: UpdateNapkinbetsAiSettingsInput) {
+      return fetch('/api/napkinbets/admin/ai-settings', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    runAdminIngest(tier: string) {
+      return fetch<{ refreshedAt: string }>('/api/napkinbets/admin/ingest', {
+        method: 'POST',
+        body: { tier },
+      })
+    },
     getWager(slug: string) {
       return fetch<NapkinbetsWagerResponse>(`/api/napkinbets/wagers/slug/${slug}`)
     },
     getPaymentProfiles() {
       return fetch<NapkinbetsPaymentProfilesResponse>('/api/napkinbets/me/payment-profiles')
+    },
+    rewriteTermsWithAi(payload: NapkinbetsAiTermsInput) {
+      return fetch<{ terms: string }>('/api/napkinbets/ai/terms', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    draftCloseoutSummary(payload: NapkinbetsAiCloseoutSummaryInput) {
+      return fetch<{ summary: string }>('/api/napkinbets/ai/closeout-summary', {
+        method: 'POST',
+        body: payload,
+      })
     },
     createWager(payload: CreateWagerInput) {
       return fetch<{ ok: true; wagerId: string; slug: string }>('/api/napkinbets/wagers', {
@@ -61,6 +89,16 @@ export function useNapkinbetsApi() {
     confirmSettlement(wagerId: string, settlementId: string) {
       return fetch(`/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/confirm`, {
         method: 'POST',
+      })
+    },
+    rejectSettlement(
+      wagerId: string,
+      settlementId: string,
+      payload: WagerSettlementReviewInput,
+    ) {
+      return fetch(`/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/reject`, {
+        method: 'POST',
+        body: payload,
       })
     },
     shuffleDraftOrder(wagerId: string) {

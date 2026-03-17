@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import type { JoinWagerInput, WagerPickInput, WagerSettlementInput } from '../../../types/napkinbets'
+import type {
+  JoinWagerInput,
+  WagerPickInput,
+  WagerSettlementInput,
+  WagerSettlementReviewInput,
+} from '../../../types/napkinbets'
 
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
@@ -50,6 +55,14 @@ async function handleSettlement(
 
 async function handleConfirmSettlement(wagerId: string, settlementId: string) {
   await actions.confirmSettlement(wagerId, settlementId)
+}
+
+async function handleRejectSettlement(
+  wagerId: string,
+  settlementId: string,
+  payload: WagerSettlementReviewInput = { note: '' },
+) {
+  await actions.rejectSettlement(wagerId, settlementId, payload)
 }
 
 async function handleShuffle(wagerId: string) {
@@ -166,6 +179,7 @@ useWebPageSchema({
         @add-pick="handlePick"
         @record-settlement="handleSettlement"
         @confirm-settlement="handleConfirmSettlement"
+        @reject-settlement="handleRejectSettlement"
         @shuffle="handleShuffle"
         @remind="handleReminder"
         @clear="handleClear"
