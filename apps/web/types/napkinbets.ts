@@ -185,6 +185,27 @@ export interface NapkinbetsEventIdea {
   format: string
 }
 
+export interface NapkinbetsEventOddsSide {
+  label: string
+  probability: number | null
+}
+
+export interface NapkinbetsEventOddsMarket {
+  label: string
+  detail: string | null
+  left: NapkinbetsEventOddsSide
+  right: NapkinbetsEventOddsSide
+}
+
+export interface NapkinbetsEventOdds {
+  source: 'polymarket'
+  url: string
+  updatedAt: string
+  moneyline: NapkinbetsEventOddsMarket | null
+  spread: NapkinbetsEventOddsMarket | null
+  total: NapkinbetsEventOddsMarket | null
+}
+
 export interface NapkinbetsCreatePrefillQuery {
   source: string
   eventId: string
@@ -243,6 +264,7 @@ export interface NapkinbetsEventCard {
   leaders: NapkinbetsEventLeader[]
   ideas: NapkinbetsEventIdea[]
   lastSyncedAt: string
+  odds?: NapkinbetsEventOdds | null
 }
 
 export interface NapkinbetsDiscoverySection {

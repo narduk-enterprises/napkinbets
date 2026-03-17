@@ -13,7 +13,7 @@ const {
   hasFilteredResults,
 } = useNapkinbetsDiscoverPresentation(discover)
 
-useNapkinbetsAutoRefresh(discoverState.refresh)
+useNapkinbetsAutoRefresh(discoverState.refresh, 30_000)
 
 useSeo({
   title: 'Browse live and upcoming games',

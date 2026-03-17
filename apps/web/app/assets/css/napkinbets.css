@@ -750,8 +750,8 @@ body {
 
 .napkinbets-event-card {
   min-width: 0;
-  max-width: 18rem;
-  padding: 0.68rem;
+  max-width: 17rem;
+  padding: 0.62rem;
 }
 
 .napkinbets-event-card-top,
@@ -766,7 +766,7 @@ body {
 }
 
 .napkinbets-event-title {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   line-height: 1.2;
 }
 
@@ -782,6 +782,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem 0.75rem;
+}
+
+.napkinbets-event-venue {
+  color: var(--napkinbets-toned);
+  font-size: 0.74rem;
+  margin: 0;
 }
 
 .napkinbets-event-matchup,
@@ -801,7 +807,7 @@ body {
   display: flex;
   gap: 0.55rem;
   justify-content: space-between;
-  padding: 0.52rem;
+  padding: 0.46rem 0.52rem;
 }
 
 .napkinbets-event-side {
@@ -832,15 +838,74 @@ body {
 
 .napkinbets-event-name {
   color: var(--napkinbets-ink);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   margin: 0;
 }
 
 .napkinbets-event-record {
   color: var(--napkinbets-toned);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   margin: 0.2rem 0 0;
+}
+
+.napkinbets-event-odds-block {
+  background: rgb(27 124 71 / 0.05);
+  border: 1px solid rgb(27 124 71 / 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem;
+}
+
+.napkinbets-event-odds-topline,
+.napkinbets-event-odds-grid {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.napkinbets-event-odds-topline {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.napkinbets-event-odds-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.napkinbets-event-odds-label {
+  color: var(--napkinbets-toned);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.napkinbets-event-odds-pill,
+.napkinbets-event-odds-chip {
+  background: rgb(255 255 255 / 0.72);
+  border: 1px solid rgb(21 83 45 / 0.08);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.napkinbets-event-odds-pill span,
+.napkinbets-event-odds-chip span {
+  color: var(--napkinbets-muted);
+  font-size: 0.67rem;
+}
+
+.napkinbets-event-odds-pill strong,
+.napkinbets-event-odds-chip strong {
+  color: var(--napkinbets-ink);
+  font-size: 0.76rem;
+}
+
+.napkinbets-event-odds-secondary {
+  display: grid;
+  gap: 0.35rem;
 }
 
 .napkinbets-event-insight {

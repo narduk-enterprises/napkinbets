@@ -4,6 +4,7 @@ import type {
   NapkinbetsCreatePrefillQuery,
   NapkinbetsEventCard as NapkinbetsEvent,
   NapkinbetsEventIdea,
+  NapkinbetsEventOddsMarket,
 } from '../../../types/napkinbets'
 
 const props = defineProps<{
@@ -87,34 +88,75 @@ const timeLabel = computed(() => props.event.shortStatus || props.event.status)
 const primaryIdeaLink = computed(() =>
   primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
 )
+const statusLabel = computed(() => {
+  if (props.event.state === 'in') {
+    return 'Live'
+  }
+
+  if (props.event.state === 'post') {
+    return 'Final'
+  }
+
+  return 'Upcoming'
+})
+const statusColor = computed(() => {
+  if (props.event.state === 'in') {
+    return 'success'
+  }
+
+  if (props.event.state === 'post') {
+    return 'neutral'
+  }
+
+  return 'warning'
+})
+const moneylineOdds = computed(() => props.event.odds?.moneyline ?? null)
+const secondaryOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
+  [props.event.odds?.spread, props.event.odds?.total]
+    .filter((market): market is NapkinbetsEventOddsMarket => Boolean(market))
+    .slice(0, 2),
+)
+const showInsights = computed(() => !moneylineOdds.value && insightRows.value.length > 0)
+
+function formatProbability(value: number | null) {
+  return value === null ? '—' : `${value}%`
+}
+
+function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
+  if (props.event.state === 'pre' && (!team.score || team.score === '0')) {
+    return '—'
+  }
+
+  return team.score || '—'
+}
 </script>
 
 <template>
   <UCard :class="cardClass">
-    <div class="napkinbets-event-card-top">
-      <div class="flex flex-wrap items-center gap-2">
-        <UBadge :color="event.state === 'in' ? 'success' : 'warning'" variant="soft">
-          {{ event.state === 'in' ? 'Live' : 'Upcoming' }}
-        </UBadge>
-        <UBadge color="neutral" variant="subtle">{{ event.leagueLabel }}</UBadge>
-        <UBadge v-if="event.contextKey === 'tournament'" color="warning" variant="soft">
-          Tournament
-        </UBadge>
+    <div class="space-y-3">
+      <div class="napkinbets-event-card-top">
+        <div class="flex flex-wrap items-center gap-2">
+          <UBadge :color="statusColor" variant="soft">
+            {{ statusLabel }}
+          </UBadge>
+          <UBadge color="neutral" variant="subtle">{{ event.leagueLabel }}</UBadge>
+          <UBadge v-if="event.contextKey === 'tournament'" color="warning" variant="soft">
+            Tournament
+          </UBadge>
+        </div>
+
+        <UButton :to="createLink" color="primary" size="xs" icon="i-lucide-plus">
+          Bet
+        </UButton>
       </div>
 
-      <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-plus">
-        Bet this game
-      </UButton>
-    </div>
-
-    <div class="space-y-3">
-      <div class="space-y-1">
+      <div class="space-y-1.5">
         <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
         <div class="napkinbets-event-meta">
           <span>{{ timeLabel }}</span>
           <span v-if="event.broadcast">{{ event.broadcast }}</span>
-          <span>{{ event.venueName }}</span>
         </div>
+        <p class="napkinbets-event-venue">{{ event.venueName }}</p>
       </div>
 
       <div
@@ -143,11 +185,56 @@ const primaryIdeaLink = computed(() =>
             </div>
           </div>
 
-          <p class="napkinbets-event-score">{{ team.score || (isMatchupEvent ? '0' : '—') }}</p>
+          <p class="napkinbets-event-score">{{ scoreLabel(team) }}</p>
         </div>
       </div>
 
-      <div v-if="insightRows.length" class="napkinbets-event-insights">
+      <div v-if="moneylineOdds" class="napkinbets-event-odds-block">
+        <div class="napkinbets-event-odds-topline">
+          <span class="napkinbets-event-odds-label">{{ moneylineOdds.label }}</span>
+          <UButton
+            v-if="event.odds?.url"
+            :to="event.odds.url"
+            target="_blank"
+            external
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            icon="i-lucide-external-link"
+          >
+            Odds
+          </UButton>
+        </div>
+
+        <div class="napkinbets-event-odds-grid">
+          <div class="napkinbets-event-odds-pill">
+            <span>{{ moneylineOdds.left.label }}</span>
+            <strong>{{ formatProbability(moneylineOdds.left.probability) }}</strong>
+          </div>
+          <div class="napkinbets-event-odds-pill">
+            <span>{{ moneylineOdds.right.label }}</span>
+            <strong>{{ formatProbability(moneylineOdds.right.probability) }}</strong>
+          </div>
+        </div>
+
+        <div v-if="secondaryOdds.length" class="napkinbets-event-odds-secondary">
+          <div
+            v-for="market in secondaryOdds"
+            :key="`${market.label}-${market.detail ?? 'none'}`"
+            class="napkinbets-event-odds-chip"
+          >
+            <span>
+              {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
+            </span>
+            <strong>
+              {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
+              {{ market.right.label }} {{ formatProbability(market.right.probability) }}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="showInsights" class="napkinbets-event-insights">
         <div
           v-for="leader in insightRows"
           :key="`${leader.label}-${leader.athlete}`"
@@ -159,14 +246,23 @@ const primaryIdeaLink = computed(() =>
       </div>
 
       <div class="napkinbets-event-footer">
+        <span v-if="primaryIdea" class="napkinbets-choice-chip">
+          {{ primaryIdea.title }}
+        </span>
+
         <div class="napkinbets-event-action-row">
-          <span v-if="primaryIdea" class="napkinbets-choice-chip">
-            {{ primaryIdea.title }}
-          </span>
-          <UButton v-if="primaryIdeaLink" :to="primaryIdeaLink" color="neutral" size="sm">
-            Use this setup
+          <UButton
+            v-if="primaryIdeaLink"
+            :to="primaryIdeaLink"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+          >
+            Setup
           </UButton>
-          <UButton v-else :to="createLink" color="neutral" size="sm"> Quick start </UButton>
+          <UButton v-else :to="createLink" color="neutral" variant="ghost" size="xs">
+            Setup
+          </UButton>
         </div>
       </div>
     </div>

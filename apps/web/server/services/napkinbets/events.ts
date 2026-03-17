@@ -11,6 +11,10 @@ import {
   type NapkinbetsLeagueDefinition,
 } from '#server/services/napkinbets/taxonomy'
 import { loadNapkinbetsLeaguesFromStore } from '#server/services/napkinbets/taxonomy-store'
+import {
+  enrichNapkinbetsEventsWithPolymarketOdds,
+  type NapkinbetsEventOdds,
+} from '#server/services/napkinbets/polymarket'
 import { useAppDatabase } from '#server/utils/database'
 
 interface EspnTeamRecord {
@@ -186,6 +190,7 @@ export interface NapkinbetsCachedEvent {
   leaders: CachedDiscoverEventLeader[]
   ideas: CachedDiscoverEventIdea[]
   lastSyncedAt: string
+  odds?: NapkinbetsEventOdds | null
 }
 
 interface NapkinbetsCreatePrefillQuery {
@@ -977,6 +982,14 @@ export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
   return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
 }
 
+function isDiscoverCacheOlderThan(freshestSync: string, maxAgeMs: number, nowMs = Date.now()) {
+  if (!freshestSync) {
+    return true
+  }
+
+  return nowMs - new Date(freshestSync).getTime() > maxAgeMs
+}
+
 async function fetchEspnJson<T>(url: string) {
   const response = await fetch(url, {
     headers: {
@@ -1318,6 +1331,7 @@ function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCac
     leaders: parseJsonValue<CachedDiscoverEventLeader[]>(row.leadersJson, []),
     ideas: parseJsonValue<CachedDiscoverEventIdea[]>(row.ideasJson, []),
     lastSyncedAt: row.lastSyncedAt,
+    odds: null,
   }
 }
 
@@ -1704,28 +1718,61 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
 
 export async function loadCachedDiscoverData(event: H3Event) {
   const db = useAppDatabase(event)
-  const [eventRows, latestRun] = await Promise.all([
-    db.select().from(napkinbetsEvents).orderBy(asc(napkinbetsEvents.startTime)),
-    db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(1),
-  ])
+  const readSnapshot = async () => {
+    const [eventRows, latestRun] = await Promise.all([
+      db.select().from(napkinbetsEvents).orderBy(asc(napkinbetsEvents.startTime)),
+      db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(1),
+    ])
 
-  const events = eventRows.map((row) => toCachedEvent(row))
-  const sections = buildDiscoverSections(events)
-  const spotlights = buildDiscoverSpotlights(events)
-  const freshestSync =
-    eventRows.map((row) => row.lastSyncedAt).sort((left, right) => right.localeCompare(left))[0] ??
-    latestRun[0]?.completedAt ??
-    ''
+    return {
+      events: eventRows.map((row) => toCachedEvent(row)),
+      latestRun: latestRun[0] ?? null,
+    }
+  }
 
-  const stale = isDiscoverCacheStale(freshestSync)
+  let snapshot = await readSnapshot()
+  let freshestSync =
+    snapshot.events
+      .map((row) => row.lastSyncedAt)
+      .sort((left, right) => right.localeCompare(left))[0] ?? snapshot.latestRun?.completedAt ?? ''
+
+  if (isDiscoverCacheOlderThan(freshestSync, 5 * 60 * 1000)) {
+    await refreshDiscoverEventCache(event, 'live-window')
+    snapshot = await readSnapshot()
+    freshestSync =
+      snapshot.events
+        .map((row) => row.lastSyncedAt)
+        .sort((left, right) => right.localeCompare(left))[0] ??
+      snapshot.latestRun?.completedAt ??
+      ''
+  }
+
+  let sections = buildDiscoverSections(snapshot.events)
+  const oddsCandidates = sections
+    .flatMap((section) => section.events)
+    .filter(
+      (cachedEvent, index, allEvents) =>
+        allEvents.findIndex((entry) => entry.id === cachedEvent.id) === index,
+    )
+
+  const oddsByEventId = await enrichNapkinbetsEventsWithPolymarketOdds(oddsCandidates)
+  sections = sections.map((section) => ({
+    ...section,
+    events: section.events.map((cachedEvent) => ({
+      ...cachedEvent,
+      odds: oddsByEventId.get(cachedEvent.id) ?? null,
+    })),
+  }))
+
+  const spotlights = buildDiscoverSpotlights(snapshot.events)
 
   return {
     sections,
     spotlights,
-    filters: buildDiscoverFilters(events),
+    filters: buildDiscoverFilters(snapshot.events),
     propIdeas: [...NAPKINBETS_PROP_IDEAS],
     refreshedAt: freshestSync || nowIso(),
-    stale,
+    stale: isDiscoverCacheStale(freshestSync),
   }
 }
 
@@ -1775,6 +1822,16 @@ export async function loadCachedEventsByIds(event: H3Event, eventIds: string[]) 
 
 export async function loadFeaturedLiveGames(event: H3Event, limit = 6) {
   const db = useAppDatabase(event)
+  const latestEvent = await db
+    .select({ lastSyncedAt: napkinbetsEvents.lastSyncedAt })
+    .from(napkinbetsEvents)
+    .orderBy(desc(napkinbetsEvents.lastSyncedAt))
+    .limit(1)
+
+  if (isDiscoverCacheOlderThan(latestEvent[0]?.lastSyncedAt ?? '', 5 * 60 * 1000)) {
+    await refreshDiscoverEventCache(event, 'live-window')
+  }
+
   const rows = await db
     .select()
     .from(napkinbetsEvents)

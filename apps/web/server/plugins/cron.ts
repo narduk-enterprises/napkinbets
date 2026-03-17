@@ -1,11 +1,20 @@
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('cloudflare:scheduled', async (...args: unknown[]) => {
-    const scheduledEvent = args[0] as { cron?: string } | undefined
-    const env = args[1] as Record<string, unknown> | undefined
-    const context = args[2]
+  nitroApp.hooks.hook('cloudflare:scheduled', async (scheduledEvent: unknown) => {
+    const cloudflareEvent = scheduledEvent as
+      | {
+          cron?: string
+          scheduledTime?: number
+          env?: Record<string, unknown>
+          context?: unknown
+        }
+      | undefined
     const config = useRuntimeConfig()
+    const env = cloudflareEvent?.env
+    const context = cloudflareEvent?.context
+    const cronSecret =
+      (typeof env?.CRON_SECRET === 'string' ? env.CRON_SECRET : null) ?? config.cronSecret
 
-    if (!config.cronSecret) {
+    if (!cronSecret) {
       console.error('[napkinbets-cron] Missing CRON_SECRET, skipping scheduled ingest.')
       return
     }
@@ -25,14 +34,16 @@ export default defineNitroPlugin((nitroApp) => {
     } as const
 
     const job =
-      (scheduledEvent?.cron ? cronToJob[scheduledEvent.cron as keyof typeof cronToJob] : null) ??
+      (cloudflareEvent?.cron
+        ? cronToJob[cloudflareEvent.cron as keyof typeof cronToJob]
+        : null) ??
       cronToJob['* * * * *']
 
     try {
       await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${config.cronSecret}`,
+          Authorization: `Bearer ${cronSecret}`,
         },
         context: cloudflareCtx,
       })
