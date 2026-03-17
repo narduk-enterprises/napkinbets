@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { z } from 'zod'
-import type { CreateWagerInput, NapkinbetsTaxonomyResponse } from '../../../types/napkinbets'
+import type {
+  CreateWagerInput,
+  NapkinbetsFriend,
+  NapkinbetsGroup,
+  NapkinbetsTaxonomyResponse,
+} from '../../../types/napkinbets'
 
 interface NapkinbetsCreateEventPreview {
   source: string
@@ -27,105 +31,98 @@ const props = defineProps<{
   mode: 'event' | 'manual'
   eventPreview: NapkinbetsCreateEventPreview | null
   taxonomy: NapkinbetsTaxonomyResponse
+  friends: NapkinbetsFriend[]
+  groups: NapkinbetsGroup[]
+  initialFriendId: string
   isAuthenticated: boolean
 }>()
 
-const formatOptions = [
-  { label: 'Game pool', value: 'sports-game' },
-  { label: 'Prop pool', value: 'sports-prop' },
-  { label: 'Race pool', value: 'sports-race' },
-  { label: 'Golf draft', value: 'golf-draft' },
-  { label: 'Custom pool', value: 'custom-prop' },
-]
-
-const paymentOptions = [
-  { label: 'Venmo', value: 'Venmo' },
-  { label: 'PayPal', value: 'PayPal' },
-  { label: 'Cash App', value: 'Cash App' },
-  { label: 'Zelle', value: 'Zelle' },
-]
-
-const schema = z.object({
-  title: z.string().min(3),
-  creatorName: z.string().min(2),
-  description: z.string().min(12),
-  boardType: z.enum(['event-backed', 'manual-curated', 'community-created']),
-  format: z.string().min(2),
-  sport: z.string(),
-  contextKey: z.string(),
-  league: z.string(),
-  customContextName: z.string(),
-  sideOptions: z.string().min(3),
-  participantNames: z.string().min(0),
-  potRules: z.string().min(3),
-  entryFeeDollars: z.coerce.number().min(0),
-  paymentService: z.string().min(2),
-  paymentHandle: z.string(),
-  venueName: z.string(),
-  latitude: z.string(),
-  longitude: z.string(),
-  terms: z.string().min(12),
-  eventSource: z.string().optional(),
-  eventId: z.string().optional(),
-  eventTitle: z.string().optional(),
-  eventStartsAt: z.string().optional(),
-  eventStatus: z.string().optional(),
-  homeTeamName: z.string().optional(),
-  awayTeamName: z.string().optional(),
-})
-
 const {
   formState,
+  isSimpleBet,
   selectedSport,
   selectedLeague,
+  selectedGroup,
+  selectedOpponent,
+  selectedOpponentId,
+  manualOpponentName,
+  simpleSideA,
+  simpleSideB,
+  selectedSimpleSide,
+  resolvedSimpleSides,
   sportOptions,
   contextOptions,
   leagueOptions,
+  groupOptions,
+  friendOptions,
+  poolFormatOptions,
+  paymentOptions,
   venueOptions,
   potTemplateOptions,
-  seatPresetOptions,
-  showCustomContextName,
-  showCustomVenue,
-  sideOptionList,
-  participantList,
   sideTemplateOptions,
-  sideOptionDraft,
-  participantDraft,
+  seatPresetOptions,
   selectedPotTemplate,
   selectedVenuePreset,
-  suggestedSideOptions,
+  showCustomContextName,
+  showCustomVenue,
+  poolParticipants,
+  participantDraft,
+  sideOptionList,
+  sideOptionDraft,
   boardSummary,
-  closeoutTerms,
   payload,
-  addParticipant,
-  removeParticipant,
+  addPoolParticipant,
+  addFriendToPool,
+  removePoolParticipant,
   applySeatPreset,
   addSideOption,
   removeSideOption,
   applySideTemplate,
-  resetSideOptions,
 } = useNapkinbetsCreateBuilder({
   prefill: computed(() => props.prefill),
   mode: computed(() => props.mode),
   taxonomy: computed(() => props.taxonomy),
+  friends: computed(() => props.friends),
+  groups: computed(() => props.groups),
+  initialFriendId: computed(() => props.initialFriendId),
 })
 
-const formatLabel = computed(() => formState.format.replaceAll('-', ' '))
-const potRuleChips = computed(() => payload.value.potRules.split('\n').filter(Boolean))
+const canSubmit = computed(() => {
+  if (!payload.value.title.trim()) {
+    return false
+  }
+
+  if (!payload.value.creatorName.trim()) {
+    return false
+  }
+
+  if (!payload.value.paymentService.trim()) {
+    return false
+  }
+
+  if (isSimpleBet.value) {
+    return Boolean(
+      resolvedSimpleSides.value[0]?.trim() &&
+        resolvedSimpleSides.value[1]?.trim() &&
+        (selectedOpponent.value?.displayName || manualOpponentName.value.trim()),
+    )
+  }
+
+  return Boolean(sideOptionList.value.length > 1)
+})
 
 const formSummary = computed(() =>
   props.mode === 'event'
-    ? 'Game locked in. Set the pool shape, players, and pay-with details.'
-    : 'Pick the structure first, then add only what the room actually needs.',
+    ? 'Start from the attached event, then only choose the room, the people, and the stake.'
+    : 'Keep it light: choose the napkin type, the people, and only the structure you actually need.',
 )
 
 function submit() {
-  const parsed = schema.safeParse(payload.value)
-  if (!parsed.success) {
+  if (!canSubmit.value) {
     return
   }
 
-  emit('create', parsed.data)
+  emit('create', payload.value)
 }
 </script>
 
@@ -133,21 +130,47 @@ function submit() {
   <UCard id="napkinbets-create" class="napkinbets-panel">
     <template #header>
       <div class="space-y-2">
-        <p class="napkinbets-kicker">Pool setup</p>
+        <p class="napkinbets-kicker">Start a napkin</p>
         <h2 class="napkinbets-section-title">
-          {{ mode === 'event' ? 'Finish the pool' : 'Start a room-ready pool' }}
+          {{ mode === 'event' ? 'Keep the setup tight' : 'Choose the simple path first' }}
         </h2>
         <p class="napkinbets-support-copy">{{ formSummary }}</p>
       </div>
     </template>
 
-    <UForm :state="formState" :schema="schema" class="space-y-6" @submit.prevent="submit">
+    <UForm :state="formState" class="space-y-6" @submit.prevent="submit">
+      <div class="grid gap-3 md:grid-cols-2">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          class="napkinbets-choice-panel h-auto"
+          :class="{ 'napkinbets-choice-panel-active': formState.napkinType === 'simple-bet' }"
+          @click="formState.napkinType = 'simple-bet'"
+        >
+          <span class="napkinbets-surface-label">Simple bet</span>
+          <span class="font-semibold text-default">One opponent, one stake, one clear side.</span>
+          <span class="text-sm text-muted">This is the default napkin for quick win-or-lose bets.</span>
+        </UButton>
+
+        <UButton
+          color="neutral"
+          variant="ghost"
+          class="napkinbets-choice-panel h-auto"
+          :class="{ 'napkinbets-choice-panel-active': formState.napkinType === 'pool' }"
+          @click="formState.napkinType = 'pool'"
+        >
+          <span class="napkinbets-surface-label">Pool</span>
+          <span class="font-semibold text-default">Use this when there are several people or payout lanes.</span>
+          <span class="text-sm text-muted">Keep this for a room, draft, or a shared board.</span>
+        </UButton>
+      </div>
+
       <div
         v-if="mode === 'event' && eventPreview"
         class="napkinbets-event-preview napkinbets-surface"
       >
-        <div>
-          <p class="napkinbets-surface-label">Attached game</p>
+        <div class="space-y-1">
+          <p class="napkinbets-surface-label">Attached event</p>
           <p class="font-semibold text-default">
             {{
               eventPreview.awayTeamName && eventPreview.homeTeamName
@@ -156,43 +179,40 @@ function submit() {
             }}
           </p>
           <p class="text-sm text-muted">
-            {{ eventPreview.status || 'Scheduled' }} •
-            {{ eventPreview.venueName || 'Venue pending' }}
+            {{ eventPreview.status || 'Scheduled' }} • {{ eventPreview.venueName || 'Venue pending' }}
           </p>
         </div>
 
         <div class="napkinbets-chip-grid">
           <span class="napkinbets-choice-chip">{{ selectedSport?.label || 'Attached sport' }}</span>
-          <span class="napkinbets-choice-chip">{{
-            selectedLeague?.label || 'Attached league'
-          }}</span>
-          <span class="napkinbets-choice-chip">{{ formatLabel }}</span>
+          <span class="napkinbets-choice-chip">{{ selectedLeague?.label || 'Attached league' }}</span>
+          <span class="napkinbets-choice-chip">{{ formState.napkinType === 'simple-bet' ? 'Simple bet' : 'Pool' }}</span>
         </div>
       </div>
 
       <div class="napkinbets-form-grid">
-        <UFormField name="title" label="Pool title">
+        <UFormField name="title" :label="formState.napkinType === 'simple-bet' ? 'Napkin title' : 'Pool title'">
           <UInput v-model="formState.title" class="w-full" />
         </UFormField>
 
-        <UFormField name="creatorName" label="Host">
+        <UFormField name="creatorName" label="You">
           <UInput v-model="formState.creatorName" class="w-full" />
         </UFormField>
 
-        <UFormField name="format" label="Pool format">
-          <USelect v-model="formState.format" :items="formatOptions" class="w-full" />
+        <UFormField name="entryFeeDollars" label="Stake ($)">
+          <UInput v-model="formState.entryFeeDollars" type="number" class="w-full" />
         </UFormField>
 
-        <UFormField name="entryFeeDollars" label="Entry fee ($)">
-          <UInput v-model="formState.entryFeeDollars" type="number" class="w-full" />
+        <UFormField name="paymentService" label="Settle-up app">
+          <USelect v-model="formState.paymentService" :items="paymentOptions" class="w-full" />
         </UFormField>
       </div>
 
-      <div class="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+      <div class="grid gap-4 xl:grid-cols-[0.98fr_1.02fr]">
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Context</p>
-            <h3 class="napkinbets-subsection-title">What this pool belongs to</h3>
+            <h3 class="napkinbets-subsection-title">Where this napkin lives</h3>
           </div>
 
           <div class="napkinbets-form-grid">
@@ -213,7 +233,7 @@ function submit() {
                 <USelect v-model="formState.sport" :items="sportOptions" class="w-full" />
               </UFormField>
 
-              <UFormField name="contextKey" label="Context">
+              <UFormField name="contextKey" label="Level">
                 <USelect v-model="formState.contextKey" :items="contextOptions" class="w-full" />
               </UFormField>
 
@@ -221,11 +241,7 @@ function submit() {
                 <USelect v-model="formState.league" :items="leagueOptions" class="w-full" />
               </UFormField>
 
-              <UFormField
-                v-if="showCustomContextName"
-                name="customContextName"
-                label="Meet, circuit, or room label"
-              >
+              <UFormField v-if="showCustomContextName" name="customContextName" label="Room or circuit name">
                 <UInput
                   v-model="formState.customContextName"
                   class="w-full"
@@ -234,206 +250,295 @@ function submit() {
               </UFormField>
             </template>
 
-            <UFormField v-if="mode === 'manual'" name="venuePreset" label="Watch context">
+            <div v-if="groupOptions.length" class="space-y-2">
+              <p class="napkinbets-surface-label">Group</p>
+              <div class="napkinbets-chip-grid">
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  class="napkinbets-choice-panel"
+                  :class="{ 'napkinbets-choice-panel-active': !formState.groupId }"
+                  @click="formState.groupId = ''"
+                >
+                  No group
+                </UButton>
+                <UButton
+                  v-for="group in groupOptions"
+                  :key="group.value"
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  class="napkinbets-choice-panel"
+                  :class="{ 'napkinbets-choice-panel-active': formState.groupId === group.value }"
+                  @click="formState.groupId = group.value"
+                >
+                  {{ group.label }}
+                </UButton>
+              </div>
+            </div>
+
+            <UFormField v-if="mode === 'manual'" name="venuePreset" label="Where it starts">
               <USelect v-model="selectedVenuePreset" :items="venueOptions" class="w-full" />
             </UFormField>
 
-            <UFormField
-              v-if="showCustomVenue || mode === 'event'"
-              name="venueName"
-              :label="mode === 'event' ? 'Venue' : 'Custom venue or room'"
-            >
+            <UFormField v-if="showCustomVenue || mode === 'event'" name="venueName" :label="mode === 'event' ? 'Venue' : 'Custom venue'">
               <UInput v-model="formState.venueName" class="w-full" />
             </UFormField>
+          </div>
+
+          <div v-if="selectedGroup" class="napkinbets-surface space-y-1">
+            <p class="napkinbets-surface-label">Selected group</p>
+            <p class="font-semibold text-default">{{ selectedGroup.name }}</p>
+            <p class="text-sm text-muted">{{ selectedGroup.description || 'No group note yet.' }}</p>
           </div>
         </div>
 
         <div class="space-y-4">
           <div class="space-y-2">
-            <p class="napkinbets-kicker">Market</p>
-            <h3 class="napkinbets-subsection-title">Sides and seats without the text wall</h3>
+            <p class="napkinbets-kicker">People and sides</p>
+            <h3 class="napkinbets-subsection-title">
+              {{ isSimpleBet ? 'Pick the opponent and your side' : 'Set the room without a text wall' }}
+            </h3>
           </div>
 
-          <div class="napkinbets-surface space-y-3">
-            <div class="flex items-center justify-between gap-3">
-              <p class="napkinbets-surface-label">Pick options</p>
-              <UButton
-                v-if="suggestedSideOptions.length"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-                icon="i-lucide-rotate-ccw"
-                @click="resetSideOptions"
-              >
-                Reset suggestions
-              </UButton>
-            </div>
-
-            <div v-if="sideTemplateOptions.length" class="space-y-2">
-              <p class="napkinbets-surface-label">Quick patterns</p>
-              <div class="napkinbets-chip-grid">
-                <UButton
-                  v-for="template in sideTemplateOptions"
-                  :key="template.value"
-                  color="neutral"
-                  variant="soft"
-                  size="sm"
-                  @click="applySideTemplate(template.value)"
-                >
-                  {{ template.label }}
-                </UButton>
+          <template v-if="isSimpleBet">
+            <div class="napkinbets-surface space-y-4">
+              <div v-if="friendOptions.length" class="space-y-2">
+                <p class="napkinbets-surface-label">Opponent from friends</p>
+                <div class="napkinbets-chip-grid">
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    class="napkinbets-choice-panel"
+                    :class="{ 'napkinbets-choice-panel-active': !selectedOpponentId }"
+                    @click="selectedOpponentId = ''"
+                  >
+                    Choose manually
+                  </UButton>
+                  <UButton
+                    v-for="friend in friendOptions"
+                    :key="friend.value"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    class="napkinbets-choice-panel"
+                    :class="{ 'napkinbets-choice-panel-active': selectedOpponentId === friend.value }"
+                    @click="selectedOpponentId = friend.value"
+                  >
+                    {{ friend.label }}
+                  </UButton>
+                </div>
               </div>
-            </div>
 
-            <div class="napkinbets-chip-grid">
-              <span v-for="option in sideOptionList" :key="option" class="napkinbets-choice-chip">
-                {{ option }}
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  icon="i-lucide-x"
-                  @click="removeSideOption(option)"
+              <UFormField v-if="!selectedOpponent" name="manualOpponentName" label="Opponent name">
+                <UInput
+                  v-model="manualOpponentName"
+                  class="w-full"
+                  placeholder="Marcus Lee"
                 />
-              </span>
-            </div>
+              </UFormField>
 
-            <div class="napkinbets-inline-form">
-              <UInput
-                v-model="sideOptionDraft"
-                class="w-full"
-                placeholder="Add one more side or prop"
-                @keydown.enter.prevent="addSideOption"
-              />
-              <UButton color="neutral" variant="soft" icon="i-lucide-plus" @click="addSideOption">
-                Add
-              </UButton>
-            </div>
-          </div>
+              <div v-if="mode === 'manual'" class="grid gap-4 sm:grid-cols-2">
+                <UFormField name="simpleSideA" label="Your side">
+                  <UInput v-model="simpleSideA" class="w-full" />
+                </UFormField>
 
-          <div class="napkinbets-surface space-y-3">
-            <div class="space-y-2">
-              <p class="napkinbets-surface-label">Start with players</p>
-              <div class="napkinbets-chip-grid">
-                <UButton
-                  v-for="preset in seatPresetOptions"
-                  :key="preset.value"
-                  color="neutral"
-                  variant="soft"
-                  size="sm"
-                  @click="applySeatPreset(preset.value)"
-                >
-                  {{ preset.label }}
-                </UButton>
+                <UFormField name="simpleSideB" label="Other side">
+                  <UInput v-model="simpleSideB" class="w-full" />
+                </UFormField>
               </div>
-            </div>
 
-            <div class="napkinbets-chip-grid">
-              <span
-                v-for="participant in participantList"
-                :key="participant"
-                class="napkinbets-choice-chip"
-              >
-                {{ participant }}
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  icon="i-lucide-x"
-                  @click="removeParticipant(participant)"
-                />
-              </span>
-            </div>
+              <div class="space-y-2">
+                <p class="napkinbets-surface-label">Which side are you taking?</p>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <UButton
+                    v-for="(side, index) in resolvedSimpleSides"
+                    :key="side"
+                    color="neutral"
+                    variant="ghost"
+                    class="napkinbets-choice-panel h-auto"
+                    :class="{ 'napkinbets-choice-panel-active': selectedSimpleSide === index }"
+                    @click="selectedSimpleSide = index"
+                  >
+                    <span class="font-semibold text-default">{{ side }}</span>
+                    <span class="text-sm text-muted">
+                      {{ index === 0 ? 'You take this side.' : 'Your opponent gets this side.' }}
+                    </span>
+                  </UButton>
+                </div>
+              </div>
 
-            <div class="napkinbets-inline-form">
-              <UInput
-                v-model="participantDraft"
-                class="w-full"
-                placeholder="Add a participant"
-                @keydown.enter.prevent="addParticipant"
-              />
-              <UButton
-                color="neutral"
+              <div class="napkinbets-surface">
+                <p class="napkinbets-surface-label">Simple bet summary</p>
+                <p class="text-sm leading-6 text-default">{{ boardSummary }}</p>
+              </div>
+
+              <UAlert
+                v-if="!friendOptions.length && isAuthenticated"
+                color="info"
                 variant="soft"
-                icon="i-lucide-user-plus"
-                @click="addParticipant"
+                icon="i-lucide-user-round-plus"
+                title="No saved friends yet"
+                description="You can still type one opponent name, or add friends first to make this faster next time."
               >
-                Add
-              </UButton>
+                <template #actions>
+                  <UButton to="/friends" color="primary" variant="soft" size="sm">Open friends</UButton>
+                </template>
+              </UAlert>
             </div>
-          </div>
+          </template>
+
+          <template v-else>
+            <div class="napkinbets-surface space-y-4">
+              <div class="grid gap-4 sm:grid-cols-2">
+                <UFormField name="format" label="Pool style">
+                  <USelect v-model="formState.format" :items="poolFormatOptions" class="w-full" />
+                </UFormField>
+
+                <UFormField name="potTemplate" label="Payout split">
+                  <USelect v-model="selectedPotTemplate" :items="potTemplateOptions" class="w-full" />
+                </UFormField>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-3">
+                  <p class="napkinbets-surface-label">Side options</p>
+                  <USelect
+                    :items="sideTemplateOptions"
+                    class="w-44"
+                    placeholder="Template"
+                    @update:model-value="applySideTemplate"
+                  />
+                </div>
+
+                <div class="napkinbets-chip-grid">
+                  <span
+                    v-for="option in sideOptionList"
+                    :key="option"
+                    class="napkinbets-choice-chip"
+                  >
+                    {{ option }}
+                    <UButton
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      icon="i-lucide-x"
+                      @click="removeSideOption(option)"
+                    />
+                  </span>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:flex-row">
+                  <UInput
+                    v-model="sideOptionDraft"
+                    class="w-full"
+                    placeholder="Add another side"
+                  />
+                  <UButton color="neutral" variant="soft" @click="addSideOption">
+                    Add side
+                  </UButton>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <p class="napkinbets-surface-label">People</p>
+                  <div class="flex flex-wrap gap-2">
+                    <UButton
+                      v-for="preset in seatPresetOptions"
+                      :key="preset.value"
+                      color="neutral"
+                      variant="ghost"
+                      size="sm"
+                      @click="applySeatPreset(preset.value)"
+                    >
+                      {{ preset.label }}
+                    </UButton>
+                  </div>
+                </div>
+
+                <div v-if="friendOptions.length" class="space-y-2">
+                  <p class="napkinbets-surface-label">Quick add from friends</p>
+                  <div class="napkinbets-chip-grid">
+                    <UButton
+                      v-for="friend in friendOptions"
+                      :key="friend.value"
+                      color="neutral"
+                      variant="ghost"
+                      size="sm"
+                      class="napkinbets-choice-panel"
+                      @click="addFriendToPool(friend.value)"
+                    >
+                      {{ friend.label }}
+                    </UButton>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-2 sm:flex-row">
+                  <UInput
+                    v-model="participantDraft"
+                    class="w-full"
+                    placeholder="Add a one-off participant"
+                  />
+                  <UButton color="neutral" variant="soft" @click="addPoolParticipant">
+                    Add person
+                  </UButton>
+                </div>
+
+                <div class="napkinbets-chip-grid">
+                  <span
+                    v-for="participant in poolParticipants"
+                    :key="participant.displayName"
+                    class="napkinbets-choice-chip"
+                  >
+                    {{ participant.displayName }}
+                    <UButton
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                      icon="i-lucide-x"
+                      @click="removePoolParticipant(participant.displayName)"
+                    />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
 
       <div class="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <p class="napkinbets-kicker">Collection</p>
-            <h3 class="napkinbets-subsection-title">Pay with and pot split</h3>
-          </div>
+        <div class="napkinbets-surface space-y-3">
+          <p class="napkinbets-surface-label">Settle-up details</p>
 
-          <div class="napkinbets-form-grid">
-            <UFormField name="paymentService" label="Pay with">
-              <USelect v-model="formState.paymentService" :items="paymentOptions" class="w-full" />
-            </UFormField>
+          <UFormField name="paymentHandle" label="Handle or destination">
+            <UInput
+              v-model="formState.paymentHandle"
+              class="w-full"
+              :placeholder="formState.paymentService === 'Venmo' ? '@your-handle' : 'Where people should send it'"
+            />
+          </UFormField>
 
-            <UFormField name="paymentHandle" label="Collection handle">
-              <UInput v-model="formState.paymentHandle" class="w-full" />
-            </UFormField>
-
-            <UFormField name="potTemplate" label="Pot split">
-              <USelect v-model="selectedPotTemplate" :items="potTemplateOptions" class="w-full" />
-            </UFormField>
-          </div>
+          <p class="text-sm leading-6 text-muted">
+            Napkinbets records who owes what and who confirmed proof. Money still moves in the payment app itself.
+          </p>
         </div>
 
-        <div class="space-y-4">
-          <div class="space-y-2">
-            <p class="napkinbets-kicker">Generated note</p>
-            <h3 class="napkinbets-subsection-title">Clear by default</h3>
-          </div>
-
-          <div class="napkinbets-surface space-y-3">
-            <div class="space-y-2">
-              <p class="napkinbets-surface-label">Pool summary</p>
-              <p class="napkinbets-support-copy">{{ boardSummary }}</p>
-            </div>
-
-            <div class="space-y-2">
-              <p class="napkinbets-surface-label">Pot rules</p>
-              <div class="napkinbets-chip-grid">
-                <span v-for="rule in potRuleChips" :key="rule" class="napkinbets-choice-chip">
-                  {{ rule }}
-                </span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <p class="napkinbets-surface-label">Closeout note</p>
-              <p class="napkinbets-support-copy">{{ closeoutTerms }}</p>
-            </div>
-          </div>
+        <div class="napkinbets-surface space-y-3">
+          <p class="napkinbets-surface-label">Ready to publish</p>
+          <p class="text-sm leading-6 text-default">{{ boardSummary }}</p>
+          <UButton
+            type="submit"
+            color="primary"
+            :loading="loading"
+            :disabled="!canSubmit"
+            class="w-full justify-center"
+          >
+            {{ isAuthenticated ? 'Create napkin' : 'Create account to publish' }}
+          </UButton>
         </div>
-      </div>
-
-      <UAlert
-        color="warning"
-        variant="soft"
-        icon="i-lucide-wallet-cards"
-        title="Payments stay manual"
-        description="Napkinbets tracks who owes what and the proof after, but money still moves outside the app."
-      />
-
-      <div class="napkinbets-form-actions">
-        <UButton
-          type="submit"
-          size="lg"
-          color="primary"
-          icon="i-lucide-ticket-plus"
-          :loading="loading"
-        >
-          {{ isAuthenticated ? 'Create pool' : 'Create account to publish' }}
-        </UButton>
       </div>
     </UForm>
   </UCard>

@@ -57,7 +57,7 @@ function competitorLabel(value: string) {
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="napkinbets-subsection-title">Scoreboard</p>
-              <p class="napkinbets-support-copy">Sports context for pools tied to live action.</p>
+              <p class="napkinbets-support-copy">Sports context for napkins tied to live action.</p>
             </div>
             <UBadge color="primary" variant="soft" icon="i-lucide-radio-tower"> ESPN </UBadge>
           </div>
@@ -99,7 +99,7 @@ function competitorLabel(value: string) {
           </div>
 
           <p v-if="liveGames.length === 0" class="napkinbets-support-copy">
-            Add a sport and league to a pool to see live scoreboard context here.
+            Add a sport and league to a napkin to see live scoreboard context here.
           </p>
         </div>
       </UCard>

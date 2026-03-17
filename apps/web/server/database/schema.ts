@@ -15,9 +15,11 @@ export * from '#layer/server/database/schema'
 export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   id: text('id').primaryKey(),
   ownerUserId: text('owner_user_id').references(() => users.id, { onDelete: 'set null' }),
+  groupId: text('group_id').references(() => napkinbetsGroups.id, { onDelete: 'set null' }),
   slug: text('slug').notNull().unique(),
   title: text('title').notNull(),
   description: text('description').notNull(),
+  napkinType: text('napkin_type').notNull().default('pool'),
   boardType: text('board_type').notNull().default('community-created'),
   category: text('category').notNull(),
   format: text('format').notNull(),
@@ -42,6 +44,59 @@ export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   eventStatus: text('event_status'),
   homeTeamName: text('home_team_name'),
   awayTeamName: text('away_team_name'),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsFriendships = sqliteTable('napkinbets_friendships', {
+  id: text('id').primaryKey(),
+  requesterUserId: text('requester_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  addresseeUserId: text('addressee_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('pending'),
+  respondedAt: text('responded_at'),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsGroups = sqliteTable('napkinbets_groups', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  ownerUserId: text('owner_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  visibility: text('visibility').notNull().default('private'),
+  joinPolicy: text('join_policy').notNull().default('invite-only'),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsGroupMembers = sqliteTable('napkinbets_group_members', {
+  id: text('id').primaryKey(),
+  groupId: text('group_id')
+    .notNull()
+    .references(() => napkinbetsGroups.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  role: text('role').notNull().default('member'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

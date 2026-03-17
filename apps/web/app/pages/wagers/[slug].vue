@@ -2,13 +2,13 @@
 const route = useRoute()
 
 useSeo({
-  title: 'Redirecting to Pool',
-  description: 'Redirecting to the Napkinbets pool detail view.',
+  title: 'Redirecting to Napkin',
+  description: 'Redirecting to the Napkinbets napkin detail view.',
 })
 
 useWebPageSchema({
-  name: 'Redirecting to Pool',
-  description: 'Redirecting to the Napkinbets pool detail view.',
+  name: 'Redirecting to Napkin',
+  description: 'Redirecting to the Napkinbets napkin detail view.',
 })
 
 await navigateTo(`/napkins/${String(route.params.slug || '')}`, {

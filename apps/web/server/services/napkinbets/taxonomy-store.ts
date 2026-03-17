@@ -236,18 +236,18 @@ export async function normalizeCreateWagerTaxonomyInputFromStore(
 
   const boardType = NAPKINBETS_BOARD_TYPES.find((value) => value === input.boardType)
   if (!boardType) {
-    throw new Error('Select a valid board type before saving the pool.')
+    throw new Error('Select a valid board type before saving the napkin.')
   }
 
   const sport = sports.find((item) => item.key === input.sport)
   if (!sport) {
-    throw new Error('Select a supported sport before saving the pool.')
+    throw new Error('Select a supported sport before saving the napkin.')
   }
 
   const rawLeague = input.league?.trim() || ''
   const league = rawLeague ? leagues.find((item) => item.key === rawLeague) : null
   if (rawLeague && !league) {
-    throw new Error('Select a supported league before saving the pool.')
+    throw new Error('Select a supported league before saving the napkin.')
   }
 
   const contextFromLeague = league?.primaryContextKey ?? null
@@ -256,7 +256,7 @@ export async function normalizeCreateWagerTaxonomyInputFromStore(
   const context = contexts.find((item) => item.key === resolvedContextKey)
 
   if (!context) {
-    throw new Error('Select a valid competition context before saving the pool.')
+    throw new Error('Select a valid competition context before saving the napkin.')
   }
 
   if (league) {
@@ -271,11 +271,11 @@ export async function normalizeCreateWagerTaxonomyInputFromStore(
 
   if (boardType === 'event-backed') {
     if (!(input.eventSource?.trim() && input.eventId?.trim())) {
-      throw new Error('Event-backed pools need an attached event.')
+      throw new Error('Event-backed napkins need an attached event.')
     }
 
     if (!league) {
-      throw new Error('Event-backed pools need a valid league attached from Events.')
+      throw new Error('Event-backed napkins need a valid league attached from Events.')
     }
   }
 

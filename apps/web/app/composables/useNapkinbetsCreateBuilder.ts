@@ -1,10 +1,18 @@
 import type { ComputedRef } from 'vue'
-import type { CreateWagerInput, NapkinbetsTaxonomyResponse } from '../../types/napkinbets'
+import type {
+  CreateWagerInput,
+  NapkinbetsFriend,
+  NapkinbetsGroup,
+  NapkinbetsTaxonomyResponse,
+} from '../../types/napkinbets'
 
 interface UseNapkinbetsCreateBuilderOptions {
   prefill: ComputedRef<CreateWagerInput>
   mode: ComputedRef<'event' | 'manual'>
   taxonomy: ComputedRef<NapkinbetsTaxonomyResponse>
+  friends: ComputedRef<NapkinbetsFriend[]>
+  groups: ComputedRef<NapkinbetsGroup[]>
+  initialFriendId: ComputedRef<string>
 }
 
 interface PotTemplateOption {
@@ -18,8 +26,26 @@ interface SideTemplateOption {
   label: string
   value: string
   options: string[]
-  formats?: string[]
 }
+
+interface ParticipantSeedDraft {
+  displayName: string
+  userId: string | null
+}
+
+const POOL_FORMAT_OPTIONS = [
+  { label: 'Pick a winner', value: 'sports-game' },
+  { label: 'Prop pool', value: 'sports-prop' },
+  { label: 'Golf draft', value: 'golf-draft' },
+  { label: 'Custom room', value: 'custom-prop' },
+]
+
+const PAYMENT_OPTIONS = [
+  { label: 'Venmo', value: 'Venmo' },
+  { label: 'PayPal', value: 'PayPal' },
+  { label: 'Cash App', value: 'Cash App' },
+  { label: 'Zelle', value: 'Zelle' },
+]
 
 const POT_TEMPLATE_OPTIONS: PotTemplateOption[] = [
   {
@@ -40,35 +66,32 @@ const POT_TEMPLATE_OPTIONS: PotTemplateOption[] = [
   },
 ]
 
-const VENUE_PRESET_OPTIONS = [
-  { label: 'Group chat', value: 'Group chat' },
-  { label: 'Living room watch party', value: 'Living room watch party' },
-  { label: 'Sports bar table', value: 'Sports bar table' },
-  { label: 'Clubhouse', value: 'Clubhouse' },
-  { label: 'Course patio', value: 'Course patio' },
-  { label: 'Custom', value: '__custom__' },
-] as const
-
 const SIDE_TEMPLATE_OPTIONS: SideTemplateOption[] = [
   {
-    label: 'Winner lane',
-    value: 'winner-lane',
-    options: ['Side A wins', 'Side B wins', 'Closer call'],
-    formats: ['sports-game', 'sports-race', 'custom-prop'],
+    label: 'Winner / winner',
+    value: 'winner',
+    options: ['Side A', 'Side B'],
   },
   {
     label: 'Yes / no',
     value: 'yes-no',
-    options: ['Yes', 'No', 'Bonus sweat'],
-    formats: ['sports-prop', 'custom-prop'],
+    options: ['Yes', 'No'],
   },
   {
-    label: 'Golf finish',
-    value: 'golf-finish',
+    label: 'Golf lanes',
+    value: 'golf',
     options: ['Champion', 'Low round', 'Weekend charge'],
-    formats: ['golf-draft'],
   },
 ]
+
+const VENUE_PRESET_OPTIONS = [
+  { label: 'Group chat', value: 'Group chat' },
+  { label: 'Watch party', value: 'Watch party' },
+  { label: 'Sports bar', value: 'Sports bar' },
+  { label: 'Clubhouse', value: 'Clubhouse' },
+  { label: 'Course patio', value: 'Course patio' },
+  { label: 'Custom', value: '__custom__' },
+] as const
 
 const SEAT_PRESET_OPTIONS = [
   { label: '4 seats', value: 4 },
@@ -78,13 +101,31 @@ const SEAT_PRESET_OPTIONS = [
 
 type VenuePresetValue = (typeof VENUE_PRESET_OPTIONS)[number]['value']
 
-const DEFAULT_POT_RULES = POT_TEMPLATE_OPTIONS[0]?.rules ?? ['Winner: 100']
-
 function parseLines(value: string) {
   return value
     .split('\n')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function uniqueParticipants(participants: ParticipantSeedDraft[]) {
+  const seen = new Set<string>()
+  const deduped: ParticipantSeedDraft[] = []
+
+  for (const participant of participants) {
+    const key = participant.displayName.trim().toLowerCase()
+    if (!key || seen.has(key)) {
+      continue
+    }
+
+    seen.add(key)
+    deduped.push({
+      displayName: participant.displayName.trim(),
+      userId: participant.userId,
+    })
+  }
+
+  return deduped
 }
 
 function inferPotTemplate(format: string, rules: string) {
@@ -97,7 +138,7 @@ function inferPotTemplate(format: string, rules: string) {
       }
 
       return normalizedRules.join('|') === template.rules.join('|')
-    })?.value || (format === 'golf-draft' ? 'golf-weekend' : 'main-plus-sweat')
+    })?.value || (format === 'golf-draft' ? 'golf-weekend' : 'winner-take-all')
   )
 }
 
@@ -106,28 +147,31 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     ...options.prefill.value,
   })
 
-  const sideOptionList = ref<string[]>(parseLines(options.prefill.value.sideOptions))
-  const participantList = ref<string[]>(parseLines(options.prefill.value.participantNames))
-  const sideOptionDraft = ref('')
+  const selectedOpponentId = ref(options.initialFriendId.value)
+  const manualOpponentName = ref('')
+  const simpleSideA = ref('Side A')
+  const simpleSideB = ref('Side B')
+  const selectedSimpleSide = ref(0)
   const participantDraft = ref('')
+  const poolParticipants = ref<ParticipantSeedDraft[]>([])
+  const sideOptionList = ref<string[]>(parseLines(options.prefill.value.sideOptions))
+  const sideOptionDraft = ref('')
   const selectedPotTemplate = ref(inferPotTemplate(formState.format, formState.potRules))
-  const selectedVenuePreset = ref<VenuePresetValue>(
-    VENUE_PRESET_OPTIONS.find((option) => option.value === formState.venueName)?.value ||
-      'Group chat',
-  )
+  const selectedVenuePreset = ref<VenuePresetValue>('Group chat')
 
   const selectedSport = computed(
     () => options.taxonomy.value.sports.find((sport) => sport.value === formState.sport) ?? null,
   )
-  const selectedContext = computed(
-    () =>
-      options.taxonomy.value.contexts.find((context) => context.value === formState.contextKey) ??
-      null,
-  )
   const selectedLeague = computed(
-    () =>
-      options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
+    () => options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
   )
+  const selectedGroup = computed(
+    () => options.groups.value.find((group) => group.id === formState.groupId) ?? null,
+  )
+  const selectedOpponent = computed(
+    () => options.friends.value.find((friend) => friend.id === selectedOpponentId.value) ?? null,
+  )
+  const isSimpleBet = computed(() => formState.napkinType === 'simple-bet')
 
   const sportOptions = computed(() =>
     options.taxonomy.value.sports.map((sport) => ({
@@ -136,26 +180,12 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     })),
   )
 
-  const contextOptions = computed(() => {
-    const allContexts = options.taxonomy.value.contexts
-
-    switch (formState.sport) {
-      case 'entertainment':
-        return allContexts.filter((context) =>
-          ['entertainment', 'community'].includes(context.value),
-        )
-      case 'track-field':
-        return allContexts.filter((context) =>
-          ['high-school', 'college', 'community', 'tournament'].includes(context.value),
-        )
-      case 'other':
-        return allContexts.filter((context) =>
-          ['community', 'high-school', 'tournament', 'international'].includes(context.value),
-        )
-      default:
-        return allContexts.filter((context) => context.value !== 'entertainment')
-    }
-  })
+  const contextOptions = computed(() =>
+    options.taxonomy.value.contexts.map((context) => ({
+      label: context.label,
+      value: context.value,
+    })),
+  )
 
   const leagueOptions = computed(() =>
     options.taxonomy.value.leagues
@@ -169,10 +199,54 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
       })),
   )
 
+  const groupOptions = computed(() =>
+    options.groups.value.map((group) => ({
+      label: group.name,
+      value: group.id,
+    })),
+  )
+
+  const friendOptions = computed(() =>
+    options.friends.value.map((friend) => ({
+      label: friend.displayName,
+      value: friend.id,
+    })),
+  )
+
+  const poolFormatOptions = computed(() =>
+    POOL_FORMAT_OPTIONS.map((option) => ({
+      label: option.label,
+      value: option.value,
+    })),
+  )
+
+  const paymentOptions = computed(() =>
+    PAYMENT_OPTIONS.map((option) => ({
+      label: option.label,
+      value: option.value,
+    })),
+  )
+
   const venueOptions = computed(() =>
     VENUE_PRESET_OPTIONS.map((option) => ({
       label: option.label,
       value: option.value,
+    })),
+  )
+
+  const potTemplateOptions = computed(() =>
+    POT_TEMPLATE_OPTIONS.filter(
+      (template) => !template.formats || template.formats.includes(formState.format),
+    ).map((template) => ({
+      label: template.label,
+      value: template.value,
+    })),
+  )
+
+  const sideTemplateOptions = computed(() =>
+    SIDE_TEMPLATE_OPTIONS.map((template) => ({
+      label: template.label,
+      value: template.value,
     })),
   )
 
@@ -186,101 +260,178 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   const showCustomContextName = computed(
     () =>
       options.mode.value === 'manual' &&
-      (leagueOptions.value.length === 0 ||
-        formState.contextKey === 'community' ||
-        formState.contextKey === 'high-school'),
+      (leagueOptions.value.length === 0 || ['community', 'high-school'].includes(formState.contextKey)),
   )
 
   const showCustomVenue = computed(
     () => options.mode.value === 'manual' && selectedVenuePreset.value === '__custom__',
   )
 
-  const suggestedSideOptions = computed(() => parseLines(options.prefill.value.sideOptions))
+  const attachedEventSides = computed(() => parseLines(options.prefill.value.sideOptions).slice(0, 2))
 
-  const sideTemplateOptions = computed(() =>
-    SIDE_TEMPLATE_OPTIONS.filter(
-      (template) => !template.formats || template.formats.includes(formState.format),
-    ).map((template) => ({
-      label: template.label,
-      value: template.value,
-    })),
-  )
+  const resolvedSimpleSides = computed(() => {
+    if (options.mode.value === 'event' && attachedEventSides.value.length >= 2) {
+      return attachedEventSides.value
+    }
 
-  const potTemplateOptions = computed(() =>
-    POT_TEMPLATE_OPTIONS.filter(
-      (template) => !template.formats || template.formats.includes(formState.format),
-    ).map((template) => ({
-      label: template.label,
-      value: template.value,
-    })),
+    return [
+      simpleSideA.value.trim() || 'Side A',
+      simpleSideB.value.trim() || 'Side B',
+    ]
+  })
+
+  const simpleBetOpponentName = computed(
+    () => selectedOpponent.value?.displayName || manualOpponentName.value.trim(),
   )
 
   const selectedPotRules = computed(
     () =>
-      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)
-        ?.rules ?? DEFAULT_POT_RULES,
+      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)?.rules ?? [
+        'Winner: 100',
+      ],
   )
 
   const boardSummary = computed(() => {
-    if (options.mode.value === 'event') {
-      return `Friendly ${formState.format.replaceAll('-', ' ')} for ${formState.title}, with a clean pool and manual settle-up after the official result.`
+    if (isSimpleBet.value) {
+      const opponent = simpleBetOpponentName.value || 'one opponent'
+      const eventLabel =
+        options.mode.value === 'event'
+          ? formState.eventTitle || formState.title
+          : selectedLeague.value?.label || selectedSport.value?.label || 'the room'
+
+      return `One-on-one napkin for ${eventLabel}, set against ${opponent}, with one stake and manual settle-up after the result is official.`
     }
 
-    return `Friendly ${formState.format.replaceAll('-', ' ')} for ${selectedLeague.value?.label || selectedSport.value?.label || 'the room'}, with quick side lanes and manual settle-up outside the app.`
+    return `Group napkin for ${formState.title}, with shared sides, tracked entries, and manual settle-up outside the app.`
   })
 
   const closeoutTerms = computed(() => {
     const provider = formState.paymentService || 'your payment app'
 
-    if (formState.format === 'golf-draft') {
-      return `Friendly bets only. ${provider} settlement happens manually after the official leaderboard posts, and the host confirms the final result before the room closes out.`
-    }
-
-    return `Friendly bets only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the pool, reminders, and proof instead of moving money.`
+    return `Friendly bets only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the napkin, reminders, and proof instead of moving money.`
   })
 
-  const payload = computed<CreateWagerInput>(() => ({
-    ...formState,
-    description: boardSummary.value,
-    sideOptions: sideOptionList.value.join('\n'),
-    participantNames: participantList.value.join('\n'),
-    potRules: selectedPotRules.value.join('\n'),
-    terms: closeoutTerms.value,
-    venueName:
-      options.mode.value === 'event'
-        ? formState.venueName
-        : selectedVenuePreset.value === '__custom__'
+  const payload = computed<CreateWagerInput>(() => {
+    const creatorName = formState.creatorName.trim() || options.prefill.value.creatorName
+    const basePayload = {
+      ...formState,
+      creatorName,
+      boardType: options.mode.value === 'event' ? 'event-backed' : 'community-created',
+      customContextName: formState.customContextName.trim(),
+      groupId: formState.groupId.trim(),
+      paymentHandle: formState.paymentHandle.trim(),
+      venueName:
+        options.mode.value === 'event'
           ? formState.venueName
-          : selectedVenuePreset.value,
-  }))
+          : selectedVenuePreset.value === '__custom__'
+            ? formState.venueName.trim()
+            : selectedVenuePreset.value,
+      terms: closeoutTerms.value,
+    } satisfies CreateWagerInput
+
+    if (isSimpleBet.value) {
+      const baseSides = resolvedSimpleSides.value.slice(0, 2)
+      const orderedSides =
+        selectedSimpleSide.value === 0 ? baseSides : [baseSides[1]!, baseSides[0]!]
+      const participantSeeds = uniqueParticipants([
+        {
+          displayName: creatorName,
+          userId: null,
+        },
+        {
+          displayName: simpleBetOpponentName.value,
+          userId: selectedOpponent.value?.id ?? null,
+        },
+      ])
+
+      return {
+        ...basePayload,
+        napkinType: 'simple-bet',
+        format: 'head-to-head',
+        description: boardSummary.value,
+        sideOptions: orderedSides.join('\n'),
+        participantNames: participantSeeds.map((participant) => participant.displayName).join('\n'),
+        participantSeeds,
+        shuffleParticipants: false,
+        potRules: 'Winner: 100',
+      }
+    }
+
+    const participantSeeds = uniqueParticipants(poolParticipants.value)
+
+    return {
+      ...basePayload,
+      napkinType: 'pool',
+      description: boardSummary.value,
+      sideOptions: sideOptionList.value.join('\n'),
+      participantNames: participantSeeds.map((participant) => participant.displayName).join('\n'),
+      participantSeeds,
+      shuffleParticipants: true,
+      potRules: selectedPotRules.value.join('\n'),
+    }
+  })
 
   function syncFromPrefill(prefill: CreateWagerInput) {
     Object.assign(formState, prefill)
+    selectedOpponentId.value = options.initialFriendId.value
+    manualOpponentName.value = ''
+    selectedSimpleSide.value = 0
     sideOptionList.value = parseLines(prefill.sideOptions)
-    participantList.value = parseLines(prefill.participantNames)
+    const defaultSides = parseLines(prefill.sideOptions)
+    simpleSideA.value = defaultSides[0] ?? 'Side A'
+    simpleSideB.value = defaultSides[1] ?? 'Side B'
+    poolParticipants.value =
+      prefill.participantSeeds?.map((participant) => ({
+        displayName: participant.displayName,
+        userId: participant.userId ?? null,
+      })) ??
+      parseLines(prefill.participantNames).map((displayName) => ({
+        displayName,
+        userId: null,
+      }))
     selectedPotTemplate.value = inferPotTemplate(prefill.format, prefill.potRules)
     selectedVenuePreset.value =
       VENUE_PRESET_OPTIONS.find((option) => option.value === prefill.venueName)?.value ||
-      '__custom__'
+      'Group chat'
   }
 
-  function addParticipant() {
+  function addPoolParticipant() {
     const value = participantDraft.value.trim()
-    if (!value || participantList.value.includes(value)) {
+    if (!value) {
       participantDraft.value = ''
       return
     }
 
-    participantList.value = [...participantList.value, value]
+    poolParticipants.value = uniqueParticipants([
+      ...poolParticipants.value,
+      { displayName: value, userId: null },
+    ])
     participantDraft.value = ''
   }
 
-  function removeParticipant(name: string) {
-    participantList.value = participantList.value.filter((participant) => participant !== name)
+  function addFriendToPool(friendId: string) {
+    const friend = options.friends.value.find((item) => item.id === friendId)
+    if (!friend) {
+      return
+    }
+
+    poolParticipants.value = uniqueParticipants([
+      ...poolParticipants.value,
+      { displayName: friend.displayName, userId: friend.id },
+    ])
+  }
+
+  function removePoolParticipant(displayName: string) {
+    poolParticipants.value = poolParticipants.value.filter(
+      (participant) => participant.displayName !== displayName,
+    )
   }
 
   function applySeatPreset(count: number) {
-    participantList.value = Array.from({ length: count }, (_, index) => `Seat ${index + 1}`)
+    poolParticipants.value = Array.from({ length: count }, (_, index) => ({
+      displayName: `Seat ${index + 1}`,
+      userId: null,
+    }))
   }
 
   function addSideOption() {
@@ -305,10 +456,6 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     }
 
     sideOptionList.value = [...template.options]
-  }
-
-  function resetSideOptions() {
-    sideOptionList.value = suggestedSideOptions.value.length ? [...suggestedSideOptions.value] : []
   }
 
   watch(
@@ -348,6 +495,19 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   )
 
   watch(
+    () => formState.napkinType,
+    (napkinType) => {
+      if (napkinType === 'simple-bet') {
+        formState.format = 'head-to-head'
+        selectedPotTemplate.value = 'winner-take-all'
+      } else if (formState.format === 'head-to-head') {
+        formState.format = options.mode.value === 'event' ? 'sports-game' : 'custom-prop'
+      }
+    },
+    { immediate: true },
+  )
+
+  watch(
     () => formState.format,
     (format) => {
       if (format === 'golf-draft' && selectedPotTemplate.value === 'main-plus-sweat') {
@@ -364,34 +524,44 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
   return {
     formState,
+    isSimpleBet,
     selectedSport,
-    selectedContext,
     selectedLeague,
+    selectedGroup,
+    selectedOpponent,
+    selectedOpponentId,
+    manualOpponentName,
+    simpleSideA,
+    simpleSideB,
+    selectedSimpleSide,
+    resolvedSimpleSides,
     sportOptions,
     contextOptions,
     leagueOptions,
+    groupOptions,
+    friendOptions,
+    poolFormatOptions,
+    paymentOptions,
     venueOptions,
     potTemplateOptions,
-    seatPresetOptions,
-    showCustomContextName,
-    showCustomVenue,
-    sideOptionList,
-    participantList,
     sideTemplateOptions,
-    sideOptionDraft,
-    participantDraft,
+    seatPresetOptions,
     selectedPotTemplate,
     selectedVenuePreset,
-    suggestedSideOptions,
+    showCustomContextName,
+    showCustomVenue,
+    poolParticipants,
+    participantDraft,
+    sideOptionList,
+    sideOptionDraft,
     boardSummary,
-    closeoutTerms,
     payload,
-    addParticipant,
-    removeParticipant,
+    addPoolParticipant,
+    addFriendToPool,
+    removePoolParticipant,
     applySeatPreset,
     addSideOption,
     removeSideOption,
     applySideTemplate,
-    resetSideOptions,
   }
 }

@@ -3,11 +3,24 @@ import { ref, watch } from 'vue'
 import type { CreateWagerInput } from '../../../types/napkinbets'
 import { NAPKINBETS_DEFAULT_CREATE_INPUT } from '../../composables/useNapkinbetsCreatePrefill'
 
+const route = useRoute()
 const { loggedIn, user } = useUserSession()
 const { createMode, prefill, eventPreview } = useNapkinbetsCreatePrefill()
 const { data: taxonomy } = await useNapkinbetsTaxonomy()
 const actions = useNapkinbetsActions(async () => Promise.resolve())
 const paymentProfilesState = loggedIn.value ? await useNapkinbetsPaymentProfiles() : null
+const friendsStore = useNapkinbetsFriendsStore()
+const groupsStore = useNapkinbetsGroupsStore()
+
+if (loggedIn.value) {
+  await callOnce(
+    'napkinbets-create-social-data',
+    async () => {
+      await Promise.all([friendsStore.fetchBundle(), groupsStore.fetchBundle()])
+    },
+    { mode: 'navigation' },
+  )
+}
 
 const defaultPaymentProfile = computed(
   () => paymentProfilesState?.data.value.profiles.find((profile) => profile.isDefault) ?? null,
@@ -65,15 +78,15 @@ async function handleCreate(payload: CreateWagerInput) {
 }
 
 useSeo({
-  title: 'Start a pool',
+  title: 'Start a napkin',
   description:
-    'Start a pool from a live game or build a custom one with your own rules and pay-with details.',
+    'Start a simple bet or a pool napkin from a real event or a custom room without typing everything by hand.',
   image: '/brand/og/create.webp',
 })
 
 useWebPageSchema({
-  name: 'Start a pool',
-  description: 'A creation workflow for building a new social pool on Napkinbets.',
+  name: 'Start a napkin',
+  description: 'A creation workflow for building a new simple bet or pool napkin on Napkinbets.',
 })
 </script>
 
@@ -84,11 +97,10 @@ useWebPageSchema({
         <div class="space-y-4">
           <p class="napkinbets-kicker">Start</p>
           <h1 class="napkinbets-section-title">
-            Build the pool from a real game or start from scratch.
+            Start with a napkin, then decide if it is a simple bet or a pool.
           </h1>
           <p class="napkinbets-hero-lede">
-            Pick the quick path when the game is already here, or start a custom pool for drafts,
-            watch parties, golf, and one-off bets.
+            The fast path is one-on-one from a real game. Use the pool path only when the room actually needs more structure.
           </p>
         </div>
 
@@ -109,7 +121,7 @@ useWebPageSchema({
                   {{ eventPreview ? eventPreview.title : 'Pick a game from Events first' }}
                 </span>
                 <span class="text-sm text-muted">
-                  Prefills the league, teams, timing, and a few quick pick ideas.
+                  This is the shortest path to a real simple bet.
                 </span>
               </UButton>
 
@@ -122,10 +134,10 @@ useWebPageSchema({
               >
                 <span class="napkinbets-surface-label">Custom</span>
                 <span class="font-semibold text-default">
-                  Drafts, watch parties, golf, or room-specific props
+                  Watch parties, drafts, majors, or one-off room bets
                 </span>
                 <span class="text-sm text-muted">
-                  Use this when the pool should not depend on a listed game.
+                  Use this when the napkin should not depend on a listed event.
                 </span>
               </UButton>
             </div>
@@ -143,7 +155,7 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Pool created' : 'Pool creation failed'"
+      :title="actions.feedback.value.type === 'success' ? 'Napkin created' : 'Napkin creation failed'"
       :description="actions.feedback.value.text"
     />
 
@@ -153,10 +165,10 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-radar"
       title="No game selected yet"
-      description="Choose a game from Events first if you want the fast path."
+      description="Choose a game from Events first if you want the shortest simple-bet path."
     >
       <template #actions>
-        <UButton to="/events" color="primary" variant="soft">Browse games</UButton>
+        <UButton to="/events" color="primary" variant="soft">Browse events</UButton>
       </template>
     </UAlert>
 
@@ -166,7 +178,7 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-shield-alert"
       title="Create account required to publish"
-      description="You can review the setup flow now, but you need an account before Napkinbets will save the pool."
+      description="You can review the setup flow now, but you need an account before Napkinbets will save the napkin."
     />
 
     <UAlert
@@ -175,7 +187,7 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-wallet-cards"
       title="No saved payment profile yet"
-      description="You can still create a pool with a one-off handle, but a saved default makes setup and settle-up cleaner."
+      description="You can still create a napkin with a one-off handle, but a saved default makes setup and settle-up cleaner."
     >
       <template #actions>
         <UButton to="/settings/payments" color="primary" variant="soft">
@@ -190,6 +202,9 @@ useWebPageSchema({
       :mode="selectedMode"
       :event-preview="eventPreview"
       :taxonomy="taxonomy"
+      :friends="friendsStore.friends.value"
+      :groups="groupsStore.myGroups.value"
+      :initial-friend-id="typeof route.query.friendId === 'string' ? route.query.friendId : ''"
       :is-authenticated="loggedIn"
       @create="handleCreate"
     />

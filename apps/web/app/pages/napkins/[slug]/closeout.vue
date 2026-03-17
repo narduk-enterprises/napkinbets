@@ -92,7 +92,7 @@ async function handleReject(settlementId: string) {
   await actions.rejectSettlement(wager.value.id, settlementId, {
     note:
       rejectionNotes[settlementId]?.trim() ||
-      'Proof needs a clearer handle, amount, or confirmation reference before the pool closes.',
+      'Proof needs a clearer handle, amount, or confirmation reference before the napkin closes.',
   })
 }
 
@@ -130,10 +130,10 @@ async function draftCloseoutSummary() {
 useSeo({
   title: wager.value ? `${wager.value.title} Settle Up` : 'Settle Up',
   description:
-    'Host-facing settle-up checklist for confirming entries, reviewing payout projections, and closing a pool cleanly.',
+    'Host-facing settle-up checklist for confirming entries, reviewing payout projections, and closing a napkin cleanly.',
   ogImage: {
     title: 'Napkinbets Settle Up',
-    description: 'Finish the pool with a clear payment and payout checklist.',
+    description: 'Finish the napkin with a clear payment and payout checklist.',
     icon: '🧮',
   },
 })
@@ -141,7 +141,7 @@ useSeo({
 useWebPageSchema({
   name: 'Napkinbets Settle Up',
   description:
-    'A settle-up workflow for hosts or admins managing payment proof and payout preparation on a Napkinbets pool.',
+    'A settle-up workflow for hosts or admins managing payment proof and payout preparation on a Napkinbets napkin.',
 })
 </script>
 
@@ -189,7 +189,7 @@ useWebPageSchema({
                 variant="soft"
                 icon="i-lucide-arrow-left"
               >
-                Back to pool
+                Back to napkin
               </UButton>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { createError } from 'h3'
 import { asc, eq, gte, inArray } from 'drizzle-orm'
 import {
   napkinbetsEvents,
+  napkinbetsGroups,
   napkinbetsNotifications,
   napkinbetsParticipants,
   napkinbetsPicks,
@@ -18,20 +19,28 @@ import {
   type NapkinbetsWeatherSnapshot,
 } from '#server/services/napkinbets/live'
 import { loadCachedEventsByIds, loadFeaturedLiveGames } from '#server/services/napkinbets/events'
+import { ensureDemoSocialGraph } from '#server/services/napkinbets/social'
 import { useAppDatabase } from '#server/utils/database'
 
 interface SavePoolDataInput {
   title: string
   creatorName: string
   description: string
+  napkinType: 'simple-bet' | 'pool'
   boardType: 'event-backed' | 'manual-curated' | 'community-created'
   format: string
   sport: string
   league: string
   contextKey: string
   customContextName: string
+  groupId: string
   sideOptions: string
   participantNames: string
+  participantSeeds?: Array<{
+    displayName: string
+    userId?: string | null
+  }>
+  shuffleParticipants?: boolean
   potRules: string
   entryFeeDollars: number
   paymentService: string
@@ -895,6 +904,9 @@ async function getSettlementOrThrow(event: H3Event, settlementId: string) {
 
 export async function ensureSeedData(event: H3Event) {
   const db = useAppDatabase(event)
+  const demoUser = await ensureDemoUser(db)
+  await ensureDemoSocialGraph(event, demoUser.id)
+
   const existingDemoWagers = await db
     .select({ slug: napkinbetsWagers.slug })
     .from(napkinbetsWagers)
@@ -903,8 +915,6 @@ export async function ensureSeedData(event: H3Event) {
   if (existingDemoWagers.length === DEMO_POOL_SLUGS.length) {
     return
   }
-
-  const demoUser = await ensureDemoUser(db)
 
   if (existingDemoWagers.length > 0) {
     await db.delete(napkinbetsWagers).where(inArray(napkinbetsWagers.slug, DEMO_POOL_SLUGS))
@@ -1079,14 +1089,16 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
   await ensureSeedData(event)
 
   const db = useAppDatabase(event)
-  const [wagers, participants, pots, picks, notifications, settlements] = await Promise.all([
+  const [wagers, groups, participants, pots, picks, notifications, settlements] = await Promise.all([
     db.select().from(napkinbetsWagers).orderBy(asc(napkinbetsWagers.createdAt)),
+    db.select().from(napkinbetsGroups),
     db.select().from(napkinbetsParticipants).orderBy(asc(napkinbetsParticipants.createdAt)),
     db.select().from(napkinbetsPots).orderBy(asc(napkinbetsPots.sortOrder)),
     db.select().from(napkinbetsPicks).orderBy(asc(napkinbetsPicks.sortOrder)),
     db.select().from(napkinbetsNotifications).orderBy(asc(napkinbetsNotifications.createdAt)),
     db.select().from(napkinbetsSettlements).orderBy(asc(napkinbetsSettlements.recordedAt)),
   ])
+  const groupNamesById = new Map(groups.map((group) => [group.id, group.name]))
 
   const weatherSnapshots = new Map<string, NapkinbetsWeatherSnapshot>()
   const cachedEventIds = wagers
@@ -1162,9 +1174,12 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     serializedWagers.push({
       id: wager.id,
       ownerUserId: wager.ownerUserId ?? null,
+      groupId: wager.groupId ?? null,
+      groupName: wager.groupId ? (groupNamesById.get(wager.groupId) ?? '') : '',
       slug: wager.slug,
       title: wager.title,
       description: wager.description,
+      napkinType: wager.napkinType as SavePoolDataInput['napkinType'],
       boardType: wager.boardType as SavePoolDataInput['boardType'],
       category: wager.category,
       format: wager.format,
@@ -1250,15 +1265,50 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   const entryFeeCents = Math.round(input.entryFeeDollars * 100)
   const sideOptions = parseSideOptions(input.sideOptions)
   const creatorName = input.creatorName.trim() || authUser.name || authUser.email
-  const participantNames = normalizeList(input.participantNames)
+  const normalizedParticipantSeeds =
+    input.participantSeeds?.map((participant) => ({
+      displayName: participant.displayName.trim(),
+      userId: participant.userId?.trim() || null,
+    })).filter((participant) => participant.displayName) ?? []
+  const participantSeeds =
+    normalizedParticipantSeeds.length > 0
+      ? normalizedParticipantSeeds
+      : normalizeList(input.participantNames).map((displayName) => ({
+          displayName,
+          userId: null,
+        }))
+
   if (
-    !participantNames.some((participant) => participant.toLowerCase() === creatorName.toLowerCase())
+    !participantSeeds.some(
+      (participant) => participant.displayName.toLowerCase() === creatorName.toLowerCase(),
+    )
   ) {
-    participantNames.unshift(creatorName)
+    participantSeeds.unshift({
+      displayName: creatorName,
+      userId: authUser.id,
+    })
   }
 
-  const shuffledParticipants = shuffleList(participantNames)
-  const totalPotCents = shuffledParticipants.length * entryFeeCents
+  const dedupedParticipants: typeof participantSeeds = []
+  const seenParticipants = new Set<string>()
+  for (const participant of participantSeeds) {
+    const key = participant.displayName.toLowerCase()
+    if (seenParticipants.has(key)) {
+      continue
+    }
+
+    seenParticipants.add(key)
+    dedupedParticipants.push({
+      displayName: participant.displayName,
+      userId:
+        participant.userId ||
+        (participant.displayName.toLowerCase() === creatorName.toLowerCase() ? authUser.id : null),
+    })
+  }
+
+  const orderedParticipants =
+    input.shuffleParticipants === false ? dedupedParticipants : shuffleList(dedupedParticipants)
+  const totalPotCents = orderedParticipants.length * entryFeeCents
   const potRules = parsePotRules(input.potRules, totalPotCents)
   const slugBase = slugify(input.title) || 'napkinbets-wager'
   const slug = `${slugBase}-${wagerId.slice(0, 6)}`
@@ -1266,9 +1316,11 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   await db.insert(napkinbetsWagers).values({
     id: wagerId,
     ownerUserId: authUser.id,
+    groupId: input.groupId.trim() || null,
     slug,
     title: input.title,
     description: input.description,
+    napkinType: input.napkinType,
     boardType: input.boardType,
     category: input.format.includes('golf') ? 'golf' : input.sport || 'custom',
     format: input.format,
@@ -1298,18 +1350,18 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   })
 
   const participantsToInsert = []
-  for (let index = 0; index < shuffledParticipants.length; index++) {
-    const displayName = shuffledParticipants[index]!
+  for (let index = 0; index < orderedParticipants.length; index++) {
+    const participant = orderedParticipants[index]!
+    const displayName = participant.displayName
     participantsToInsert.push({
       id: crypto.randomUUID(),
       wagerId,
-      userId: displayName.toLowerCase() === creatorName.toLowerCase() ? authUser.id : null,
+      userId: participant.userId,
       displayName,
       sideLabel: sideOptions[index % sideOptions.length] ?? sideOptions[0] ?? 'Open side',
       joinStatus: 'accepted',
       draftOrder: index + 1,
-      paymentStatus:
-        displayName.toLowerCase() === creatorName.toLowerCase() ? 'confirmed' : 'pending',
+      paymentStatus: participant.userId === authUser.id ? 'confirmed' : 'pending',
       paymentReference: null,
       avatarUrl: '',
       createdAt,

@@ -14,16 +14,16 @@ const openingEvents = computed(() =>
 )
 
 useSeo({
-  title: 'Social sports pools for games, props, and drafts',
+  title: 'Simple bets and group napkins for games, props, and drafts',
   description:
-    'Napkinbets turns live games, props, and drafts into clean social pools with manual payment follow-up.',
+    'Napkinbets turns live games, props, and drafts into clean social napkins with manual payment follow-up.',
   image: '/brand/og/home.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets',
   description:
-    'A social sports pool app for live games, props, golf drafts, and watch-party side bets.',
+    'A social sports app for quick one-on-one bets, group napkins, props, drafts, and watch-party side bets.',
 })
 </script>
 
@@ -37,7 +37,7 @@ useWebPageSchema({
             <h1 class="napkinbets-hero-title">
               {{
                 isAuthenticated
-                  ? 'Run tonight’s pools without running the group chat.'
+                  ? 'Run tonight’s napkins without running the group chat.'
                   : 'Put the side bet where everyone can see it.'
               }}
             </h1>
@@ -60,7 +60,7 @@ useWebPageSchema({
               color="neutral"
               icon="i-lucide-ticket-plus"
             >
-              {{ isAuthenticated ? 'Start a pool' : 'Create account' }}
+              {{ isAuthenticated ? 'Start a napkin' : 'Create account' }}
             </UButton>
             <UButton
               v-if="!isAuthenticated"
@@ -83,7 +83,7 @@ useWebPageSchema({
 
         <div class="napkinbets-hero-stack">
           <div v-if="isAuthenticated && dashboard" class="napkinbets-aside-note">
-            <p class="napkinbets-kicker">My pools</p>
+            <p class="napkinbets-kicker">My napkins</p>
             <p class="napkinbets-surface-value">{{ dashboard.metrics[0]?.value || '0' }}</p>
             <p class="napkinbets-support-copy">Hosted, joined, and still in motion.</p>
           </div>
@@ -130,11 +130,11 @@ useWebPageSchema({
     <div v-if="isAuthenticated" class="napkinbets-section-stack">
       <div class="flex items-end justify-between gap-3">
         <div class="space-y-1">
-          <p class="napkinbets-kicker">Open pools</p>
-          <h2 class="napkinbets-section-title">Pools already in motion</h2>
+          <p class="napkinbets-kicker">Open napkins</p>
+          <h2 class="napkinbets-section-title">Napkins already in motion</h2>
         </div>
         <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
-          My pools
+          My napkins
         </UButton>
       </div>
 
@@ -142,7 +142,7 @@ useWebPageSchema({
         <NapkinbetsNapkinSummaryCard
           v-for="wager in featuredWagers"
           :key="wager.id"
-          title="Live pool"
+          title="Live napkin"
           description="Players, picks, reminders, and payment follow-up stay in one place."
           :wager="wager"
         />
@@ -153,8 +153,8 @@ useWebPageSchema({
         color="info"
         variant="soft"
         icon="i-lucide-ticket"
-        title="No pools yet"
-        description="Start from events or spin up a quick custom pool for tonight."
+        title="No napkins yet"
+        description="Start from events or spin up a quick custom napkin for tonight."
       />
     </div>
   </div>

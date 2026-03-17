@@ -30,7 +30,7 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Demo account</p>
           <h1 class="napkinbets-hero-title napkinbets-auth-title">Opening the guided demo.</h1>
           <p class="napkinbets-hero-lede">
-            We&apos;re signing you into the shared demo account so you can see real sample pools,
+            We&apos;re signing you into the shared demo account so you can see real sample napkins,
             players, and payment flows.
           </p>
         </div>
@@ -49,7 +49,7 @@ useWebPageSchema({
             />
 
             <p v-else class="napkinbets-support-copy">
-              Loading the demo account and sending you to My Pools.
+              Loading the demo account and sending you to My Napkins.
             </p>
 
             <UButton

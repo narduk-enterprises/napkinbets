@@ -16,21 +16,39 @@ const PRIMARY_NAV_LINKS: NapkinbetsNavLink[] = [
     mobileLabel: 'Events',
   },
   {
-    label: 'Start',
-    to: '/napkins/create',
-    icon: 'i-lucide-ticket-plus',
-    mobileLabel: 'Start',
+    label: 'Guide',
+    to: '/guide',
+    icon: 'i-lucide-book-open-text',
+    mobileLabel: 'Guide',
   },
   {
-    label: 'My pools',
+    label: 'Create',
+    to: '/napkins/create',
+    icon: 'i-lucide-ticket-plus',
+    mobileLabel: 'Create',
+  },
+  {
+    label: 'My Napkins',
     to: '/dashboard',
     icon: 'i-lucide-layout-dashboard',
-    mobileLabel: 'Pools',
+    mobileLabel: 'My',
     requiresAuth: true,
   },
 ]
 
 const ACCOUNT_LINKS: NapkinbetsNavLink[] = [
+  {
+    label: 'Friends',
+    to: '/friends',
+    icon: 'i-lucide-user-round-plus',
+    requiresAuth: true,
+  },
+  {
+    label: 'Groups',
+    to: '/groups',
+    icon: 'i-lucide-users-round',
+    requiresAuth: true,
+  },
   {
     label: 'Payments',
     to: '/settings/payments',

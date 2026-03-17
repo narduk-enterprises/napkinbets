@@ -103,7 +103,7 @@ const primaryIdeaLink = computed(() =>
       </div>
 
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-plus">
-        Start pool
+        Start napkin
       </UButton>
     </div>
 

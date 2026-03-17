@@ -15,19 +15,21 @@ interface NapkinbetsCreateEventPreview {
 }
 
 export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
-  title: 'Wednesday watch party pool',
+  title: 'Tonight head-to-head',
   creatorName: '',
   description:
-    'A friendly pool for tonight with a clean side market, manual payment proof, and one fast prop that settles off the broadcast.',
+    'A friendly one-on-one napkin with a clear side, one stake, and manual settle-up after the result is official.',
+  napkinType: 'simple-bet',
   boardType: 'community-created',
-  format: 'sports-game',
+  format: 'head-to-head',
   sport: 'basketball',
   contextKey: 'pro',
   league: 'nba',
   customContextName: '',
-  sideOptions: 'Home side\nAway side\nFeatured prop',
+  groupId: '',
+  sideOptions: 'Side A\nSide B',
   participantNames: '',
-  potRules: 'Winner: 70\nCloser call: 30',
+  potRules: 'Winner: 100',
   entryFeeDollars: 20,
   paymentService: 'Venmo',
   paymentHandle: '',
@@ -35,7 +37,7 @@ export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
   latitude: '',
   longitude: '',
   terms:
-    'Friendly bets only. Napkinbets tracks the pool, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
+    'Friendly bets only. Napkinbets tracks the napkin, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
 }
 
 const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>> = {
@@ -43,12 +45,14 @@ const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>>
     title: 'Masters week pool',
     description:
       'A golf-first pool for Masters week with featured golfer lanes, low-round sweats, and manual settle-up after the final round is official.',
+    napkinType: 'pool',
     boardType: 'manual-curated',
     format: 'golf-draft',
     sport: 'golf',
     contextKey: 'tournament',
     league: 'pga',
     customContextName: '',
+    groupId: '',
     sideOptions: 'Green Jacket winner\nLow Thursday round\nPlayoff yes/no',
     potRules: 'Champion: 50\nLow round: 25\nWeekend charge: 25',
     venueName: 'Augusta watch party or clubhouse',
@@ -70,7 +74,7 @@ function buildSideOptions(homeTeamName: string, awayTeamName: string) {
     return NAPKINBETS_DEFAULT_CREATE_INPUT.sideOptions
   }
 
-  return `${awayTeamName} wins\n${homeTeamName} wins\nFirst featured prop`
+  return `${awayTeamName}\n${homeTeamName}`
 }
 
 function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: string) {
@@ -84,6 +88,10 @@ function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: stri
 export function useNapkinbetsCreatePrefill() {
   const route = useRoute()
   const preset = computed(() => getQueryString(route.query.preset))
+  const requestedNapkinType = computed(() =>
+    getQueryString(route.query.napkinType) === 'pool' ? 'pool' : 'simple-bet',
+  )
+  const requestedGroupId = computed(() => getQueryString(route.query.groupId))
 
   const eventPreview = computed<NapkinbetsCreateEventPreview | null>(() => {
     const source = getQueryString(route.query.source)
@@ -135,7 +143,12 @@ export function useNapkinbetsCreatePrefill() {
     const presetDefaults = NAPKINBETS_PRESET_CREATE_INPUTS[preset.value] ?? {}
 
     if (!preview) {
-      return { ...NAPKINBETS_DEFAULT_CREATE_INPUT, ...presetDefaults }
+      return {
+        ...NAPKINBETS_DEFAULT_CREATE_INPUT,
+        ...presetDefaults,
+        napkinType: requestedNapkinType.value,
+        groupId: requestedGroupId.value,
+      }
     }
 
     return {
@@ -144,13 +157,18 @@ export function useNapkinbetsCreatePrefill() {
       title: buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName),
       description:
         preview.homeTeamName && preview.awayTeamName
-          ? `Friendly pool for ${preview.awayTeamName} at ${preview.homeTeamName}, with a simple side market, one prop lane, and manual payment confirmation after the result is official.`
+          ? `Friendly napkin for ${preview.awayTeamName} at ${preview.homeTeamName}, with one clear side and manual payment confirmation after the result is official.`
           : NAPKINBETS_DEFAULT_CREATE_INPUT.description,
+      napkinType: requestedNapkinType.value,
       boardType: 'event-backed',
-      format: getQueryString(route.query.format) || NAPKINBETS_DEFAULT_CREATE_INPUT.format,
+      format:
+        requestedNapkinType.value === 'simple-bet'
+          ? 'head-to-head'
+          : getQueryString(route.query.format) || 'sports-game',
       sport: preview.sport || NAPKINBETS_DEFAULT_CREATE_INPUT.sport,
       contextKey: preview.contextKey || NAPKINBETS_DEFAULT_CREATE_INPUT.contextKey,
       league: preview.league || NAPKINBETS_DEFAULT_CREATE_INPUT.league,
+      groupId: requestedGroupId.value,
       sideOptions:
         getQueryString(route.query.sideOptions) ||
         buildSideOptions(preview.homeTeamName, preview.awayTeamName),

@@ -1,4 +1,5 @@
 import type {
+  CreateNapkinbetsGroupInput,
   CreateWagerInput,
   CreatePaymentProfileInput,
   JoinWagerInput,
@@ -7,6 +8,9 @@ import type {
   NapkinbetsAdminResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
+  NapkinbetsFriendSearchResponse,
+  NapkinbetsFriendsResponse,
+  NapkinbetsGroupsResponse,
   NapkinbetsPaymentProfilesResponse,
   NapkinbetsTaxonomyResponse,
   NapkinbetsWorkspaceResponse,
@@ -32,6 +36,52 @@ export function useNapkinbetsApi() {
     },
     getWorkspace() {
       return fetch<NapkinbetsWorkspaceResponse>('/api/napkinbets/workspace')
+    },
+    getFriends() {
+      return fetch<NapkinbetsFriendsResponse>('/api/napkinbets/friends')
+    },
+    searchUsers(query: string) {
+      return fetch<NapkinbetsFriendSearchResponse>('/api/napkinbets/friends/search', {
+        query: { q: query },
+      })
+    },
+    sendFriendRequest(targetUserId: string) {
+      return fetch('/api/napkinbets/friends/requests', {
+        method: 'POST',
+        body: { targetUserId },
+      })
+    },
+    acceptFriendRequest(requestId: string) {
+      return fetch(`/api/napkinbets/friends/requests/${requestId}/accept`, {
+        method: 'POST',
+      })
+    },
+    declineFriendRequest(requestId: string) {
+      return fetch(`/api/napkinbets/friends/requests/${requestId}`, {
+        method: 'DELETE',
+      })
+    },
+    removeFriend(friendshipId: string) {
+      return fetch(`/api/napkinbets/friends/${friendshipId}`, {
+        method: 'DELETE',
+      })
+    },
+    getGroups() {
+      return fetch<NapkinbetsGroupsResponse>('/api/napkinbets/groups')
+    },
+    createGroup(payload: CreateNapkinbetsGroupInput) {
+      return fetch<{ ok: true; group: { id: string; slug: string; name: string } }>(
+        '/api/napkinbets/groups',
+        {
+          method: 'POST',
+          body: payload,
+        },
+      )
+    },
+    joinGroup(groupId: string) {
+      return fetch(`/api/napkinbets/groups/${groupId}/join`, {
+        method: 'POST',
+      })
     },
     getAdminOverview() {
       return fetch<NapkinbetsAdminResponse>('/api/napkinbets/admin/overview')

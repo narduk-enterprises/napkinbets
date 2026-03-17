@@ -14,9 +14,9 @@ test.describe('web smoke', () => {
     await page.goto('/')
     await waitForHydration(page)
     await expect(page.getByText('Put the side bet where everyone can see it.')).toBeVisible()
-    await expect(page.getByText('Real games in')).toBeVisible()
+    await expect(page.getByText('Real games')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Browse games' })).toBeVisible()
-    await expect(page).toHaveTitle(/Social sports pools for games, props, and drafts/)
+    await expect(page).toHaveTitle(/Simple bets and group napkins for games, props, and drafts/)
 
     await page.goto('/events')
     await waitForHydration(page)

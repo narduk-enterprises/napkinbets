@@ -75,20 +75,20 @@ async function handleClear(wagerId: string) {
 }
 
 useSeo({
-  title: wager.value?.title || 'Pool',
+  title: wager.value?.title || 'Napkin',
   description:
-    wager.value?.description || 'View the pool, picks, reminders, and payment confirmation.',
+    wager.value?.description || 'View the napkin, picks, reminders, and payment confirmation.',
   ogImage: {
-    title: wager.value?.title || 'Napkinbets pool',
-    description: wager.value?.description || 'Pool detail and picks.',
+    title: wager.value?.title || 'Napkinbets napkin',
+    description: wager.value?.description || 'Napkin detail and picks.',
     icon: '🧾',
   },
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Pool',
+  name: 'Napkinbets Napkin',
   description:
-    'A detailed view of a Napkinbets pool including players, picks, reminders, and payment confirmation.',
+    'A detailed view of a Napkinbets napkin including people, picks, reminders, and payment confirmation.',
 })
 </script>
 
@@ -103,7 +103,7 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Pool updated' : 'Pool action failed'"
+      :title="actions.feedback.value.type === 'success' ? 'Napkin updated' : 'Napkin action failed'"
       :description="actions.feedback.value.text"
     />
 
@@ -112,7 +112,7 @@ useWebPageSchema({
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
-      title="Pool failed to load"
+      title="Napkin failed to load"
       :description="wagerState.error.value.message"
     />
 
@@ -124,20 +124,23 @@ useWebPageSchema({
               <UBadge :color="wager.status === 'live' ? 'success' : 'info'" variant="soft">
                 {{ wager.status }}
               </UBadge>
-              <UBadge color="neutral" variant="subtle">{{ wager.format }}</UBadge>
+              <UBadge color="neutral" variant="subtle">
+                {{ wager.napkinType === 'simple-bet' ? 'simple bet' : wager.format }}
+              </UBadge>
               <UBadge v-if="wager.league" color="warning" variant="soft">{{
                 wager.league.toUpperCase()
               }}</UBadge>
             </div>
 
             <div class="space-y-3">
-              <p class="napkinbets-kicker">Pool</p>
+              <p class="napkinbets-kicker">Napkin</p>
               <h1 class="napkinbets-section-title">{{ wager.title }}</h1>
               <p class="napkinbets-hero-lede">{{ wager.description }}</p>
             </div>
 
             <div class="napkinbets-hero-pills">
-              <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom pool' }}</span>
+              <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom napkin' }}</span>
+              <span v-if="wager.groupName" class="napkinbets-hero-pill">{{ wager.groupName }}</span>
               <span class="napkinbets-hero-pill"
                 >{{ wager.paymentService
                 }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</span

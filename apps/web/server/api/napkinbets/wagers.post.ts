@@ -9,14 +9,26 @@ const bodySchema = z.object({
   title: z.string().min(3).max(120),
   creatorName: z.string().min(2).max(80),
   description: z.string().min(12).max(500),
+  napkinType: z.enum(['simple-bet', 'pool']),
   boardType: z.enum(NAPKINBETS_BOARD_TYPES),
   format: z.string().min(2).max(40),
   sport: z.string().max(40),
   contextKey: z.string().max(40),
   league: z.string().max(40),
   customContextName: z.string().max(120),
+  groupId: z.string().max(120),
   sideOptions: z.string().min(3).max(500),
   participantNames: z.string().max(500),
+  participantSeeds: z
+    .array(
+      z.object({
+        displayName: z.string().min(1).max(80),
+        userId: z.string().max(120).nullable().optional(),
+      }),
+    )
+    .max(24)
+    .optional(),
+  shuffleParticipants: z.boolean().optional(),
   potRules: z.string().min(3).max(500),
   entryFeeDollars: z.coerce.number().min(0).max(1000),
   paymentService: z.string().min(2).max(40),
@@ -52,7 +64,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       statusCode: 400,
-      message: error instanceof Error ? error.message : 'Invalid pool taxonomy.',
+      message: error instanceof Error ? error.message : 'Invalid napkin taxonomy.',
     })
   }
 

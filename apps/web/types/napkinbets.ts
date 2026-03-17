@@ -6,6 +6,7 @@ export interface NapkinbetsMetric {
 }
 
 export type NapkinbetsBoardType = 'event-backed' | 'manual-curated' | 'community-created'
+export type NapkinbetsNapkinType = 'simple-bet' | 'pool'
 
 export interface NapkinbetsConcept {
   summary: string
@@ -120,9 +121,12 @@ export interface NapkinbetsLeaderboardRow {
 export interface NapkinbetsWager {
   id: string
   ownerUserId: string | null
+  groupId: string | null
+  groupName: string
   slug: string
   title: string
   description: string
+  napkinType: NapkinbetsNapkinType
   boardType: NapkinbetsBoardType
   category: string
   format: string
@@ -352,6 +356,63 @@ export interface NapkinbetsPaymentProfilesResponse {
   profiles: NapkinbetsPaymentProfile[]
 }
 
+export interface NapkinbetsFriend {
+  id: string
+  friendshipId: string
+  displayName: string
+  email: string
+  createdAt: string
+}
+
+export interface NapkinbetsFriendRequest {
+  id: string
+  friendshipId: string
+  displayName: string
+  email: string
+  createdAt: string
+}
+
+export interface NapkinbetsFriendSearchResult {
+  id: string
+  displayName: string
+  email: string
+}
+
+export interface NapkinbetsFriendsResponse {
+  friends: NapkinbetsFriend[]
+  incomingRequests: NapkinbetsFriendRequest[]
+  outgoingRequests: NapkinbetsFriendRequest[]
+}
+
+export interface NapkinbetsFriendSearchResponse {
+  results: NapkinbetsFriendSearchResult[]
+}
+
+export interface NapkinbetsGroup {
+  id: string
+  slug: string
+  name: string
+  description: string
+  visibility: 'public' | 'private'
+  joinPolicy: 'open' | 'invite-only' | 'closed'
+  memberCount: number
+  ownerName: string
+  userRole: 'owner' | 'admin' | 'member' | null
+  joinedAt: string | null
+}
+
+export interface NapkinbetsGroupsResponse {
+  groups: NapkinbetsGroup[]
+  myGroups: NapkinbetsGroup[]
+}
+
+export interface CreateNapkinbetsGroupInput {
+  name: string
+  description: string
+  visibility: 'public' | 'private'
+  joinPolicy: 'open' | 'invite-only' | 'closed'
+}
+
 export interface NapkinbetsDashboardResponse {
   concept: NapkinbetsConcept
   metrics: NapkinbetsMetric[]
@@ -393,14 +454,21 @@ export interface CreateWagerInput {
   title: string
   creatorName: string
   description: string
+  napkinType: NapkinbetsNapkinType
   boardType: NapkinbetsBoardType
   format: string
   sport: string
   league: string
   contextKey: string
   customContextName: string
+  groupId: string
   sideOptions: string
   participantNames: string
+  participantSeeds?: Array<{
+    displayName: string
+    userId?: string | null
+  }>
+  shuffleParticipants?: boolean
   potRules: string
   entryFeeDollars: number
   paymentService: string

@@ -212,7 +212,8 @@ function submitSettlement() {
               {{ wager.description }}
             </p>
             <div class="napkinbets-meta-row">
-              <span>{{ wager.eventTitle || 'Custom pool' }}</span>
+              <span>{{ wager.eventTitle || 'Custom napkin' }}</span>
+              <span v-if="wager.groupName">{{ wager.groupName }}</span>
               <span>{{ wager.venueName || 'Remote group' }}</span>
               <span>Host: {{ wager.creatorName }}</span>
             </div>
@@ -394,7 +395,7 @@ function submitSettlement() {
 
         <div v-if="isAuthenticated" class="napkinbets-form-section">
           <div class="space-y-4">
-            <h3 class="napkinbets-subsection-title">Join the pool</h3>
+            <h3 class="napkinbets-subsection-title">Join the napkin</h3>
             <div class="napkinbets-chip-grid">
               <span
                 v-for="option in wager.sideOptions"
@@ -421,7 +422,7 @@ function submitSettlement() {
                 icon="i-lucide-user-plus"
                 :loading="isBusy(`join:${wager.id}`)"
               >
-                Join pool
+                Join napkin
               </UButton>
             </UForm>
           </div>
@@ -499,7 +500,7 @@ function submitSettlement() {
           variant="soft"
           icon="i-lucide-log-in"
           title="Sign in to join, pick, or settle"
-          description="Pool detail is shareable, but player actions and payment proof require an account."
+          description="Napkin detail is shareable, but player actions and payment proof require an account."
         >
           <template #actions>
             <div class="napkinbets-card-actions">
