@@ -57,7 +57,7 @@ useWebPageSchema({
               class="w-full"
               icon="i-lucide-zap"
               :loading="demoAccess.pending.value"
-              @click="demoAccess.openDemo"
+              @click="() => demoAccess.openDemo()"
             >
               Open demo account
             </UButton>

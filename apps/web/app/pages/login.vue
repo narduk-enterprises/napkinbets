@@ -42,12 +42,11 @@ useWebPageSchema({
             <template #after-form>
               <div class="mt-4">
                 <UButton
-                  color="neutral"
-                  variant="soft"
+                  color="primary"
                   class="w-full"
                   icon="i-lucide-zap"
                   :loading="demoAccess.pending.value"
-                  @click="demoAccess.openDemo"
+                  @click="() => demoAccess.openDemo()"
                 >
                   See the demo account
                 </UButton>

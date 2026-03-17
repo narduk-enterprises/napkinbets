@@ -37,7 +37,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Events</p>
           <h1 class="napkinbets-section-title">Start from tonight&apos;s games.</h1>
           <p class="napkinbets-hero-lede">
-            See what is live, what is starting soon, and what is worth putting on the napkin next.
+            Pick a real game, keep the terms short, and start a pool without typing the whole
+            setup from scratch.
           </p>
           <div class="napkinbets-card-actions">
             <UButton
@@ -50,7 +51,6 @@ useWebPageSchema({
             <UButton
               to="/settings/payments"
               color="neutral"
-              variant="ghost"
               icon="i-lucide-wallet-cards"
             >
               Payment setup
@@ -146,7 +146,7 @@ useWebPageSchema({
                 <h2 class="napkinbets-subsection-title">{{ section.description }}</h2>
               </div>
 
-              <span class="text-sm text-muted">{{ section.events.length }} games</span>
+              <span class="text-sm text-default">{{ section.events.length }} games</span>
             </div>
 
             <div class="napkinbets-scroll-strip">
@@ -168,15 +168,12 @@ useWebPageSchema({
           <div class="space-y-4">
             <div class="space-y-1">
               <p class="napkinbets-kicker">Quick angles</p>
-              <h2 class="napkinbets-subsection-title">Simple ideas that play well in a group</h2>
-              <p class="napkinbets-support-copy">
-                Start with a real game, then add one clean side bet.
-              </p>
+              <h2 class="napkinbets-subsection-title">Formats that are easy to settle</h2>
             </div>
 
             <div class="space-y-3">
               <NapkinbetsPropIdeaCard
-                v-for="idea in discover.propIdeas"
+                v-for="idea in discover.propIdeas.slice(0, 2)"
                 :key="idea.id"
                 :idea="idea"
               />

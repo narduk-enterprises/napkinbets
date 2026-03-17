@@ -77,10 +77,10 @@ export function useNapkinbetsDiscoverPresentation(
         icon: 'i-lucide-calendar-range',
       },
       {
-        label: 'Featured',
-        value: String(discovery.value.spotlights.length),
-        hint: 'tournaments and watch list',
-        icon: 'i-lucide-flag',
+        label: 'Leagues',
+        value: String(discovery.value.filters.leagues.length),
+        hint: 'worth a look this week',
+        icon: 'i-lucide-panels-top-left',
       },
     ]
   })

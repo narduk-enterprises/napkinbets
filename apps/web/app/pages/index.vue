@@ -10,7 +10,7 @@ const featuredSpotlight = computed(() => discover.value.spotlights[0] ?? null)
 const openingEvents = computed(() =>
   discover.value.sections
     .flatMap((section) => section.events)
-    .slice(0, isAuthenticated.value ? 4 : 3),
+    .slice(0, isAuthenticated.value ? 4 : 2),
 )
 
 useSeo({
@@ -45,7 +45,7 @@ useWebPageSchema({
               {{
                 isAuthenticated
                   ? 'Start from a real game, keep the rules short, track the picks, and settle up after the final.'
-                  : 'Real games in, simple pool out. Fewer texts, clearer picks, and easy settle-up after the final.'
+                  : 'Pick a real game, keep it simple, and settle up after the final.'
               }}
             </p>
           </div>
@@ -58,7 +58,6 @@ useWebPageSchema({
               :to="isAuthenticated ? '/napkins/create' : '/register'"
               size="xl"
               color="neutral"
-              variant="soft"
               icon="i-lucide-ticket-plus"
             >
               {{ isAuthenticated ? 'Start a pool' : 'Create account' }}
@@ -92,8 +91,7 @@ useWebPageSchema({
           <div v-else class="napkinbets-aside-note">
             <p class="napkinbets-kicker">What it does</p>
             <p class="napkinbets-support-copy">
-              Start from a game, invite the room, track picks, and settle after the result is
-              official.
+              Start from a game, invite the room, track picks, and settle after it goes final.
             </p>
           </div>
 
@@ -119,7 +117,7 @@ useWebPageSchema({
             {{ isAuthenticated ? 'Live and upcoming games' : 'A few good places to start' }}
           </h2>
         </div>
-        <UButton to="/events" color="neutral" variant="ghost">
+        <UButton to="/events" color="neutral">
           {{ isAuthenticated ? 'All games' : 'More games' }}
         </UButton>
       </div>
@@ -135,7 +133,7 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Open pools</p>
           <h2 class="napkinbets-section-title">Pools already in motion</h2>
         </div>
-        <UButton to="/dashboard" color="primary" variant="soft" icon="i-lucide-layout-dashboard">
+        <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
           My pools
         </UButton>
       </div>

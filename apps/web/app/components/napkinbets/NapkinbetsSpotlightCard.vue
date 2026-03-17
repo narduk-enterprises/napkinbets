@@ -91,7 +91,7 @@ const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-ticket-plus">
         Start pool
       </UButton>
-      <UButton to="/events" color="neutral" variant="ghost" size="sm" icon="i-lucide-arrow-right">
+      <UButton to="/events" color="neutral" size="sm" icon="i-lucide-arrow-right">
         See games
       </UButton>
     </div>

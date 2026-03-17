@@ -12,7 +12,7 @@ const props = defineProps<{
 <template>
   <section :id="slide.id" class="h-dvh w-screen shrink-0 snap-center snap-always overflow-hidden">
     <div
-      class="grid h-dvh grid-rows-[30dvh_1fr] overflow-hidden border-y border-default/60 bg-white/85 shadow-overlay backdrop-blur sm:grid-rows-[33dvh_1fr] lg:grid-cols-[0.92fr_1.08fr] lg:grid-rows-1 lg:border-x"
+      class="grid h-dvh grid-rows-[30dvh_1fr] overflow-hidden border-y border-default bg-default/95 shadow-overlay backdrop-blur sm:grid-rows-[33dvh_1fr] lg:grid-cols-[0.92fr_1.08fr] lg:grid-rows-1 lg:border-x"
     >
       <div class="relative min-h-[30dvh] overflow-hidden lg:order-2 lg:min-h-0">
         <img :src="slide.imageSrc" :alt="slide.imageAlt" class="h-full w-full object-cover" />
@@ -37,7 +37,7 @@ const props = defineProps<{
           </p>
 
           <div
-            class="rounded-full border border-default/70 bg-white/80 px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-muted"
+            class="rounded-full border border-default bg-default/95 px-3 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-default"
           >
             {{ props.slideIndex + 1 }} / {{ props.slideCount }}
           </div>
@@ -48,7 +48,7 @@ const props = defineProps<{
             <h1 class="font-display text-3xl leading-none text-default sm:text-5xl">
               {{ slide.title }}
             </h1>
-            <p class="max-w-xl text-sm leading-6 text-muted sm:text-base sm:leading-7 lg:text-lg">
+            <p class="max-w-xl text-sm leading-6 text-default sm:text-base sm:leading-7 lg:text-lg">
               {{ slide.summary }}
             </p>
           </div>
@@ -58,7 +58,7 @@ const props = defineProps<{
           <div
             v-for="highlight in slide.highlights"
             :key="highlight"
-            class="rounded-[1rem] border border-default/70 bg-white/82 px-3.5 py-2.5 text-sm leading-5 text-default lg:px-4 lg:py-3"
+            class="rounded-[1rem] border border-default bg-default/94 px-3.5 py-2.5 text-sm leading-5 text-default lg:px-4 lg:py-3"
           >
             {{ highlight }}
           </div>
@@ -66,10 +66,10 @@ const props = defineProps<{
 
         <div class="relative flex flex-wrap items-center justify-between gap-3">
           <div class="space-y-1">
-            <p class="text-xs font-medium text-muted sm:text-sm">{{ slide.footnote }}</p>
+            <p class="text-xs font-medium text-default sm:text-sm">{{ slide.footnote }}</p>
             <p
               v-if="!slide.actions?.length"
-              class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-toned"
+              class="text-[0.68rem] font-semibold uppercase tracking-[0.24em] text-muted"
             >
               Swipe sideways or tap next
             </p>
@@ -92,8 +92,7 @@ const props = defineProps<{
           <UButton
             v-else-if="nextSlideId"
             :to="`#${nextSlideId}`"
-            color="neutral"
-            variant="soft"
+            color="primary"
             size="md"
             icon="i-lucide-arrow-right"
           >

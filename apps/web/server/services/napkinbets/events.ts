@@ -1349,16 +1349,22 @@ function toLiveGame(event: NapkinbetsCachedEvent) {
   }
 }
 
-function discoverPriority(event: NapkinbetsCachedEvent) {
-  if (event.league === 'pga' || event.league === 'lpga') {
-    return 0
+function takeLeagueBalancedEvents(events: NapkinbetsCachedEvent[], limit: number) {
+  const selected: NapkinbetsCachedEvent[] = []
+  const overflow: NapkinbetsCachedEvent[] = []
+  const seenLeagues = new Set<string>()
+
+  for (const event of events) {
+    if (!seenLeagues.has(event.league)) {
+      seenLeagues.add(event.league)
+      selected.push(event)
+      continue
+    }
+
+    overflow.push(event)
   }
 
-  if (event.contextKey === 'tournament') {
-    return 1
-  }
-
-  return 2
+  return [...selected, ...overflow].slice(0, limit)
 }
 
 function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDiscoverSection[] {
@@ -1373,30 +1379,28 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
     .filter((event) => event.state === 'pre')
     .sort((left, right) => left.startTime.localeCompare(right.startTime))
 
-  const startingSoon = upcoming
-    .filter((event) => isWithinHours(new Date(event.startTime), 4, now))
-    .slice(0, 8)
+  const startingSoon = takeLeagueBalancedEvents(
+    upcoming.filter((event) => isWithinHours(new Date(event.startTime), 4, now)),
+    8,
+  )
   const startingSoonIds = new Set(startingSoon.map((event) => event.id))
 
-  const today = upcoming
-    .filter(
+  const today = takeLeagueBalancedEvents(
+    upcoming.filter(
       (event) =>
         !startingSoonIds.has(event.id) && isWithinHours(new Date(event.startTime), 24, now),
-    )
-    .slice(0, 10)
+    ),
+    10,
+  )
   const todayIds = new Set(today.map((event) => event.id))
 
-  const nextUp = upcoming
+  const nextUpWindow = upcoming
     .filter((event) => !startingSoonIds.has(event.id) && !todayIds.has(event.id))
-    .sort((left, right) => {
-      const priorityDiff = discoverPriority(left) - discoverPriority(right)
-      if (priorityDiff !== 0) {
-        return priorityDiff
-      }
-
-      return left.startTime.localeCompare(right.startTime)
-    })
-    .slice(0, 12)
+    .filter((event) => isWithinHours(new Date(event.startTime), 24 * 7, now))
+  const nextUpSource = nextUpWindow.length
+    ? nextUpWindow
+    : upcoming.filter((event) => !startingSoonIds.has(event.id) && !todayIds.has(event.id))
+  const nextUp = takeLeagueBalancedEvents(nextUpSource, 12)
 
   return [
     {

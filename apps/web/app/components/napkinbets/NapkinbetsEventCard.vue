@@ -102,7 +102,7 @@ const primaryIdeaLink = computed(() =>
         </UBadge>
       </div>
 
-      <UButton :to="createLink" color="primary" variant="soft" size="sm" icon="i-lucide-plus">
+      <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-plus">
         Start pool
       </UButton>
     </div>
@@ -159,18 +159,16 @@ const primaryIdeaLink = computed(() =>
       </div>
 
       <div class="napkinbets-event-footer">
-        <span>{{ event.summary }}</span>
         <div class="napkinbets-event-action-row">
           <UButton
             v-if="primaryIdea && primaryIdeaLink"
             :to="primaryIdeaLink"
             color="neutral"
-            variant="ghost"
             size="sm"
           >
             {{ primaryIdea.title }}
           </UButton>
-          <UButton v-else :to="createLink" color="neutral" variant="ghost" size="sm">
+          <UButton v-else :to="createLink" color="neutral" size="sm">
             Open picks
           </UButton>
         </div>
