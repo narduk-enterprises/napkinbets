@@ -402,10 +402,10 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
   return [
     {
       slug: 'demo-hoops-night',
-      title: 'Hoops Night Rally',
+      title: 'Friday Hoops Group Bet',
       description: primaryEvent
-        ? `Live-friendly sample anchored on ${primaryEvent.eventTitle}.`
-        : 'Live-friendly court-side pool for tonight’s action.',
+        ? `Sample group bet built from ${primaryEvent.eventTitle}.`
+        : 'Sample group bet built around tonight’s featured game.',
       category: 'basketball',
       format: 'sports-game',
       sport: primaryEvent?.sport ?? 'basketball',
@@ -524,10 +524,10 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
     },
     {
       slug: 'demo-soccer-watch',
-      title: 'Starlit Soccer Watch',
+      title: 'Soccer Props Group Bet',
       description: secondaryEvent
-        ? `Prop-style pool for ${secondaryEvent.eventTitle}.`
-        : 'Prop-style pool anchored on midweek soccer action.',
+        ? `Sample prop bet built from ${secondaryEvent.eventTitle}.`
+        : 'Sample prop bet built around a featured soccer match.',
       category: 'soccer',
       format: 'sports-prop',
       sport: secondaryEvent?.sport ?? 'soccer',
@@ -636,8 +636,8 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
     },
     {
       slug: 'demo-golf-draft',
-      title: 'Napkin Greens Draft',
-      description: 'Golf-draft showcase with leaderboards and pot splits.',
+      title: 'Weekend Golf Draft',
+      description: 'Sample golf draft with leaderboards and payout splits.',
       category: 'golf',
       format: 'golf-draft',
       sport: 'golf',
@@ -883,7 +883,7 @@ async function requireOwnerOrAdmin(event: H3Event, wagerId: string) {
 
   throw createError({
     statusCode: 403,
-    message: 'Only the board owner or an admin can manage this wager.',
+    message: 'Only the bet host or an admin can manage this wager.',
   })
 }
 
@@ -907,23 +907,27 @@ export async function ensureSeedData(event: H3Event) {
   const demoUser = await ensureDemoUser(db)
   await ensureDemoSocialGraph(event, demoUser.id)
 
+  const now = nowIso()
+  const events = await loadUpcomingEventRows(db, now)
+  const demoPools = buildDemoPools(events)
+  const demoTitleBySlug = new Map(demoPools.map((pool) => [pool.slug, pool.title]))
+
   const existingDemoWagers = await db
-    .select({ slug: napkinbetsWagers.slug })
+    .select({ slug: napkinbetsWagers.slug, title: napkinbetsWagers.title })
     .from(napkinbetsWagers)
     .where(inArray(napkinbetsWagers.slug, DEMO_POOL_SLUGS))
 
-  if (existingDemoWagers.length === DEMO_POOL_SLUGS.length) {
+  const hasCurrentDemoSeed =
+    existingDemoWagers.length === DEMO_POOL_SLUGS.length &&
+    existingDemoWagers.every((wager) => demoTitleBySlug.get(wager.slug) === wager.title)
+
+  if (hasCurrentDemoSeed) {
     return
   }
 
   if (existingDemoWagers.length > 0) {
     await db.delete(napkinbetsWagers).where(inArray(napkinbetsWagers.slug, DEMO_POOL_SLUGS))
   }
-
-  const now = nowIso()
-  const events = await loadUpcomingEventRows(db, now)
-  const demoPools = buildDemoPools(events)
-
   for (const pool of demoPools) {
     const wagerId = crypto.randomUUID()
     const boardType = pool.eventRow ? 'event-backed' : 'manual-curated'
@@ -1220,7 +1224,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     {
       label: 'Active wagers',
       value: String(serializedWagers.length),
-      hint: 'live friendly boards',
+      hint: 'live friendly bets',
       icon: 'i-lucide-ticket',
     },
     {
@@ -1228,7 +1232,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       value: String(
         participants.filter((participant) => participant.joinStatus === 'accepted').length,
       ),
-      hint: 'accepted into the pool',
+      hint: 'accepted on a bet',
       icon: 'i-lucide-users',
     },
     {
@@ -1390,7 +1394,7 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
     event,
     wagerId,
     'Wager created',
-    `${creatorName} set the board and randomized draft order.`,
+    `${creatorName} set the bet and randomized the draft order.`,
     'system',
   )
   await createNotification(
@@ -1663,7 +1667,7 @@ export async function confirmSettlement(event: H3Event, wagerId: string, settlem
     event,
     wagerId,
     'Settlement confirmed',
-    'A board owner verified submitted payment proof.',
+    'A host verified submitted payment proof.',
     'settlement',
     settlement.participantId,
   )
@@ -1749,7 +1753,7 @@ export async function randomizeDraftOrder(event: H3Event, wagerId: string) {
     event,
     wagerId,
     'Draft order rerolled',
-    'The napkin got shuffled and the board has a fresh order.',
+    'The draft order was reshuffled for this bet.',
     'draft',
   )
 

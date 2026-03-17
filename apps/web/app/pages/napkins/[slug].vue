@@ -75,20 +75,20 @@ async function handleClear(wagerId: string) {
 }
 
 useSeo({
-  title: wager.value?.title || 'Napkin',
+  title: wager.value?.title || 'Bet',
   description:
-    wager.value?.description || 'View the napkin, picks, reminders, and payment confirmation.',
+    wager.value?.description || 'View the bet, picks, reminders, and payment confirmation.',
   ogImage: {
-    title: wager.value?.title || 'Napkinbets napkin',
-    description: wager.value?.description || 'Napkin detail and picks.',
+    title: wager.value?.title || 'Napkinbets bet',
+    description: wager.value?.description || 'Bet detail and picks.',
     icon: '🧾',
   },
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Napkin',
+  name: 'Napkinbets Bet',
   description:
-    'A detailed view of a Napkinbets napkin including people, picks, reminders, and payment confirmation.',
+    'A detailed view of a Napkinbets bet including people, picks, reminders, and payment confirmation.',
 })
 </script>
 
@@ -103,7 +103,7 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Napkin updated' : 'Napkin action failed'"
+      :title="actions.feedback.value.type === 'success' ? 'Bet updated' : 'Bet action failed'"
       :description="actions.feedback.value.text"
     />
 
@@ -112,7 +112,7 @@ useWebPageSchema({
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
-      title="Napkin failed to load"
+      title="Bet failed to load"
       :description="wagerState.error.value.message"
     />
 
@@ -133,13 +133,13 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-3">
-              <p class="napkinbets-kicker">Napkin</p>
+              <p class="napkinbets-kicker">Bet</p>
               <h1 class="napkinbets-section-title">{{ wager.title }}</h1>
               <p class="napkinbets-hero-lede">{{ wager.description }}</p>
             </div>
 
             <div class="napkinbets-hero-pills">
-              <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom napkin' }}</span>
+              <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom bet' }}</span>
               <span v-if="wager.groupName" class="napkinbets-hero-pill">{{ wager.groupName }}</span>
               <span class="napkinbets-hero-pill"
                 >{{ wager.paymentService
@@ -169,7 +169,7 @@ useWebPageSchema({
                   <p class="napkinbets-surface-value">{{ wager.participants.length }}</p>
                 </div>
                 <div class="napkinbets-surface">
-                  <p class="napkinbets-surface-label">Pots</p>
+                  <p class="napkinbets-surface-label">Payouts</p>
                   <p class="napkinbets-surface-value">{{ wager.pots.length }}</p>
                 </div>
                 <div class="napkinbets-surface">

@@ -269,8 +269,8 @@ export const NAPKINBETS_PROP_IDEAS = [
   {
     id: 'golf-pool-sidepots',
     category: 'Golf drafts',
-    title: 'Draft boards plus side pots',
-    context: 'Inspired by the original golf-pool workflow.',
+    title: 'Golf drafts plus side bets',
+    context: 'Inspired by the original golf draft workflow.',
     summary:
       'Mix a draft order, low-round bonus, and one weather-sensitive side pot without needing any direct payment processing.',
     examples: [
@@ -278,7 +278,7 @@ export const NAPKINBETS_PROP_IDEAS = [
       'Most birdies by your drafted roster',
       'Closest-to-pin side pot during the watch session',
     ],
-    settlementHint: 'Use the leaderboard plus posted pool rules to close the board manually.',
+    settlementHint: 'Use the leaderboard plus posted group-bet rules to settle everything manually.',
   },
   {
     id: 'entertainment-and-culture',
@@ -286,7 +286,7 @@ export const NAPKINBETS_PROP_IDEAS = [
     title: 'Non-sports prompts for group nights',
     context: 'The app should feel broader than games only.',
     summary:
-      'Napkinbets can host reality-show outcomes, awards-night calls, and other “who’s right tonight?” boards.',
+      'Napkinbets can host reality-show outcomes, awards-night calls, and other “who’s right tonight?” bets.',
     examples: [
       'Which contestant gets called safe first?',
       'Will the acceptance speech run over 45 seconds?',
@@ -302,7 +302,7 @@ const NAPKINBETS_GOLF_EDITORIAL = [
     id: 'masters-2026',
     label: 'Major watch',
     title: 'Masters week room',
-    subtitle: 'Build the Augusta board before Monday, then let it carry the whole week.',
+    subtitle: 'Build the Augusta bet before Monday, then let it carry the whole week.',
     summary:
       'Cover the full official Masters week with one room for Green Jacket futures, Thursday pace-setters, and Sunday closeout sweats.',
     windowLabel: 'Apr 6-12, 2026',
@@ -330,9 +330,9 @@ const NAPKINBETS_GOLF_EDITORIAL = [
     label: 'Sunday sweat',
     title: 'Masters weekend closeout',
     subtitle:
-      'Once the cut is set, shrink the board and turn the leaderboard into one clean finish lane.',
+      'Once the cut is set, shrink the bet and turn the leaderboard into one clean finish lane.',
     summary:
-      'Use a smaller Augusta board for best weekend score, final pairing winner, or the biggest Sunday charge once the field is trimmed.',
+      'Use a smaller Augusta bet for best weekend score, final pairing winner, or the biggest Sunday charge once the field is trimmed.',
     windowLabel: 'Apr 11-12, 2026',
     venueLabel: 'Augusta National Golf Club',
     accent: 'watch',
@@ -434,7 +434,7 @@ function getLeagueIdeas(
       return [
         {
           title: 'Race market',
-          description: `Turn ${awayTeam} vs ${homeTeam} into a simple run-race board.`,
+          description: `Turn ${awayTeam} vs ${homeTeam} into a simple run-race bet.`,
           sideOptions: [
             'First to 25 points',
             'First to 50 points',
@@ -456,7 +456,7 @@ function getLeagueIdeas(
     case 'football':
       return [
         {
-          title: 'Drive finish board',
+          title: 'Drive finish bet',
           description: `Keep ${awayTeam} vs ${homeTeam} focused on clean, free-to-track football swings.`,
           sideOptions: [
             'Next scoring team',
@@ -469,7 +469,7 @@ function getLeagueIdeas(
     case 'hockey':
       return [
         {
-          title: 'First goal board',
+          title: 'First goal bet',
           description: `Keep ${awayTeam} vs ${homeTeam} simple and social.`,
           sideOptions: ['Home scores first', 'Away scores first', 'Scoreless first 10 minutes'],
           format: 'sports-prop',
@@ -484,7 +484,7 @@ function getLeagueIdeas(
     case 'baseball':
       return [
         {
-          title: 'Early innings board',
+          title: 'Early innings bet',
           description: 'Lean into clean, free-to-track inning outcomes.',
           sideOptions: [
             'First team to score',
@@ -498,7 +498,7 @@ function getLeagueIdeas(
       return [
         {
           title: 'Featured golfer lane',
-          description: `Keep ${awayTeam} and ${homeTeam} at the center of a board that still settles cleanly from the leaderboard.`,
+          description: `Keep ${awayTeam} and ${homeTeam} at the center of a bet that still settles cleanly from the leaderboard.`,
           sideOptions: [
             'Best finish among featured golfers',
             'Both golfers make the cut',
@@ -522,7 +522,7 @@ function getLeagueIdeas(
     default:
       return [
         {
-          title: 'Head-to-head board',
+          title: 'Head-to-head bet',
           description: 'Keep it simple with winner and one side market.',
           sideOptions: ['Home wins', 'Away wins', 'One featured side prop'],
           format: 'sports-game',
@@ -1406,13 +1406,13 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
     {
       key: 'live-now',
       label: 'Live now',
-      description: 'Events already in motion and ready for close-to-live side boards.',
+      description: 'Events already in motion and ready for close-to-live bets.',
       events: liveNow,
     },
     {
       key: 'starting-soon',
       label: 'Starting soon',
-      description: 'Boards worth setting before the first whistle or tip.',
+      description: 'Good bets to set before the first whistle or tip.',
       events: startingSoon,
     },
     {

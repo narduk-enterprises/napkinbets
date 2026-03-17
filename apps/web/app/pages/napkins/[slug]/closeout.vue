@@ -92,7 +92,7 @@ async function handleReject(settlementId: string) {
   await actions.rejectSettlement(wager.value.id, settlementId, {
     note:
       rejectionNotes[settlementId]?.trim() ||
-      'Proof needs a clearer handle, amount, or confirmation reference before the napkin closes.',
+      'Proof needs a clearer handle, amount, or confirmation reference before the bet closes.',
   })
 }
 
@@ -130,10 +130,10 @@ async function draftCloseoutSummary() {
 useSeo({
   title: wager.value ? `${wager.value.title} Settle Up` : 'Settle Up',
   description:
-    'Host-facing settle-up checklist for confirming entries, reviewing payout projections, and closing a napkin cleanly.',
+    'Host-facing settle-up checklist for confirming entries, reviewing payout projections, and closing a bet cleanly.',
   ogImage: {
     title: 'Napkinbets Settle Up',
-    description: 'Finish the napkin with a clear payment and payout checklist.',
+    description: 'Finish the bet with a clear payment and payout checklist.',
     icon: '🧮',
   },
 })
@@ -141,7 +141,7 @@ useSeo({
 useWebPageSchema({
   name: 'Napkinbets Settle Up',
   description:
-    'A settle-up workflow for hosts or admins managing payment proof and payout preparation on a Napkinbets napkin.',
+    'A settle-up workflow for hosts or admins managing payment proof and payout preparation on a Napkinbets bet.',
 })
 </script>
 
@@ -189,7 +189,7 @@ useWebPageSchema({
                 variant="soft"
                 icon="i-lucide-arrow-left"
               >
-                Back to napkin
+                Back to bet
               </UButton>
             </div>
           </div>
@@ -301,7 +301,7 @@ useWebPageSchema({
 
               <p v-if="aiSummary" class="napkinbets-support-copy">{{ aiSummary }}</p>
               <p v-else class="napkinbets-support-copy">
-                Generate a short settle-up summary for the host before you close the pool.
+                Generate a short settle-up summary for the host before you close the bet.
               </p>
             </div>
           </UCard>

@@ -27,7 +27,7 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
           {{ wager.status }}
         </UBadge>
         <UBadge color="neutral" variant="subtle">
-          {{ wager.napkinType === 'simple-bet' ? 'simple bet' : wager.format }}
+          {{ wager.napkinType === 'simple-bet' ? 'one-on-one' : 'group bet' }}
         </UBadge>
         <UBadge v-if="wager.league" color="warning" variant="soft">{{
           wager.league.toUpperCase()
@@ -72,13 +72,13 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
 
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="napkinbets-meta-row">
-          <span>{{ wager.eventTitle || 'Custom napkin' }}</span>
+          <span>{{ wager.eventTitle || 'Custom bet' }}</span>
           <span v-if="wager.groupName">{{ wager.groupName }}</span>
           <span>{{ wager.venueName || 'Remote group' }}</span>
         </div>
 
         <UButton :to="`/napkins/${wager.slug}`" color="primary" icon="i-lucide-arrow-right">
-          {{ actionLabel || 'Open napkin' }}
+          {{ actionLabel || 'Open bet' }}
         </UButton>
       </div>
     </div>

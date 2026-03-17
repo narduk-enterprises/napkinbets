@@ -57,7 +57,7 @@ function competitorLabel(value: string) {
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="napkinbets-subsection-title">Scoreboard</p>
-              <p class="napkinbets-support-copy">Sports context for napkins tied to live action.</p>
+              <p class="napkinbets-support-copy">Sports context for bets tied to live action.</p>
             </div>
             <UBadge color="primary" variant="soft" icon="i-lucide-radio-tower"> ESPN </UBadge>
           </div>
@@ -99,7 +99,7 @@ function competitorLabel(value: string) {
           </div>
 
           <p v-if="liveGames.length === 0" class="napkinbets-support-copy">
-            Add a sport and league to a napkin to see live scoreboard context here.
+            Add a sport and league to a bet to see live scoreboard context here.
           </p>
         </div>
       </UCard>
@@ -110,7 +110,7 @@ function competitorLabel(value: string) {
             <div>
               <p class="napkinbets-subsection-title">Venue weather</p>
               <p class="napkinbets-support-copy">
-                Pulled from Open-Meteo for golf rounds and outdoor pools.
+                Pulled from Open-Meteo for golf rounds and outdoor group bets.
               </p>
             </div>
             <UBadge color="info" variant="soft" icon="i-lucide-cloud-sun"> Forecast </UBadge>
@@ -146,7 +146,7 @@ function competitorLabel(value: string) {
           </div>
 
           <p v-if="weather.length === 0" class="napkinbets-support-copy">
-            Add venue coordinates when a pool depends on outdoor conditions.
+            Add venue coordinates when a bet depends on outdoor conditions.
           </p>
         </div>
       </UCard>

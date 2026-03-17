@@ -236,7 +236,7 @@ export async function normalizeCreateWagerTaxonomyInputFromStore(
 
   const boardType = NAPKINBETS_BOARD_TYPES.find((value) => value === input.boardType)
   if (!boardType) {
-    throw new Error('Select a valid board type before saving the napkin.')
+    throw new Error('Select a valid bet format before saving the bet.')
   }
 
   const sport = sports.find((item) => item.key === input.sport)

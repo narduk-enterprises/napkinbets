@@ -1,63 +1,68 @@
 <script setup lang="ts">
 const termCards = [
   {
-    term: 'Napkin',
-    summary:
-      'The shared bet page. It holds the people, the sides, the stake, the status, and the settle-up record.',
-  },
-  {
-    term: 'Simple bet',
-    summary:
-      'A two-person napkin. One stake, one opponent, and the cleanest path from idea to agreed bet.',
-  },
-  {
-    term: 'Pool',
-    summary:
-      'A group napkin. Use it when there are several people, multiple lanes, draft order, or split payouts.',
-  },
-  {
     term: 'Event',
     summary:
-      'The real-world thing the napkin can attach to: a game, a round, a race, or another scheduled result.',
+      'The real-world game, round, or matchup. This should be the first thing you pick whenever it exists.',
+  },
+  {
+    term: 'Bet',
+    summary:
+      'The thing you create from an event. It holds the people, the side, the stake, the status, and the settle-up record.',
+  },
+  {
+    term: 'One-on-one bet',
+    summary:
+      'The default. One stake, one opponent, and one clear side.',
+  },
+  {
+    term: 'Group bet',
+    summary:
+      'Use this only when there are several people or several outcomes to track.',
   },
   {
     term: 'Friend',
-    summary: 'Someone you bet with often. Adding them once makes future one-on-ones much faster.',
+    summary: 'Someone you bet with often. Save them once so one-on-one bets are faster next time.',
   },
   {
     term: 'Group',
     summary:
-      'A recurring room of people. It gives a napkin a home before anyone starts picking sides.',
+      'A recurring room of people. It gives a group bet a home before anyone starts picking sides.',
   },
   {
     term: 'Side',
-    summary: 'One possible outcome on the napkin, like Celtics, Lakers, Yes, or No.',
+    summary: 'One possible outcome on the bet, like Celtics, Lakers, Yes, or No.',
   },
   {
     term: 'Settle-up',
     summary:
       'The last step. Napkinbets records proof and reminders, but the actual transfer still happens in Venmo, PayPal, Cash App, or Zelle.',
   },
+  {
+    term: 'Napkin',
+    summary:
+      'Mostly an internal Napkinbets word for the shared bet page. If you see it in a URL or older screen, just read it as bet.',
+  },
 ] as const
 
 const relationshipSteps = [
-  'Start with a napkin.',
-  'Choose simple bet for one-on-one or pool for a group.',
-  'Attach an event if one exists, or keep it custom.',
+  'Pick an event first whenever one exists.',
+  'Create a bet from that event.',
+  'Choose one-on-one by default, or group bet if several people are involved.',
   'Add friends or pick a group.',
   'Lock the sides and the stake.',
   'Track the result, then record settle-up proof.',
 ] as const
 
 useSeo({
-  title: 'Guide',
+  title: 'Help',
   description:
-    'A simple guide to what a napkin is, how simple bets and pools differ, and how the main objects fit together.',
+    'A simple guide to events, bets, one-on-one bets, group bets, and how the main objects fit together.',
   image: '/brand/og/home.webp',
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Guide',
+  name: 'Napkinbets Help',
   description: 'A knowledge base for Napkinbets concepts, terms, and object relationships.',
 })
 </script>
@@ -66,11 +71,11 @@ useWebPageSchema({
   <div class="napkinbets-page">
     <div class="napkinbets-hero">
       <div class="space-y-4">
-        <p class="napkinbets-kicker">Guide</p>
-        <h1 class="napkinbets-section-title">How the product is organized in plain English.</h1>
+        <p class="napkinbets-kicker">Help</p>
+        <h1 class="napkinbets-section-title">How the product works in plain English.</h1>
         <p class="napkinbets-hero-lede">
-          The app got too abstract. This is the compact map of what each term means and how they fit
-          together.
+          The app got too abstract. This is the compact map of what each word means and which ones
+          you can safely ignore.
         </p>
       </div>
     </div>

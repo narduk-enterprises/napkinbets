@@ -18,14 +18,14 @@ useNapkinbetsAutoRefresh(discoverState.refresh)
 useSeo({
   title: 'Browse live and upcoming games',
   description:
-    'Browse live and upcoming games, then start a napkin from real sports context instead of typing everything by hand.',
+    'Browse live and upcoming games, then start a bet from the game instead of typing everything by hand.',
   image: '/brand/og/discover.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets Games',
   description:
-    'A sports schedule browser for starting friendly napkins from live and upcoming games.',
+    'A sports schedule browser for starting friendly bets from live and upcoming games.',
 })
 </script>
 
@@ -35,10 +35,10 @@ useWebPageSchema({
       <div class="napkinbets-hero-grid napkinbets-hero-grid-discovery">
         <div class="space-y-4">
           <p class="napkinbets-kicker">Events</p>
-          <h1 class="napkinbets-section-title">Start from tonight&apos;s games.</h1>
+          <h1 class="napkinbets-section-title">Pick a game, then start a bet.</h1>
           <p class="napkinbets-hero-lede">
-            Pick a real game, keep the terms short, and start a napkin without typing the whole
-            setup from scratch.
+            This is the main path. Choose a live or upcoming game, then fill in only the people,
+            side, and stake.
           </p>
           <div class="napkinbets-card-actions">
             <UButton
@@ -46,7 +46,7 @@ useWebPageSchema({
               color="primary"
               icon="i-lucide-ticket-plus"
             >
-              Start a custom napkin
+              Start a custom bet
             </UButton>
             <UButton to="/settings/payments" color="neutral" icon="i-lucide-wallet-cards">
               Payment setup
@@ -83,7 +83,7 @@ useWebPageSchema({
       <div class="space-y-4">
         <div class="space-y-1">
           <p class="napkinbets-kicker">Filters</p>
-          <h2 class="napkinbets-subsection-title">Narrow the games</h2>
+          <h2 class="napkinbets-subsection-title">Filter games</h2>
         </div>
 
         <div class="napkinbets-form-grid">
@@ -107,7 +107,7 @@ useWebPageSchema({
         <div class="flex items-end justify-between gap-3">
           <div class="space-y-1">
             <p class="napkinbets-kicker">Featured</p>
-            <h2 class="napkinbets-subsection-title">Tournaments and watch-list games</h2>
+            <h2 class="napkinbets-subsection-title">Big events worth a closer look</h2>
           </div>
 
           <UButton
@@ -116,7 +116,7 @@ useWebPageSchema({
             variant="ghost"
             icon="i-lucide-flag"
           >
-            Masters quick start
+            Masters group bet
           </UButton>
         </div>
 
@@ -129,53 +129,34 @@ useWebPageSchema({
         </div>
       </div>
 
-      <div class="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <div class="space-y-6">
-          <div
-            v-for="section in filteredSections"
-            :key="section.key"
-            class="napkinbets-section-stack"
-          >
-            <div class="flex items-end justify-between gap-3">
-              <div class="space-y-1">
-                <p class="napkinbets-kicker">{{ section.label }}</p>
-                <h2 class="napkinbets-subsection-title">{{ section.description }}</h2>
-              </div>
-
-              <span class="text-sm text-default">{{ section.events.length }} games</span>
+      <div class="space-y-6">
+        <div
+          v-for="section in filteredSections"
+          :key="section.key"
+          class="napkinbets-section-stack"
+        >
+          <div class="flex items-end justify-between gap-3">
+            <div class="space-y-1">
+              <p class="napkinbets-kicker">{{ section.label }}</p>
+              <h2 class="napkinbets-subsection-title">{{ section.description }}</h2>
             </div>
 
-            <div class="napkinbets-scroll-strip">
-              <NapkinbetsEventCard v-for="event in section.events" :key="event.id" :event="event" />
-            </div>
+            <span class="text-sm text-default">{{ section.events.length }} games</span>
           </div>
 
-          <UAlert
-            v-if="!hasFilteredResults && !discoverState.pending.value"
-            color="info"
-            variant="soft"
-            icon="i-lucide-search-x"
-            title="No events match these filters"
-            description="Try a different sport, league, or status to bring more games back in."
-          />
+          <div class="napkinbets-scroll-strip">
+            <NapkinbetsEventCard v-for="event in section.events" :key="event.id" :event="event" />
+          </div>
         </div>
 
-        <UCard class="napkinbets-panel">
-          <div class="space-y-4">
-            <div class="space-y-1">
-              <p class="napkinbets-kicker">Quick angles</p>
-              <h2 class="napkinbets-subsection-title">Formats that are easy to settle</h2>
-            </div>
-
-            <div class="space-y-3">
-              <NapkinbetsPropIdeaCard
-                v-for="idea in discover.propIdeas.slice(0, 2)"
-                :key="idea.id"
-                :idea="idea"
-              />
-            </div>
-          </div>
-        </UCard>
+        <UAlert
+          v-if="!hasFilteredResults && !discoverState.pending.value"
+          color="info"
+          variant="soft"
+          icon="i-lucide-search-x"
+          title="No events match these filters"
+          description="Try a different sport, league, or status to bring more games back in."
+        />
       </div>
     </div>
   </div>

@@ -1,11 +1,25 @@
 <script setup lang="ts">
 const { isAuthenticated } = useNapkinbetsNavLinks()
 const discoverState = await useNapkinbetsDiscover()
-const dashboardState = isAuthenticated.value ? await useNapkinbetsDashboard() : null
+const workspaceState = isAuthenticated.value
+  ? useNapkinbetsWorkspace({
+      server: false,
+      lazy: true,
+    })
+  : null
 
 const discover = computed(() => discoverState.data.value)
-const dashboard = computed(() => dashboardState?.data.value ?? null)
-const featuredWagers = computed(() => dashboard.value?.wagers.slice(0, 2) ?? [])
+const workspace = computed(() => workspaceState?.data.value ?? null)
+const workspaceBetCount = computed(
+  () => (workspace.value?.ownedWagers.length ?? 0) + (workspace.value?.joinedWagers.length ?? 0),
+)
+const featuredWagers = computed(() => {
+  if (!workspace.value) {
+    return []
+  }
+
+  return [...workspace.value.ownedWagers, ...workspace.value.joinedWagers].slice(0, 2)
+})
 const featuredSpotlight = computed(() => discover.value.spotlights[0] ?? null)
 const openingEvents = computed(() =>
   discover.value.sections
@@ -14,16 +28,16 @@ const openingEvents = computed(() =>
 )
 
 useSeo({
-  title: 'Simple bets and group napkins for games, props, and drafts',
+  title: 'Real games first. Simple bets second.',
   description:
-    'Napkinbets turns live games, props, and drafts into clean social napkins with manual payment follow-up.',
+    'Napkinbets starts with real games, then helps you spin up simple bets and group bets without the usual text-thread mess.',
   image: '/brand/og/home.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets',
   description:
-    'A social sports app for quick one-on-one bets, group napkins, props, drafts, and watch-party side bets.',
+    'A social sports app for starting bets from real games and settling up off-platform.',
 })
 </script>
 
@@ -37,15 +51,15 @@ useWebPageSchema({
             <h1 class="napkinbets-hero-title">
               {{
                 isAuthenticated
-                  ? 'Run tonight’s napkins without running the group chat.'
-                  : 'Put the side bet where everyone can see it.'
+                  ? 'Start from a real game and keep the bet clear.'
+                  : 'Pick a game. Start a bet. Settle after the final.'
               }}
             </h1>
             <p class="napkinbets-hero-lede">
               {{
                 isAuthenticated
-                  ? 'Start from a real game, keep the rules short, track the picks, and settle up after the final.'
-                  : 'Pick a real game, keep it simple, and settle up after the final.'
+                  ? 'Browse events first, choose one-on-one or group only if you need it, and keep the rest short.'
+                  : 'Napkinbets helps you turn a live or upcoming game into a simple side bet without rebuilding the whole setup by hand.'
               }}
             </p>
           </div>
@@ -60,7 +74,7 @@ useWebPageSchema({
               color="neutral"
               icon="i-lucide-ticket-plus"
             >
-              {{ isAuthenticated ? 'Start a napkin' : 'Create account' }}
+              {{ isAuthenticated ? 'Start a custom bet' : 'Create account' }}
             </UButton>
             <UButton
               v-if="!isAuthenticated"
@@ -82,16 +96,25 @@ useWebPageSchema({
         </div>
 
         <div class="napkinbets-hero-stack">
-          <div v-if="isAuthenticated && dashboard" class="napkinbets-aside-note">
-            <p class="napkinbets-kicker">My napkins</p>
-            <p class="napkinbets-surface-value">{{ dashboard.metrics[0]?.value || '0' }}</p>
-            <p class="napkinbets-support-copy">Hosted, joined, and still in motion.</p>
-          </div>
+          <ClientOnly v-if="isAuthenticated">
+            <template #fallback>
+              <div class="napkinbets-aside-note">
+                <p class="napkinbets-kicker">My bets</p>
+                <p class="napkinbets-support-copy">Loading your started and joined bets.</p>
+              </div>
+            </template>
+
+            <div class="napkinbets-aside-note">
+              <p class="napkinbets-kicker">My bets</p>
+              <p class="napkinbets-surface-value">{{ workspaceBetCount }}</p>
+              <p class="napkinbets-support-copy">Started, joined, and still waiting on a result.</p>
+            </div>
+          </ClientOnly>
 
           <div v-else class="napkinbets-aside-note">
             <p class="napkinbets-kicker">What it does</p>
             <p class="napkinbets-support-copy">
-              Start from a game, invite the room, track picks, and settle after it goes final.
+              Start from a game, invite one person or a group, and settle after it goes final.
             </p>
           </div>
 
@@ -114,7 +137,7 @@ useWebPageSchema({
         <div class="space-y-1">
           <p class="napkinbets-kicker">{{ isAuthenticated ? 'On deck' : 'Tonight' }}</p>
           <h2 class="napkinbets-section-title">
-            {{ isAuthenticated ? 'Live and upcoming games' : 'A few good places to start' }}
+            {{ isAuthenticated ? 'Pick a game and go' : 'A few good games to start from' }}
           </h2>
         </div>
         <UButton to="/events" color="neutral">
@@ -127,14 +150,29 @@ useWebPageSchema({
       </div>
     </div>
 
-    <div v-if="isAuthenticated" class="napkinbets-section-stack">
+    <ClientOnly v-if="isAuthenticated">
+      <template #fallback>
+        <div class="napkinbets-section-stack">
+          <div class="flex items-end justify-between gap-3">
+            <div class="space-y-1">
+              <p class="napkinbets-kicker">Open bets</p>
+              <h2 class="napkinbets-section-title">Loading your active bets</h2>
+            </div>
+            <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
+              My bets
+            </UButton>
+          </div>
+        </div>
+      </template>
+
+      <div class="napkinbets-section-stack">
       <div class="flex items-end justify-between gap-3">
         <div class="space-y-1">
-          <p class="napkinbets-kicker">Open napkins</p>
-          <h2 class="napkinbets-section-title">Napkins already in motion</h2>
+          <p class="napkinbets-kicker">Open bets</p>
+          <h2 class="napkinbets-section-title">Bets already in motion</h2>
         </div>
         <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
-          My napkins
+          My bets
         </UButton>
       </div>
 
@@ -142,8 +180,8 @@ useWebPageSchema({
         <NapkinbetsNapkinSummaryCard
           v-for="wager in featuredWagers"
           :key="wager.id"
-          title="Live napkin"
-          description="Players, picks, reminders, and payment follow-up stay in one place."
+          title="Open bet"
+          description="People, picks, reminders, and payment follow-up stay in one place."
           :wager="wager"
         />
       </div>
@@ -153,9 +191,10 @@ useWebPageSchema({
         color="info"
         variant="soft"
         icon="i-lucide-ticket"
-        title="No napkins yet"
-        description="Start from events or spin up a quick custom napkin for tonight."
+        title="No bets yet"
+        description="Start from Events first, or make a quick custom bet when the game is not listed."
       />
-    </div>
+      </div>
+    </ClientOnly>
   </div>
 </template>

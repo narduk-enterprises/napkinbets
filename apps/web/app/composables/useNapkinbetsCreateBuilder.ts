@@ -34,10 +34,10 @@ interface ParticipantSeedDraft {
 }
 
 const POOL_FORMAT_OPTIONS = [
-  { label: 'Pick a winner', value: 'sports-game' },
-  { label: 'Prop pool', value: 'sports-prop' },
+  { label: 'Game winner', value: 'sports-game' },
+  { label: 'Prop picks', value: 'sports-prop' },
   { label: 'Golf draft', value: 'golf-draft' },
-  { label: 'Custom room', value: 'custom-prop' },
+  { label: 'Custom group', value: 'custom-prop' },
 ]
 
 const PAYMENT_OPTIONS = [
@@ -299,16 +299,16 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
           ? formState.eventTitle || formState.title
           : selectedLeague.value?.label || selectedSport.value?.label || 'the room'
 
-      return `One-on-one napkin for ${eventLabel}, set against ${opponent}, with one stake and manual settle-up after the result is official.`
+      return `One-on-one bet for ${eventLabel}, set against ${opponent}, with one stake and manual settle-up after the result is official.`
     }
 
-    return `Group napkin for ${formState.title}, with shared sides, tracked entries, and manual settle-up outside the app.`
+    return `Group bet for ${formState.title}, with shared sides, tracked entries, and manual settle-up outside the app.`
   })
 
   const closeoutTerms = computed(() => {
     const provider = formState.paymentService || 'your payment app'
 
-    return `Friendly bets only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the napkin, reminders, and proof instead of moving money.`
+    return `Friendly bets only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the bet, reminders, and proof instead of moving money.`
   })
 
   const payload = computed<CreateWagerInput>(() => {

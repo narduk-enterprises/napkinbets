@@ -69,13 +69,13 @@ async function handleRemove(friendshipId: string) {
 
 useSeo({
   title: 'Friends',
-  description: 'Add the people you actually bet with so one-on-one napkins are fast to start.',
+  description: 'Add the people you actually bet with so one-on-one bets are fast to start.',
   image: '/brand/og/dashboard.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets Friends',
-  description: 'Manage friends for quick one-on-one napkins and shared rooms.',
+  description: 'Manage friends for quick one-on-one bets and shared rooms.',
 })
 </script>
 
@@ -84,9 +84,9 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">Friends</p>
-        <h1 class="napkinbets-section-title">Keep the people handy before you start the napkin.</h1>
+        <h1 class="napkinbets-section-title">Keep the people handy before you start the bet.</h1>
         <p class="napkinbets-hero-lede">
-          Add regular opponents once, then spin up a simple bet without retyping names every time.
+          Add regular opponents once, then spin up a one-on-one bet without retyping names every time.
         </p>
       </div>
     </div>
@@ -160,7 +160,7 @@ useWebPageSchema({
             <div class="flex items-center justify-between gap-3">
               <div class="space-y-1">
                 <p class="napkinbets-kicker">Your bench</p>
-                <h2 class="napkinbets-subsection-title">Friends ready for a simple bet</h2>
+                <h2 class="napkinbets-subsection-title">Friends ready for a one-on-one bet</h2>
               </div>
               <UBadge color="neutral" variant="subtle">{{
                 friendsStore.friends.value.length
@@ -186,7 +186,7 @@ useWebPageSchema({
                     size="sm"
                     icon="i-lucide-ticket-plus"
                   >
-                    Start simple bet
+                    Start bet
                   </UButton>
                   <UButton
                     color="neutral"
@@ -208,7 +208,7 @@ useWebPageSchema({
               variant="soft"
               icon="i-lucide-users"
               title="No friends yet"
-              description="Add one person here and the simple-bet flow gets much faster."
+              description="Add one person here and the one-on-one flow gets much faster."
             />
           </div>
         </UCard>

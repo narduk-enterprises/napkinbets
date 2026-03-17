@@ -113,8 +113,8 @@ const canSubmit = computed(() => {
 
 const formSummary = computed(() =>
   props.mode === 'event'
-    ? 'Start from the attached event, then only choose the room, the people, and the stake.'
-    : 'Keep it light: choose the napkin type, the people, and only the structure you actually need.',
+    ? 'Start from the attached game, then only choose the people, side, and stake.'
+    : 'Keep it light: one-on-one first, group only when you actually need it.',
 )
 
 function submit() {
@@ -130,9 +130,9 @@ function submit() {
   <UCard id="napkinbets-create" class="napkinbets-panel">
     <template #header>
       <div class="space-y-2">
-        <p class="napkinbets-kicker">Start a napkin</p>
+        <p class="napkinbets-kicker">Start a bet</p>
         <h2 class="napkinbets-section-title">
-          {{ mode === 'event' ? 'Keep the setup tight' : 'Choose the simple path first' }}
+          {{ mode === 'event' ? 'Keep the setup tight' : 'Choose the simplest setup that works' }}
         </h2>
         <p class="napkinbets-support-copy">{{ formSummary }}</p>
       </div>
@@ -147,11 +147,9 @@ function submit() {
           :class="{ 'napkinbets-choice-panel-active': formState.napkinType === 'simple-bet' }"
           @click="formState.napkinType = 'simple-bet'"
         >
-          <span class="napkinbets-surface-label">Simple bet</span>
+          <span class="napkinbets-surface-label">One-on-one</span>
           <span class="font-semibold text-default">One opponent, one stake, one clear side.</span>
-          <span class="text-sm text-muted"
-            >This is the default napkin for quick win-or-lose bets.</span
-          >
+          <span class="text-sm text-muted">This is the default for quick win-or-lose bets.</span>
         </UButton>
 
         <UButton
@@ -161,11 +159,9 @@ function submit() {
           :class="{ 'napkinbets-choice-panel-active': formState.napkinType === 'pool' }"
           @click="formState.napkinType = 'pool'"
         >
-          <span class="napkinbets-surface-label">Pool</span>
-          <span class="font-semibold text-default"
-            >Use this when there are several people or payout lanes.</span
-          >
-          <span class="text-sm text-muted">Keep this for a room, draft, or a shared board.</span>
+          <span class="napkinbets-surface-label">Group bet</span>
+          <span class="font-semibold text-default">Use this when there are several people or multiple outcomes.</span>
+          <span class="text-sm text-muted">Keep this for a room, draft, or shared watch party.</span>
         </UButton>
       </div>
 
@@ -174,7 +170,7 @@ function submit() {
         class="napkinbets-event-preview napkinbets-surface"
       >
         <div class="space-y-1">
-          <p class="napkinbets-surface-label">Attached event</p>
+          <p class="napkinbets-surface-label">Attached game</p>
           <p class="font-semibold text-default">
             {{
               eventPreview.awayTeamName && eventPreview.homeTeamName
@@ -194,7 +190,7 @@ function submit() {
             selectedLeague?.label || 'Attached league'
           }}</span>
           <span class="napkinbets-choice-chip">{{
-            formState.napkinType === 'simple-bet' ? 'Simple bet' : 'Pool'
+            formState.napkinType === 'simple-bet' ? 'One-on-one' : 'Group bet'
           }}</span>
         </div>
       </div>
@@ -202,7 +198,7 @@ function submit() {
       <div class="napkinbets-form-grid">
         <UFormField
           name="title"
-          :label="formState.napkinType === 'simple-bet' ? 'Napkin title' : 'Pool title'"
+          :label="formState.napkinType === 'simple-bet' ? 'Bet title' : 'Group bet title'"
         >
           <UInput v-model="formState.title" class="w-full" />
         </UFormField>
@@ -224,7 +220,7 @@ function submit() {
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Context</p>
-            <h3 class="napkinbets-subsection-title">Where this napkin lives</h3>
+            <h3 class="napkinbets-subsection-title">Where this bet lives</h3>
           </div>
 
           <div class="napkinbets-form-grid">
@@ -267,7 +263,7 @@ function submit() {
             </template>
 
             <div v-if="groupOptions.length" class="space-y-2">
-              <p class="napkinbets-surface-label">Group</p>
+              <p class="napkinbets-surface-label">Saved group</p>
               <div class="napkinbets-chip-grid">
                 <UButton
                   color="neutral"
@@ -320,9 +316,7 @@ function submit() {
           <div class="space-y-2">
             <p class="napkinbets-kicker">People and sides</p>
             <h3 class="napkinbets-subsection-title">
-              {{
-                isSimpleBet ? 'Pick the opponent and your side' : 'Set the room without a text wall'
-              }}
+              {{ isSimpleBet ? 'Pick the opponent and your side' : 'Set up the group bet' }}
             </h3>
           </div>
 
@@ -393,7 +387,7 @@ function submit() {
               </div>
 
               <div class="napkinbets-surface">
-                <p class="napkinbets-surface-label">Simple bet summary</p>
+                <p class="napkinbets-surface-label">Bet summary</p>
                 <p class="text-sm leading-6 text-default">{{ boardSummary }}</p>
               </div>
 
@@ -403,7 +397,7 @@ function submit() {
                 variant="soft"
                 icon="i-lucide-user-round-plus"
                 title="No saved friends yet"
-                description="You can still type one opponent name, or add friends first to make this faster next time."
+                description="You can still type one opponent name, or save friends first to make this faster next time."
               >
                 <template #actions>
                   <UButton to="/friends" color="primary" variant="soft" size="sm"
@@ -417,7 +411,7 @@ function submit() {
           <template v-else>
             <div class="napkinbets-surface space-y-4">
               <div class="grid gap-4 sm:grid-cols-2">
-                <UFormField name="format" label="Pool style">
+                <UFormField name="format" label="Group style">
                   <USelect v-model="formState.format" :items="poolFormatOptions" class="w-full" />
                 </UFormField>
 
@@ -565,7 +559,7 @@ function submit() {
             :disabled="!canSubmit"
             class="w-full justify-center"
           >
-            {{ isAuthenticated ? 'Create napkin' : 'Create account to publish' }}
+            {{ isAuthenticated ? 'Create bet' : 'Create account to publish' }}
           </UButton>
         </div>
       </div>

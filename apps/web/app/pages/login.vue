@@ -8,13 +8,13 @@ const demoAccess = useNapkinbetsDemoAccess()
 
 useSeo({
   title: 'Sign in to Napkinbets',
-  description: 'Sign in to manage your napkins, picks, and payment follow-up.',
+  description: 'Sign in to manage your bets, picks, and payment follow-up.',
   image: '/brand/og/auth.webp',
 })
 
 useWebPageSchema({
   name: 'Sign in to Napkinbets',
-  description: 'Sign in to access your Napkinbets napkins.',
+  description: 'Sign in to access your Napkinbets bets.',
 })
 </script>
 
@@ -24,10 +24,10 @@ useWebPageSchema({
       <div class="napkinbets-auth-rail">
         <div class="space-y-4">
           <p class="napkinbets-kicker">Sign in</p>
-          <h1 class="napkinbets-hero-title napkinbets-auth-title">Get back to your napkins.</h1>
+          <h1 class="napkinbets-hero-title napkinbets-auth-title">Get back to your bets.</h1>
           <p class="napkinbets-hero-lede">
-            Open the games, run your hosted napkins, and confirm payment proof without digging
-            through messages.
+            Open the games, run your bets, and confirm payment proof without digging through
+            messages.
           </p>
         </div>
       </div>
@@ -36,9 +36,9 @@ useWebPageSchema({
         <NapkinbetsAuthStage
           eyebrow="Sign in"
           title="Account access"
-          description="Access your napkins and player controls."
+          description="Access your bets and player controls."
         >
-          <AuthLoginCard title="Sign in" subtitle="Access your napkins and player controls">
+          <AuthLoginCard title="Sign in" subtitle="Access your bets and player controls">
             <template #after-form>
               <div class="mt-4">
                 <UButton

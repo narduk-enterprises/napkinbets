@@ -445,7 +445,7 @@ export function getNapkinbetsContextLabel(contextKey: string) {
 export function normalizeCreateWagerTaxonomyInput(input: CreateWagerTaxonomyInput) {
   const boardType = NAPKINBETS_BOARD_TYPES.find((value) => value === input.boardType)
   if (!boardType) {
-    throw new Error('Select a valid board type before saving the wager.')
+    throw new Error('Select a valid bet format before saving the wager.')
   }
 
   const sport = findNapkinbetsSport(input.sport)

@@ -47,7 +47,7 @@ async function handleJoin(groupId: string) {
 
 useSeo({
   title: 'Groups',
-  description: 'Keep recurring rooms together so napkins start with the right crowd and context.',
+  description: 'Keep recurring rooms together so bets start with the right crowd and context.',
   image: '/brand/og/dashboard.webp',
 })
 
@@ -176,7 +176,7 @@ useWebPageSchema({
                   size="sm"
                   icon="i-lucide-ticket-plus"
                 >
-                  Start a napkin
+                  Start group bet
                 </UButton>
               </div>
             </div>

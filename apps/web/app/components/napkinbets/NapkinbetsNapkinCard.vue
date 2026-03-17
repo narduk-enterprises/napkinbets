@@ -212,7 +212,7 @@ function submitSettlement() {
               {{ wager.description }}
             </p>
             <div class="napkinbets-meta-row">
-              <span>{{ wager.eventTitle || 'Custom napkin' }}</span>
+              <span>{{ wager.eventTitle || 'Custom bet' }}</span>
               <span v-if="wager.groupName">{{ wager.groupName }}</span>
               <span>{{ wager.venueName || 'Remote group' }}</span>
               <span>Host: {{ wager.creatorName }}</span>
@@ -264,9 +264,9 @@ function submitSettlement() {
           </div>
 
           <div class="napkinbets-surface">
-            <p class="napkinbets-surface-label">Total pot</p>
+            <p class="napkinbets-surface-label">Total payout</p>
             <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
-            <p class="napkinbets-support-copy">{{ wager.pots.length }} side pots tracked</p>
+            <p class="napkinbets-support-copy">{{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}</p>
           </div>
 
           <div class="napkinbets-surface">
@@ -277,7 +277,7 @@ function submitSettlement() {
         </div>
 
         <div class="space-y-3">
-          <h3 class="napkinbets-subsection-title">Pot breakdown</h3>
+          <h3 class="napkinbets-subsection-title">Payout breakdown</h3>
           <div class="napkinbets-chip-grid">
             <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
               <span class="font-semibold text-default">{{ pot.label }}</span>
@@ -395,7 +395,7 @@ function submitSettlement() {
 
         <div v-if="isAuthenticated" class="napkinbets-form-section">
           <div class="space-y-4">
-            <h3 class="napkinbets-subsection-title">Join the napkin</h3>
+            <h3 class="napkinbets-subsection-title">Join the bet</h3>
             <div class="napkinbets-chip-grid">
               <span
                 v-for="option in wager.sideOptions"
@@ -422,7 +422,7 @@ function submitSettlement() {
                 icon="i-lucide-user-plus"
                 :loading="isBusy(`join:${wager.id}`)"
               >
-                Join napkin
+                Join bet
               </UButton>
             </UForm>
           </div>
@@ -500,7 +500,7 @@ function submitSettlement() {
           variant="soft"
           icon="i-lucide-log-in"
           title="Sign in to join, pick, or settle"
-          description="Napkin detail is shareable, but player actions and payment proof require an account."
+          description="Bet detail is shareable, but player actions and payment proof require an account."
         >
           <template #actions>
             <div class="napkinbets-card-actions">
@@ -575,6 +575,10 @@ function submitSettlement() {
               </div>
             </div>
           </div>
+
+          <p v-else class="napkinbets-support-copy">
+            Add a sport and league to this bet to see live scoreboard context here.
+          </p>
 
           <div v-if="wager.weather" class="napkinbets-weather-card">
             <div class="flex items-start justify-between gap-4">

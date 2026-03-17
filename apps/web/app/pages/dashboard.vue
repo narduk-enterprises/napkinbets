@@ -22,15 +22,15 @@ const isInitialWorkspaceLoad = computed(() => {
 useNapkinbetsAutoRefresh(workspaceState.refresh)
 
 useSeo({
-  title: 'My napkins',
+  title: 'My bets',
   description:
-    'Manage the napkins you host, the ones you joined, and the settle-up follow-up still waiting on action.',
+    'Manage the bets you started, the ones you joined, and the settle-up follow-up still waiting on action.',
   image: '/brand/og/dashboard.webp',
 })
 
 useWebPageSchema({
-  name: 'Napkinbets My Napkins',
-  description: 'A protected dashboard for managing napkins, picks, reminders, and settle-up tasks.',
+  name: 'Napkinbets My Bets',
+  description: 'A protected dashboard for managing bets, picks, reminders, and settle-up tasks.',
 })
 </script>
 
@@ -38,13 +38,11 @@ useWebPageSchema({
   <div class="napkinbets-page">
     <div class="napkinbets-hero">
       <div class="space-y-4">
-        <p class="napkinbets-kicker">My napkins</p>
-        <h1 class="napkinbets-section-title">
-          Everything you host, joined, or still need to settle.
-        </h1>
+        <p class="napkinbets-kicker">My bets</p>
+        <h1 class="napkinbets-section-title">Everything you started, joined, or still need to settle.</h1>
         <p class="napkinbets-hero-lede">
-          Keep the active napkins, player follow-up, and payment confirmation in one place instead
-          of chasing it through messages.
+          Keep the active bets, player follow-up, and payment confirmation in one place instead of
+          chasing it through messages.
         </p>
         <div class="flex flex-wrap gap-2">
           <UButton to="/friends" color="neutral" variant="soft" icon="i-lucide-user-round-plus">
@@ -54,7 +52,7 @@ useWebPageSchema({
             Groups
           </UButton>
           <UButton to="/guide" color="neutral" variant="soft" icon="i-lucide-book-open-text">
-            Guide
+            Help
           </UButton>
         </div>
       </div>
@@ -65,7 +63,7 @@ useWebPageSchema({
         <div class="napkinbets-aside-note">
           <p class="napkinbets-kicker">Loading</p>
           <p class="napkinbets-support-copy">
-            Pulling your napkins, reminders, and settle-up queue.
+            Pulling your bets, reminders, and settle-up queue.
           </p>
         </div>
       </template>
@@ -76,17 +74,17 @@ useWebPageSchema({
           color="error"
           variant="soft"
           icon="i-lucide-circle-alert"
-          title="My napkins failed to load"
+          title="My bets failed to load"
           :description="workspaceState.error.value.message"
         />
 
         <div v-else-if="isInitialWorkspaceLoad" class="napkinbets-aside-note">
           <p class="napkinbets-kicker">Loading</p>
           <p class="napkinbets-support-copy">
-            Pulling your hosted napkins, joined napkins, and reminder queue.
+            Pulling your started bets, joined bets, and reminder queue.
           </p>
           <div class="pt-3">
-            <UButton color="neutral" variant="ghost" loading> Loading your napkins </UButton>
+            <UButton color="neutral" variant="ghost" loading> Loading your bets </UButton>
           </div>
         </div>
 
@@ -103,7 +101,7 @@ useWebPageSchema({
             <div class="space-y-4">
               <div class="flex items-center justify-between gap-3">
                 <div class="space-y-1">
-                  <p class="napkinbets-kicker">Hosted napkins</p>
+                  <p class="napkinbets-kicker">Bets you started</p>
                   <h2 class="napkinbets-subsection-title">You run these</h2>
                 </div>
 
@@ -113,7 +111,7 @@ useWebPageSchema({
                   variant="soft"
                   icon="i-lucide-ticket-plus"
                 >
-                  Start a napkin
+                  Start a bet
                 </UButton>
               </div>
 
@@ -122,9 +120,9 @@ useWebPageSchema({
                   v-for="wager in workspace.ownedWagers"
                   :key="wager.id"
                   title="Host view"
-                  description="Open the napkin to manage people, picks, reminders, and payment confirmation."
+                  description="Open the bet to manage people, picks, reminders, and payment confirmation."
                   :wager="wager"
-                  action-label="Manage napkin"
+                  action-label="Manage bet"
                 />
               </div>
 
@@ -133,20 +131,20 @@ useWebPageSchema({
                 color="info"
                 variant="soft"
                 icon="i-lucide-ticket-plus"
-                title="No hosted napkins yet"
-                description="Start with a simple bet from Events, or build a custom napkin for your room."
+                title="No started bets yet"
+                description="Start from Events first, or build a quick custom bet for your room."
               />
 
               <div class="space-y-3 pt-4">
-                <p class="napkinbets-kicker">Joined napkins</p>
+                <p class="napkinbets-kicker">Bets you joined</p>
                 <div v-if="workspace.joinedWagers.length" class="space-y-4">
                   <NapkinbetsNapkinSummaryCard
                     v-for="wager in workspace.joinedWagers"
                     :key="wager.id"
                     title="Player view"
-                    description="Open the napkin to add picks or confirm payment proof."
+                    description="Open the bet to add picks or confirm payment proof."
                     :wager="wager"
-                    action-label="Open napkin"
+                    action-label="Open bet"
                   />
                 </div>
 
@@ -155,8 +153,8 @@ useWebPageSchema({
                   color="neutral"
                   variant="soft"
                   icon="i-lucide-users"
-                  title="You have not joined any napkins yet"
-                  description="Use Events to find a live or upcoming game, or join a napkin from a shared link."
+                  title="You have not joined any bets yet"
+                  description="Use Events to find a live or upcoming game, or join a bet from a shared link."
                 />
               </div>
             </div>

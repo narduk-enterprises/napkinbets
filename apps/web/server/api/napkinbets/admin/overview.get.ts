@@ -49,13 +49,13 @@ export default defineEventHandler(async (event) => {
       {
         label: 'Admins',
         value: String(userRows.filter((user) => Boolean(user.isAdmin)).length),
-        hint: 'accounts with board controls',
+        hint: 'accounts with host controls',
         icon: 'i-lucide-shield-check',
       },
       {
         label: 'Tracked wagers',
         value: String(dashboard.wagers.length),
-        hint: 'all pools across the product',
+        hint: 'all bets across the product',
         icon: 'i-lucide-ticket',
       },
       {

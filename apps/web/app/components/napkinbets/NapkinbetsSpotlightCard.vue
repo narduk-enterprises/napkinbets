@@ -89,7 +89,7 @@ const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
 
     <div class="napkinbets-card-actions">
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-ticket-plus">
-        Start napkin
+        Start bet
       </UButton>
       <UButton to="/events" color="neutral" size="sm" icon="i-lucide-arrow-right">
         See games

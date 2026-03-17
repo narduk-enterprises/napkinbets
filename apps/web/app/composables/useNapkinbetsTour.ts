@@ -25,12 +25,12 @@ const slides: NapkinbetsTourSlide[] = [
     step: 'Napkinbets',
     title: 'Friendly side bets, finally organized.',
     summary:
-      'Take the side bet out of the chat thread and put it in one clear pool the whole room can follow.',
+      'Take the side bet out of the chat thread and put it in one clear bet the whole room can follow.',
     imageSrc: '/brand/imagery/live-room-editorial.webp',
     imageAlt: 'Napkinbets live room editorial illustration',
     accentClass: 'from-white via-amber-100/80 to-emerald-100/75',
     highlights: [
-      'Works for games, pools, props, drafts, and custom room bets.',
+      'Works for games, one-on-ones, group bets, props, drafts, and custom room bets.',
       'Keeps the tone social instead of looking like a sportsbook.',
       'Money still moves through Venmo, PayPal, Cash App, or Zelle.',
     ],
@@ -41,12 +41,12 @@ const slides: NapkinbetsTourSlide[] = [
     step: '01 · Events',
     title: 'Start with the games.',
     summary:
-      'Pick from live and upcoming games first, then launch a pool from real context instead of typing everything by hand.',
+      'Pick from live and upcoming games first, then launch a bet from real context instead of typing everything by hand.',
     imageSrc: '/brand/imagery/discovery-paper-grid.webp',
     imageAlt: 'Napkinbets discovery background illustration',
     accentClass: 'from-emerald-100/90 via-white to-amber-100/80',
     highlights: [
-      'See what is live, what is next, and what is worth a quick pool right now.',
+      'See what is live, what is next, and what is worth a quick bet right now.',
       'Use sport, league, and status filters instead of freeform entry.',
       'Golf fits the same intake flow without taking over the product.',
     ],
@@ -54,19 +54,19 @@ const slides: NapkinbetsTourSlide[] = [
   },
   {
     id: 'tour-board',
-    step: '02 · Pool',
-    title: 'Run the room in one pool.',
+    step: '02 · Bet',
+    title: 'Run the room in one bet.',
     summary:
-      'Players, sides, picks, reminders, and leaderboard state all stay attached to the pool instead of scattered across messages.',
+      'Players, sides, picks, reminders, and leaderboard state all stay attached to the bet instead of scattered across messages.',
     imageSrc: '/brand/imagery/masters-week-editorial.webp',
-    imageAlt: 'Napkinbets tournament pool illustration',
+    imageAlt: 'Napkinbets group bet illustration',
     accentClass: 'from-amber-100/85 via-white to-emerald-100/70',
     highlights: [
       'Quick presets reduce setup friction for common bet shapes.',
-      'Event-backed and custom pools use the same core model.',
+      'Event-backed and custom bets use the same core model.',
       'The room sees one source of truth for what the bet actually is.',
     ],
-    footnote: 'The pool is the source of truth.',
+    footnote: 'The bet is the source of truth.',
   },
   {
     id: 'tour-closeout',
@@ -95,7 +95,7 @@ const slides: NapkinbetsTourSlide[] = [
     accentClass: 'from-white via-amber-100/75 to-emerald-100/80',
     highlights: [
       'Broader event ingestion across major sports, college schedules, and higher-signal special events, with better imagery and logos.',
-      'Community-created events so a pool can start from local tournaments, school sports, or one-off room ideas.',
+      'Community-created events so a bet can start from local tournaments, school sports, or one-off room ideas.',
       'Smarter assistive flows for filling gaps, suggesting structure, and reducing manual setup even further.',
     ],
     footnote: 'The roadmap is about less friction and broader coverage.',
@@ -110,14 +110,14 @@ const slides: NapkinbetsTourSlide[] = [
     imageAlt: 'Napkinbets onboarding illustration',
     accentClass: 'from-emerald-100/80 via-white to-white',
     highlights: [
-      'Register to save payment rails and join pools.',
+      'Register to save payment rails and join bets.',
       'Open Events to start from the current schedule.',
       'Use the app directly after this instead of staying in the tour.',
     ],
     footnote: 'This page should get out of the way quickly.',
     actions: [
       {
-        label: 'See the demo account',
+        label: 'Open the demo',
         to: '/demo',
         icon: 'i-lucide-zap',
         color: 'primary',

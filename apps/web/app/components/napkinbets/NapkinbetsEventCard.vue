@@ -103,7 +103,7 @@ const primaryIdeaLink = computed(() =>
       </div>
 
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-plus">
-        Start napkin
+        Bet this game
       </UButton>
     </div>
 
@@ -160,15 +160,15 @@ const primaryIdeaLink = computed(() =>
 
       <div class="napkinbets-event-footer">
         <div class="napkinbets-event-action-row">
-          <UButton
-            v-if="primaryIdea && primaryIdeaLink"
-            :to="primaryIdeaLink"
-            color="neutral"
-            size="sm"
-          >
+          <span v-if="primaryIdea" class="napkinbets-choice-chip">
             {{ primaryIdea.title }}
+          </span>
+          <UButton v-if="primaryIdeaLink" :to="primaryIdeaLink" color="neutral" size="sm">
+            Use this setup
           </UButton>
-          <UButton v-else :to="createLink" color="neutral" size="sm"> Open picks </UButton>
+          <UButton v-else :to="createLink" color="neutral" size="sm">
+            Quick start
+          </UButton>
         </div>
       </div>
     </div>

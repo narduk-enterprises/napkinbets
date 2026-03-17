@@ -54,17 +54,17 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       feedback.value = null
     },
     createWager(payload: CreateWagerInput) {
-      return runAction('create-wager', 'Napkin created and ready to share.', () =>
+      return runAction('create-wager', 'Bet created and ready to share.', () =>
         api.createWager(payload),
       )
     },
     joinWager(wagerId: string, payload: JoinWagerInput) {
-      return runAction(`join:${wagerId}`, 'Participant added to the napkin.', () =>
+      return runAction(`join:${wagerId}`, 'Participant added to the bet.', () =>
         api.joinWager(wagerId, payload),
       )
     },
     addPick(wagerId: string, payload: WagerPickInput) {
-      return runAction(`pick:${wagerId}`, 'Pick added to the napkin.', () =>
+      return runAction(`pick:${wagerId}`, 'Pick added to the bet.', () =>
         api.addPick(wagerId, payload),
       )
     },
@@ -96,7 +96,7 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     clearWager(wagerId: string) {
-      return runAction(`clear:${wagerId}`, 'Napkin cleared.', () => api.clearWager(wagerId))
+      return runAction(`clear:${wagerId}`, 'Bet cleared.', () => api.clearWager(wagerId))
     },
     setAdminStatus(userId: string, isAdmin: boolean) {
       return runAction(

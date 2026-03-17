@@ -32,13 +32,13 @@ export default defineEventHandler(async (event) => {
   return {
     metrics: [
       {
-        label: 'Boards you own',
+        label: 'Bets you started',
         value: String(ownedWagers.length),
         hint: 'managed from your dashboard',
         icon: 'i-lucide-layout-dashboard',
       },
       {
-        label: 'Boards you joined',
+        label: 'Bets you joined',
         value: String(joinedWagers.length),
         hint: 'friendly wagers where you have a seat',
         icon: 'i-lucide-users',

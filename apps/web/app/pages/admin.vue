@@ -82,7 +82,7 @@ const aiControlRows = computed(() => [
 ])
 
 useSeo({
-  title: 'Admin pool controls',
+  title: 'Admin bet controls',
   description:
     'Manage registered users, promote admins, refresh event coverage, and control operator-only features across Napkinbets.',
   ogImage: {
@@ -104,9 +104,9 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">Admin</p>
-        <h1 class="napkinbets-section-title">Run the product, not just the pools.</h1>
+        <h1 class="napkinbets-section-title">Run the product, not just the bets.</h1>
         <p class="napkinbets-hero-lede">
-          This route covers users, pool states, event coverage health, and operator-controlled AI
+          This route covers users, bet states, event coverage health, and operator-controlled AI
           toggles so the product stays explicit.
         </p>
       </div>
@@ -281,8 +281,8 @@ useWebPageSchema({
         <UCard class="napkinbets-panel">
           <div class="space-y-4">
             <div class="space-y-2">
-              <p class="napkinbets-kicker">Boards</p>
-              <h2 class="napkinbets-subsection-title">Pool status management</h2>
+              <p class="napkinbets-kicker">Bets</p>
+              <h2 class="napkinbets-subsection-title">Bet status management</h2>
             </div>
 
             <div class="space-y-4">
@@ -337,7 +337,7 @@ useWebPageSchema({
                     size="sm"
                     icon="i-lucide-arrow-right"
                   >
-                    Open pool
+                    Open bet
                   </UButton>
                 </div>
               </div>

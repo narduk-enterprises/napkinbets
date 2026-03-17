@@ -13,14 +13,14 @@ test.describe('web smoke', () => {
   test('home and events routes render the current Napkinbets flow', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
-    await expect(page.getByText('Put the side bet where everyone can see it.')).toBeVisible()
+    await expect(page.getByText('Pick a game. Start a bet. Settle after the final.')).toBeVisible()
     await expect(page.getByText('Real games')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Browse games' })).toBeVisible()
-    await expect(page).toHaveTitle(/Simple bets and group napkins for games, props, and drafts/)
+    await expect(page).toHaveTitle(/Real games first. Simple bets second./)
 
     await page.goto('/events')
     await waitForHydration(page)
-    await expect(page.getByRole('heading', { name: /Start from tonight/i })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Narrow the games' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Pick a game, then start a bet/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Filter games' })).toBeVisible()
   })
 })
