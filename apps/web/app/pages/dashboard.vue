@@ -73,9 +73,7 @@ useWebPageSchema({
             Pulling your hosted boards, joined boards, and reminder queue.
           </p>
           <div class="pt-3">
-            <UButton color="neutral" variant="ghost" loading>
-              Loading your boards
-            </UButton>
+            <UButton color="neutral" variant="ghost" loading> Loading your boards </UButton>
           </div>
         </div>
 
