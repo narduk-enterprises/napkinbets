@@ -7,7 +7,9 @@ import { z } from 'zod'
 const bodySchema = z.object({
   title: z.string().min(2).max(120),
   description: z.string().max(500).default(''),
-  status: z.enum(['open', 'locked', 'live', 'settling', 'settled', 'closed', 'archived']).default('open'),
+  status: z
+    .enum(['open', 'locked', 'live', 'settling', 'settled', 'closed', 'archived'])
+    .default('open'),
   league: z.string().max(40).default(''),
   eventTitle: z.string().max(160).default(''),
   slug: z.string().max(120).optional(),
@@ -39,7 +41,7 @@ export default defineEventHandler(async (event) => {
     status: parsed.data.status,
     league: parsed.data.league,
     eventTitle: parsed.data.eventTitle,
-    
+
     // Required fields defaults
     napkinType: 'simple-bet',
     boardType: 'manual-curated',

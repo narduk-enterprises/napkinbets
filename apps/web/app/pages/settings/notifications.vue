@@ -75,7 +75,13 @@ useWebPageSchema({
 <template>
   <div class="napkinbets-page">
     <div class="space-y-4 mb-8">
-      <UButton to="/settings" variant="ghost" color="neutral" icon="i-lucide-arrow-left" class="-ml-2">
+      <UButton
+        to="/settings"
+        variant="ghost"
+        color="neutral"
+        icon="i-lucide-arrow-left"
+        class="-ml-2"
+      >
         Back to Settings
       </UButton>
       <div>
@@ -112,7 +118,7 @@ useWebPageSchema({
               <p class="napkinbets-kicker">Social</p>
               <h2 class="napkinbets-subsection-title">Friend & Group Invites</h2>
             </div>
-            
+
             <UFormField
               name="notifyFriendRequests"
               label="Friend Requests"
@@ -139,7 +145,7 @@ useWebPageSchema({
               <p class="napkinbets-kicker">Wagers</p>
               <h2 class="napkinbets-subsection-title">Updates & Settlements</h2>
             </div>
-            
+
             <UFormField
               name="notifyWagerUpdates"
               label="Wager Activity"
@@ -147,9 +153,15 @@ useWebPageSchema({
             >
               <USwitch v-model="formState.notifyWagerUpdates" />
             </UFormField>
-            
+
             <div class="pt-6">
-              <UButton color="primary" icon="i-lucide-save" :loading="isSaving" @click="handleSave" class="w-full justify-center">
+              <UButton
+                color="primary"
+                icon="i-lucide-save"
+                :loading="isSaving"
+                @click="handleSave"
+                class="w-full justify-center"
+              >
                 Save Preferences
               </UButton>
             </div>

@@ -137,11 +137,7 @@ function openFeaturedForm() {
               placeholder="Window label (e.g. Apr 6-12)"
               class="w-full"
             />
-            <UInput
-              v-model="featuredForm.venueLabel"
-              placeholder="Venue label"
-              class="w-full"
-            />
+            <UInput v-model="featuredForm.venueLabel" placeholder="Venue label" class="w-full" />
             <UInput v-model="featuredForm.imageUrl" placeholder="Image URL" class="w-full" />
             <USelect
               v-model="featuredForm.accent"
@@ -202,9 +198,7 @@ function openFeaturedForm() {
                 <UBadge color="warning" variant="soft" size="sm">
                   {{ bet.accent }}
                 </UBadge>
-                <span v-if="bet.windowLabel" class="text-xs text-muted">{{
-                  bet.windowLabel
-                }}</span>
+                <span v-if="bet.windowLabel" class="text-xs text-muted">{{ bet.windowLabel }}</span>
               </div>
               <p class="font-semibold text-default">{{ bet.title }}</p>
               <p class="text-sm text-muted">

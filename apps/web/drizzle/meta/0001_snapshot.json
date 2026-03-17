@@ -184,12 +184,8 @@
           "name": "napkinbets_event_odds_event_id_napkinbets_events_id_fk",
           "tableFrom": "napkinbets_event_odds",
           "tableTo": "napkinbets_events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -278,12 +274,8 @@
           "name": "napkinbets_event_snapshots_event_id_napkinbets_events_id_fk",
           "tableFrom": "napkinbets_event_snapshots",
           "tableTo": "napkinbets_events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -686,12 +678,8 @@
           "name": "napkinbets_friendships_requester_user_id_users_id_fk",
           "tableFrom": "napkinbets_friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "requester_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requester_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -699,12 +687,8 @@
           "name": "napkinbets_friendships_addressee_user_id_users_id_fk",
           "tableFrom": "napkinbets_friendships",
           "tableTo": "users",
-          "columnsFrom": [
-            "addressee_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["addressee_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -766,12 +750,8 @@
           "name": "napkinbets_group_members_group_id_napkinbets_groups_id_fk",
           "tableFrom": "napkinbets_group_members",
           "tableTo": "napkinbets_groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -779,12 +759,8 @@
           "name": "napkinbets_group_members_user_id_users_id_fk",
           "tableFrom": "napkinbets_group_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -865,9 +841,7 @@
       "indexes": {
         "napkinbets_groups_slug_unique": {
           "name": "napkinbets_groups_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -876,12 +850,8 @@
           "name": "napkinbets_groups_owner_user_id_users_id_fk",
           "tableFrom": "napkinbets_groups",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1073,12 +1043,8 @@
           "name": "napkinbets_notifications_wager_id_napkinbets_wagers_id_fk",
           "tableFrom": "napkinbets_notifications",
           "tableTo": "napkinbets_wagers",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wager_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1086,12 +1052,8 @@
           "name": "napkinbets_notifications_target_user_id_users_id_fk",
           "tableFrom": "napkinbets_notifications",
           "tableTo": "users",
-          "columnsFrom": [
-            "target_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1099,12 +1061,8 @@
           "name": "napkinbets_notifications_participant_id_napkinbets_participants_id_fk",
           "tableFrom": "napkinbets_notifications",
           "tableTo": "napkinbets_participants",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1210,12 +1168,8 @@
           "name": "napkinbets_participants_wager_id_napkinbets_wagers_id_fk",
           "tableFrom": "napkinbets_participants",
           "tableTo": "napkinbets_wagers",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wager_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1223,12 +1177,8 @@
           "name": "napkinbets_participants_user_id_users_id_fk",
           "tableFrom": "napkinbets_participants",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1329,12 +1279,8 @@
           "name": "napkinbets_picks_wager_id_napkinbets_wagers_id_fk",
           "tableFrom": "napkinbets_picks",
           "tableTo": "napkinbets_wagers",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wager_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1342,12 +1288,8 @@
           "name": "napkinbets_picks_participant_id_napkinbets_participants_id_fk",
           "tableFrom": "napkinbets_picks",
           "tableTo": "napkinbets_participants",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1402,12 +1344,8 @@
           "name": "napkinbets_pots_wager_id_napkinbets_wagers_id_fk",
           "tableFrom": "napkinbets_pots",
           "tableTo": "napkinbets_wagers",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wager_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1532,12 +1470,8 @@
           "name": "napkinbets_settlements_wager_id_napkinbets_wagers_id_fk",
           "tableFrom": "napkinbets_settlements",
           "tableTo": "napkinbets_wagers",
-          "columnsFrom": [
-            "wager_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["wager_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1545,12 +1479,8 @@
           "name": "napkinbets_settlements_participant_id_napkinbets_participants_id_fk",
           "tableFrom": "napkinbets_settlements",
           "tableTo": "napkinbets_participants",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1558,12 +1488,8 @@
           "name": "napkinbets_settlements_verified_by_user_id_users_id_fk",
           "tableFrom": "napkinbets_settlements",
           "tableTo": "users",
-          "columnsFrom": [
-            "verified_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["verified_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1571,12 +1497,8 @@
           "name": "napkinbets_settlements_rejected_by_user_id_users_id_fk",
           "tableFrom": "napkinbets_settlements",
           "tableTo": "users",
-          "columnsFrom": [
-            "rejected_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rejected_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1773,12 +1695,8 @@
           "name": "napkinbets_taxonomy_leagues_sport_key_napkinbets_taxonomy_sports_key_fk",
           "tableFrom": "napkinbets_taxonomy_leagues",
           "tableTo": "napkinbets_taxonomy_sports",
-          "columnsFrom": [
-            "sport_key"
-          ],
-          "columnsTo": [
-            "key"
-          ],
+          "columnsFrom": ["sport_key"],
+          "columnsTo": ["key"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1786,12 +1704,8 @@
           "name": "napkinbets_taxonomy_leagues_primary_context_key_napkinbets_taxonomy_contexts_key_fk",
           "tableFrom": "napkinbets_taxonomy_leagues",
           "tableTo": "napkinbets_taxonomy_contexts",
-          "columnsFrom": [
-            "primary_context_key"
-          ],
-          "columnsTo": [
-            "key"
-          ],
+          "columnsFrom": ["primary_context_key"],
+          "columnsTo": ["key"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1924,12 +1838,8 @@
           "name": "napkinbets_user_notification_settings_user_id_users_id_fk",
           "tableFrom": "napkinbets_user_notification_settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2013,12 +1923,8 @@
           "name": "napkinbets_user_payment_profiles_user_id_users_id_fk",
           "tableFrom": "napkinbets_user_payment_profiles",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2296,9 +2202,7 @@
       "indexes": {
         "napkinbets_wagers_slug_unique": {
           "name": "napkinbets_wagers_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -2307,12 +2211,8 @@
           "name": "napkinbets_wagers_owner_user_id_users_id_fk",
           "tableFrom": "napkinbets_wagers",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2320,12 +2220,8 @@
           "name": "napkinbets_wagers_group_id_napkinbets_groups_id_fk",
           "tableFrom": "napkinbets_wagers",
           "tableTo": "napkinbets_groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2400,12 +2296,8 @@
           "name": "api_keys_user_id_users_id_fk",
           "tableFrom": "api_keys",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2483,12 +2375,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2543,12 +2431,8 @@
           "name": "todos_user_id_users_id_fk",
           "tableFrom": "todos",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2621,16 +2505,12 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         },
         "users_apple_id_unique": {
           "name": "users_apple_id_unique",
-          "columns": [
-            "apple_id"
-          ],
+          "columns": ["apple_id"],
           "isUnique": true
         }
       },

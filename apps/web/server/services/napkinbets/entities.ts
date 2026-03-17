@@ -57,7 +57,9 @@ function buildFallbackVenueExternalId(leagueKey: string, venue: NapkinbetsApiSpo
   return `${leagueKey}:${slugify(`${venue.name}-${venue.city}-${venue.stateRegion}`)}`
 }
 
-function buildVenueSlug(venue: Pick<typeof napkinbetsVenues.$inferInsert, 'name' | 'city' | 'stateRegion' | 'id'>) {
+function buildVenueSlug(
+  venue: Pick<typeof napkinbetsVenues.$inferInsert, 'name' | 'city' | 'stateRegion' | 'id'>,
+) {
   const base = slugify([venue.name, venue.city, venue.stateRegion].filter(Boolean).join(' '))
   const suffix = venue.id.split(':').at(-1) ?? venue.id.slice(-8)
   return `${base || 'venue'}-${suffix}`
@@ -67,7 +69,9 @@ function buildTeamSlug(team: Pick<typeof napkinbetsTeams.$inferInsert, 'name' | 
   return `${slugify(team.name) || 'team'}-${team.externalTeamId}`
 }
 
-function buildPlayerSlug(player: Pick<typeof napkinbetsPlayers.$inferInsert, 'displayName' | 'externalPlayerId'>) {
+function buildPlayerSlug(
+  player: Pick<typeof napkinbetsPlayers.$inferInsert, 'displayName' | 'externalPlayerId'>,
+) {
   return `${slugify(player.displayName) || 'player'}-${player.externalPlayerId}`
 }
 
@@ -81,15 +85,13 @@ function buildSeasonCandidates(
     candidates.add(preferredSeason)
   }
 
-  for (const season of metadata?.seasons
-    ?.slice()
-    .sort((left, right) => {
-      if (left.current !== right.current) {
-        return left.current ? -1 : 1
-      }
+  for (const season of metadata?.seasons?.slice().sort((left, right) => {
+    if (left.current !== right.current) {
+      return left.current ? -1 : 1
+    }
 
-      return right.season.localeCompare(left.season)
-    }) ?? []) {
+    return right.season.localeCompare(left.season)
+  }) ?? []) {
     candidates.add(season.season)
   }
 
@@ -220,8 +222,16 @@ export async function linkEventsToCanonicalEntities(event: H3Event, leagueKey: s
     let awayName = ''
 
     try {
-      const home = JSON.parse(currentEvent.homeTeamJson) as { name?: string; shortName?: string; abbreviation?: string }
-      const away = JSON.parse(currentEvent.awayTeamJson) as { name?: string; shortName?: string; abbreviation?: string }
+      const home = JSON.parse(currentEvent.homeTeamJson) as {
+        name?: string
+        shortName?: string
+        abbreviation?: string
+      }
+      const away = JSON.parse(currentEvent.awayTeamJson) as {
+        name?: string
+        shortName?: string
+        abbreviation?: string
+      }
       homeName = home.name || home.shortName || home.abbreviation || ''
       awayName = away.name || away.shortName || away.abbreviation || ''
     } catch {
@@ -583,11 +593,15 @@ function mapEventRow(row: typeof napkinbetsEvents.$inferSelect) {
 
   try {
     homeTeam = JSON.parse(row.homeTeamJson) as { name: string; score: string }
-  } catch {}
+  } catch {
+    // Ignore malformed legacy event payloads and fall back to empty team fields.
+  }
 
   try {
     awayTeam = JSON.parse(row.awayTeamJson) as { name: string; score: string }
-  } catch {}
+  } catch {
+    // Ignore malformed legacy event payloads and fall back to empty team fields.
+  }
 
   return {
     id: row.id,
@@ -612,8 +626,17 @@ export async function loadLeagueProfile(event: H3Event, key: string) {
   }
 
   const [teams, recentEvents] = await Promise.all([
-    db.select().from(napkinbetsTeams).where(eq(napkinbetsTeams.primaryLeagueKey, key)).orderBy(asc(napkinbetsTeams.name)),
-    db.select().from(napkinbetsEvents).where(eq(napkinbetsEvents.league, key)).orderBy(desc(napkinbetsEvents.startTime)).limit(16),
+    db
+      .select()
+      .from(napkinbetsTeams)
+      .where(eq(napkinbetsTeams.primaryLeagueKey, key))
+      .orderBy(asc(napkinbetsTeams.name)),
+    db
+      .select()
+      .from(napkinbetsEvents)
+      .where(eq(napkinbetsEvents.league, key))
+      .orderBy(desc(napkinbetsEvents.startTime))
+      .limit(16),
   ])
 
   return {
@@ -632,7 +655,11 @@ export async function loadLeagueProfile(event: H3Event, key: string) {
 
 export async function loadTeamProfileBySlug(event: H3Event, slug: string) {
   const db = useAppDatabase(event)
-  const teamRow = await db.select().from(napkinbetsTeams).where(eq(napkinbetsTeams.slug, slug)).limit(1)
+  const teamRow = await db
+    .select()
+    .from(napkinbetsTeams)
+    .where(eq(napkinbetsTeams.slug, slug))
+    .limit(1)
   const team = teamRow[0]
   if (!team) {
     return null
@@ -694,7 +721,11 @@ export async function loadTeamProfileBySlug(event: H3Event, slug: string) {
 
 export async function loadPlayerProfileBySlug(event: H3Event, slug: string) {
   const db = useAppDatabase(event)
-  const playerRows = await db.select().from(napkinbetsPlayers).where(eq(napkinbetsPlayers.slug, slug)).limit(1)
+  const playerRows = await db
+    .select()
+    .from(napkinbetsPlayers)
+    .where(eq(napkinbetsPlayers.slug, slug))
+    .limit(1)
   const player = playerRows[0]
   if (!player) {
     return null
@@ -708,23 +739,24 @@ export async function loadPlayerProfileBySlug(event: H3Event, slug: string) {
 
   const teamIds = [...new Set(rosterRows.map((row) => row.teamId))]
   const teams =
-    teamIds.length > 0 ? await db.select().from(napkinbetsTeams).where(inArray(napkinbetsTeams.id, teamIds)) : []
+    teamIds.length > 0
+      ? await db.select().from(napkinbetsTeams).where(inArray(napkinbetsTeams.id, teamIds))
+      : []
   const teamById = new Map(teams.map((team) => [team.id, team]))
 
-  const recentEvents =
-    player.currentTeamId
-      ? await db
-          .select()
-          .from(napkinbetsEvents)
-          .where(
-            or(
-              eq(napkinbetsEvents.homeTeamId, player.currentTeamId),
-              eq(napkinbetsEvents.awayTeamId, player.currentTeamId),
-            ),
-          )
-          .orderBy(desc(napkinbetsEvents.startTime))
-          .limit(12)
-      : []
+  const recentEvents = player.currentTeamId
+    ? await db
+        .select()
+        .from(napkinbetsEvents)
+        .where(
+          or(
+            eq(napkinbetsEvents.homeTeamId, player.currentTeamId),
+            eq(napkinbetsEvents.awayTeamId, player.currentTeamId),
+          ),
+        )
+        .orderBy(desc(napkinbetsEvents.startTime))
+        .limit(12)
+    : []
 
   return {
     player,
@@ -748,15 +780,28 @@ export async function loadPlayerProfileBySlug(event: H3Event, slug: string) {
 
 export async function loadVenueProfileBySlug(event: H3Event, slug: string) {
   const db = useAppDatabase(event)
-  const venueRows = await db.select().from(napkinbetsVenues).where(eq(napkinbetsVenues.slug, slug)).limit(1)
+  const venueRows = await db
+    .select()
+    .from(napkinbetsVenues)
+    .where(eq(napkinbetsVenues.slug, slug))
+    .limit(1)
   const venue = venueRows[0]
   if (!venue) {
     return null
   }
 
   const [teams, recentEvents] = await Promise.all([
-    db.select().from(napkinbetsTeams).where(eq(napkinbetsTeams.venueId, venue.id)).orderBy(asc(napkinbetsTeams.name)),
-    db.select().from(napkinbetsEvents).where(eq(napkinbetsEvents.venueId, venue.id)).orderBy(desc(napkinbetsEvents.startTime)).limit(16),
+    db
+      .select()
+      .from(napkinbetsTeams)
+      .where(eq(napkinbetsTeams.venueId, venue.id))
+      .orderBy(asc(napkinbetsTeams.name)),
+    db
+      .select()
+      .from(napkinbetsEvents)
+      .where(eq(napkinbetsEvents.venueId, venue.id))
+      .orderBy(desc(napkinbetsEvents.startTime))
+      .limit(16),
   ])
 
   return {

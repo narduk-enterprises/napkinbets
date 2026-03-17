@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { users } from '#layer/server/database/schema'
 
@@ -341,7 +342,9 @@ export const napkinbetsVenues = sqliteTable('napkinbets_venues', {
   slug: text('slug').notNull().unique(),
   source: text('source').notNull(),
   externalVenueId: text('external_venue_id'),
-  sportKey: text('sport_key').references(() => napkinbetsTaxonomySports.key, { onDelete: 'cascade' }),
+  sportKey: text('sport_key').references(() => napkinbetsTaxonomySports.key, {
+    onDelete: 'cascade',
+  }),
   primaryLeagueKey: text('primary_league_key').references(() => napkinbetsTaxonomyLeagues.key, {
     onDelete: 'set null',
   }),
@@ -411,7 +414,9 @@ export const napkinbetsPlayers = sqliteTable('napkinbets_players', {
   sportKey: text('sport_key')
     .notNull()
     .references(() => napkinbetsTaxonomySports.key, { onDelete: 'cascade' }),
-  currentTeamId: text('current_team_id').references(() => napkinbetsTeams.id, { onDelete: 'set null' }),
+  currentTeamId: text('current_team_id').references(() => napkinbetsTeams.id, {
+    onDelete: 'set null',
+  }),
   currentLeagueKey: text('current_league_key').references(() => napkinbetsTaxonomyLeagues.key, {
     onDelete: 'set null',
   }),
@@ -442,7 +447,9 @@ export const napkinbetsPlayers = sqliteTable('napkinbets_players', {
 
 export const napkinbetsTeamRosters = sqliteTable('napkinbets_team_rosters', {
   id: text('id').primaryKey(),
-  leagueKey: text('league_key').references(() => napkinbetsTaxonomyLeagues.key, { onDelete: 'set null' }),
+  leagueKey: text('league_key').references(() => napkinbetsTaxonomyLeagues.key, {
+    onDelete: 'set null',
+  }),
   teamId: text('team_id')
     .notNull()
     .references(() => napkinbetsTeams.id, { onDelete: 'cascade' }),
@@ -586,8 +593,6 @@ export const napkinbetsFeaturedBets = sqliteTable('napkinbets_featured_bets', {
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
 })
-
-import { relations } from 'drizzle-orm'
 
 export const napkinbetsWagersRelations = relations(napkinbetsWagers, ({ many }) => ({
   participants: many(napkinbetsParticipants),

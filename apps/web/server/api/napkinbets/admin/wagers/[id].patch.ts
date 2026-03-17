@@ -8,7 +8,9 @@ import { z } from 'zod'
 const bodySchema = z.object({
   title: z.string().min(2).max(120).optional(),
   description: z.string().max(500).optional(),
-  status: z.enum(['open', 'locked', 'live', 'settling', 'settled', 'closed', 'archived']).optional(),
+  status: z
+    .enum(['open', 'locked', 'live', 'settling', 'settled', 'closed', 'archived'])
+    .optional(),
   league: z.string().max(40).optional(),
   eventTitle: z.string().max(160).optional(),
   slug: z.string().max(120).optional(),

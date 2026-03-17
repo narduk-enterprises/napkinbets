@@ -86,7 +86,9 @@ export default defineNuxtConfig({
     session: {
       password:
         process.env.NUXT_SESSION_PASSWORD ||
-        (process.env.NODE_ENV === 'development' ? 'layer-auth-dev-session-secret-min-32-chars' : ''),
+        (process.env.NODE_ENV === 'development'
+          ? 'layer-auth-dev-session-secret-min-32-chars'
+          : ''),
       cookie: {
         secure: process.env.NODE_ENV !== 'development',
         sameSite: 'lax' as const,

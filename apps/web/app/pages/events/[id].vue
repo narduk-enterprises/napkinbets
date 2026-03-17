@@ -50,6 +50,23 @@ const statusColor = computed(() => {
   return 'warning'
 })
 
+const matchupRows = computed(() => {
+  if (!eventDetail.value) {
+    return []
+  }
+
+  return [
+    {
+      team: eventDetail.value.awayTeam,
+      slug: eventDetail.value.awayTeamProfileSlug ?? null,
+    },
+    {
+      team: eventDetail.value.homeTeam,
+      slug: eventDetail.value.homeTeamProfileSlug ?? null,
+    },
+  ]
+})
+
 function formatProbability(value: number | null) {
   return value === null ? '—' : `${value}%`
 }
@@ -95,14 +112,36 @@ useWebPageSchema({
               Events
             </UButton>
             <UBadge :color="statusColor" variant="soft">{{ statusLabel }}</UBadge>
-            <UBadge color="neutral" variant="subtle">{{ eventDetail.leagueLabel }}</UBadge>
+            <UBadge color="neutral" variant="subtle">
+              <ULink
+                v-if="eventDetail.leagueProfileKey"
+                :to="`/leagues/${eventDetail.leagueProfileKey}`"
+                class="text-inherit"
+              >
+                {{ eventDetail.leagueLabel }}
+              </ULink>
+              <template v-else>
+                {{ eventDetail.leagueLabel }}
+              </template>
+            </UBadge>
           </div>
           <h1 class="napkinbets-section-title">{{ eventDetail.eventTitle }}</h1>
           <div class="napkinbets-event-meta">
             <span>{{ eventDetail.shortStatus || eventDetail.status }}</span>
             <span v-if="eventDetail.broadcast">{{ eventDetail.broadcast }}</span>
           </div>
-          <p class="napkinbets-hero-lede">{{ eventDetail.venueName }}</p>
+          <p class="napkinbets-hero-lede">
+            <ULink
+              v-if="eventDetail.venueProfileSlug"
+              :to="`/venues/${eventDetail.venueProfileSlug}`"
+              class="text-inherit"
+            >
+              {{ eventDetail.venueName }}
+            </ULink>
+            <template v-else>
+              {{ eventDetail.venueName }}
+            </template>
+          </p>
         </div>
       </div>
 
@@ -115,27 +154,32 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-3">
-              <div
-                v-for="team in [eventDetail.awayTeam, eventDetail.homeTeam]"
-                :key="team?.name"
-                class="napkinbets-event-side"
-              >
+              <div v-for="row in matchupRows" :key="row.team?.name" class="napkinbets-event-side">
                 <div class="napkinbets-event-side-main">
                   <span class="napkinbets-event-avatar">
                     <img
-                      v-if="team?.logo"
-                      :src="team.logo"
-                      :alt="team.name"
+                      v-if="row.team?.logo"
+                      :src="row.team.logo"
+                      :alt="row.team.name"
                       class="napkinbets-event-avatar-image"
                     />
-                    <span v-else>{{ (team?.abbreviation || team?.name || '').slice(0, 2) }}</span>
+                    <span v-else>{{
+                      (row.team?.abbreviation || row.team?.name || '').slice(0, 2)
+                    }}</span>
                   </span>
                   <div class="min-w-0">
-                    <p class="napkinbets-event-name">{{ team?.name }}</p>
-                    <p class="napkinbets-event-record">{{ team?.record }}</p>
+                    <p class="napkinbets-event-name">
+                      <ULink v-if="row.slug" :to="`/teams/${row.slug}`" class="text-inherit">
+                        {{ row.team?.name }}
+                      </ULink>
+                      <template v-else>
+                        {{ row.team?.name }}
+                      </template>
+                    </p>
+                    <p class="napkinbets-event-record">{{ row.team?.record }}</p>
                   </div>
                 </div>
-                <p class="napkinbets-event-score">{{ team?.score || '—' }}</p>
+                <p class="napkinbets-event-score">{{ row.team?.score || '—' }}</p>
               </div>
             </div>
 

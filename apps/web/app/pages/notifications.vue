@@ -99,7 +99,13 @@ useWebPageSchema({
           <NuxtLink
             v-for="notification in notifications"
             :key="notification.id"
-            :to="notification.wagerSlug ? `/napkins/${notification.wagerSlug}` : (notification.kind === 'friend_request' ? '/friends' : '/notifications')"
+            :to="
+              notification.wagerSlug
+                ? `/napkins/${notification.wagerSlug}`
+                : notification.kind === 'friend_request'
+                  ? '/friends'
+                  : '/notifications'
+            "
             class="napkinbets-notification-row"
           >
             <div class="napkinbets-notification-row-icon">
@@ -124,7 +130,9 @@ useWebPageSchema({
                   {{ notification.kind }}
                 </UBadge>
                 <span class="text-xs text-dimmed">
-                  <template v-if="notification.wagerTitle">{{ notification.wagerTitle }} · </template>{{ timeAgo(notification.createdAt) }}
+                  <template v-if="notification.wagerTitle"
+                    >{{ notification.wagerTitle }} · </template
+                  >{{ timeAgo(notification.createdAt) }}
                 </span>
               </div>
             </div>

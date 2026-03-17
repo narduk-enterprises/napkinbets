@@ -67,7 +67,13 @@ function timeAgo(value: string) {
             <NuxtLink
               v-for="notification in latestNotifications"
               :key="notification.id"
-              :to="notification.wagerSlug ? `/napkins/${notification.wagerSlug}` : (notification.kind === 'friend_request' ? '/friends' : '/notifications')"
+              :to="
+                notification.wagerSlug
+                  ? `/napkins/${notification.wagerSlug}`
+                  : notification.kind === 'friend_request'
+                    ? '/friends'
+                    : '/notifications'
+              "
               class="napkinbets-notification-dropdown-item"
               @click="isOpen = false"
             >
@@ -78,7 +84,9 @@ function timeAgo(value: string) {
                 <p class="napkinbets-notification-dropdown-title">{{ notification.title }}</p>
                 <p class="napkinbets-notification-dropdown-body">{{ notification.body }}</p>
                 <p class="napkinbets-notification-dropdown-meta">
-                  <template v-if="notification.wagerTitle">{{ notification.wagerTitle }} · </template>{{ timeAgo(notification.createdAt) }}
+                  <template v-if="notification.wagerTitle"
+                    >{{ notification.wagerTitle }} · </template
+                  >{{ timeAgo(notification.createdAt) }}
                 </p>
               </div>
               <UBadge

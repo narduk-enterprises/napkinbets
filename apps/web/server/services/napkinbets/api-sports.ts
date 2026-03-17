@@ -167,8 +167,11 @@ function parseLeagueSeasons(row: Record<string, unknown>) {
       const coverage = (typed.coverage as Record<string, unknown> | undefined) ?? {}
       const players =
         coverage.players === true ||
-        ((coverage.statistics as Record<string, unknown> | undefined)?.season as Record<string, unknown>
-          | undefined)?.players === true
+        (
+          (coverage.statistics as Record<string, unknown> | undefined)?.season as
+            | Record<string, unknown>
+            | undefined
+        )?.players === true
       const standings = coverage.standings === true
 
       return {
@@ -241,7 +244,9 @@ function parseVenueFromTeam(
       latitude: '',
       longitude: '',
       capacity:
-        typeof typedArena.capacity === 'number' ? typedArena.capacity : Number(typedArena.capacity || '') || null,
+        typeof typedArena.capacity === 'number'
+          ? typedArena.capacity
+          : Number(typedArena.capacity || '') || null,
       surface: '',
       roofType: '',
       imageUrl: '',
@@ -267,7 +272,9 @@ function parseVenueFromTeam(
       latitude: String(typedVenue.lat ?? ''),
       longitude: String(typedVenue.lng ?? ''),
       capacity:
-        typeof typedVenue.capacity === 'number' ? typedVenue.capacity : Number(typedVenue.capacity || '') || null,
+        typeof typedVenue.capacity === 'number'
+          ? typedVenue.capacity
+          : Number(typedVenue.capacity || '') || null,
       surface: String(typedVenue.surface ?? ''),
       roofType: '',
       imageUrl: String(typedVenue.image ?? ''),
@@ -297,7 +304,9 @@ function parseTeam(
   const shortName = city && name.startsWith(city) ? name.slice(city.length).trim() : name
   const foundedValue = row.founded ?? row.established
   const foundedYear =
-    typeof foundedValue === 'number' ? foundedValue : Number.parseInt(String(foundedValue ?? ''), 10) || null
+    typeof foundedValue === 'number'
+      ? foundedValue
+      : Number.parseInt(String(foundedValue ?? ''), 10) || null
 
   return {
     externalId,
@@ -327,7 +336,9 @@ function parsePlayer(row: Record<string, unknown>): NapkinbetsApiSportsPlayerPay
     return null
   }
 
-  const firstName = String(row.firstname ?? row.firstName ?? splitDisplayName(displayName).firstName)
+  const firstName = String(
+    row.firstname ?? row.firstName ?? splitDisplayName(displayName).firstName,
+  )
   const lastName = String(row.lastname ?? row.lastName ?? splitDisplayName(displayName).lastName)
 
   return {
@@ -338,7 +349,8 @@ function parsePlayer(row: Record<string, unknown>): NapkinbetsApiSportsPlayerPay
     shortName: String(row.shortName ?? displayName),
     nationality: String(row.nationality ?? row.country ?? ''),
     age: typeof row.age === 'number' ? row.age : Number.parseInt(String(row.age ?? ''), 10) || null,
-    birthDate: String((row.birth as { date?: unknown } | undefined)?.date ?? row.birthDate ?? '') || null,
+    birthDate:
+      String((row.birth as { date?: unknown } | undefined)?.date ?? row.birthDate ?? '') || null,
     height: String(row.height ?? ''),
     weight: String(row.weight ?? ''),
     position: String(row.position ?? ''),
@@ -411,7 +423,9 @@ export async function fetchApiSportsLeagueMetadata(
   product: NapkinbetsApiSportsProduct,
   leagueId: string,
 ): Promise<NapkinbetsApiSportsLeagueMetadata | null> {
-  const rows = await fetchApiSports<Record<string, unknown>>(event, product, '/leagues', { id: leagueId })
+  const rows = await fetchApiSports<Record<string, unknown>>(event, product, '/leagues', {
+    id: leagueId,
+  })
   const first = rows[0]
   if (!first) {
     return null

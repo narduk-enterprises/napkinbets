@@ -6,14 +6,14 @@ const actions = useNapkinbetsActions(async () => {})
 const items = [
   { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', slot: 'dashboard' },
   { label: 'Bets', icon: 'i-lucide-ticket', slot: 'bets' },
+  { label: 'Taxonomy', icon: 'i-lucide-library-big', slot: 'taxonomy' },
   { label: 'Featured', icon: 'i-lucide-star', slot: 'featured' },
   { label: 'Users', icon: 'i-lucide-users', slot: 'users' },
 ]
 
 useSeo({
   title: 'Admin controls',
-  description:
-    'Manage registered users, bets, event coverage, and control operator-only features.',
+  description: 'Manage registered users, bets, event coverage, and control operator-only features.',
   ogImage: {
     title: 'Napkinbets Admin',
     description: 'User, event, and feature controls for the prototype.',
@@ -67,6 +67,12 @@ useWebPageSchema({
       <template #bets>
         <div class="mt-6">
           <AdminBetsTab />
+        </div>
+      </template>
+
+      <template #taxonomy>
+        <div class="mt-6">
+          <AdminTaxonomyTab />
         </div>
       </template>
 

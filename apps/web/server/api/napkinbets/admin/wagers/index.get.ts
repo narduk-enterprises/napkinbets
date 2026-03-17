@@ -1,7 +1,7 @@
 import { requireAdmin } from '#layer/server/utils/auth'
 import { napkinbetsWagers, users } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
-import { desc, ilike, or, count, eq } from 'drizzle-orm'
+import { count, desc, ilike, inArray, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 const querySchema = z.object({
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
   const offset = (query.page - 1) * query.limit
 
-  let whereClause;
+  let whereClause
   if (query.search) {
     const searchPattern = `%${query.search}%`
     whereClause = or(
@@ -28,10 +28,7 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  const [totalCount] = await db
-    .select({ value: count() })
-    .from(napkinbetsWagers)
-    .where(whereClause)
+  const [totalCount] = await db.select({ value: count() }).from(napkinbetsWagers).where(whereClause)
 
   const wagers = await db.query.napkinbetsWagers.findMany({
     where: whereClause,
@@ -48,17 +45,13 @@ export default defineEventHandler(async (event) => {
   const ownerEmailMap = new Map<string, string>()
 
   if (ownerIds.length > 0) {
-    // using Promise.all or batched queries, but here a simple inArray would be best, wait wait..
-    // the prompt says "Array.map(async ...) (N+1 queries) — use Promise.all with batched queries."
-    // Actually, getting all users at once by ID mapping might be easiest, or just a few select queries in a Promise.all
-    const userQueries = ownerIds.map((id) =>
-      db.select({ id: users.id, email: users.email }).from(users).where(eq(users.id, id))
-    )
-    const userResults = await Promise.all(userQueries)
-    for (const res of userResults) {
-      if (res.length > 0) {
-        ownerEmailMap.set(res[0].id, res[0].email)
-      }
+    const ownerRows = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(inArray(users.id, ownerIds))
+
+    for (const owner of ownerRows) {
+      ownerEmailMap.set(owner.id, owner.email)
     }
   }
 

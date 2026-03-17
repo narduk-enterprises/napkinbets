@@ -59,9 +59,7 @@ export default defineEventHandler(async (event) => {
   const wagerTitleMap = new Map<string, { title: string; slug: string }>()
   if (notifications.length > 0) {
     const relevantWagerIds = [
-      ...new Set(
-        notifications.filter((n) => n.wagerId !== null).map((n) => n.wagerId as string),
-      ),
+      ...new Set(notifications.filter((n) => n.wagerId !== null).map((n) => n.wagerId as string)),
     ]
 
     if (relevantWagerIds.length > 0) {
@@ -86,8 +84,10 @@ export default defineEventHandler(async (event) => {
     notifications: notifications.map((n) => ({
       id: n.id,
       wagerId: n.wagerId,
-      wagerTitle: n.wagerId && wagerTitleMap.has(n.wagerId) ? wagerTitleMap.get(n.wagerId)?.title : undefined,
-      wagerSlug: n.wagerId && wagerTitleMap.has(n.wagerId) ? wagerTitleMap.get(n.wagerId)?.slug : undefined,
+      wagerTitle:
+        n.wagerId && wagerTitleMap.has(n.wagerId) ? wagerTitleMap.get(n.wagerId)?.title : undefined,
+      wagerSlug:
+        n.wagerId && wagerTitleMap.has(n.wagerId) ? wagerTitleMap.get(n.wagerId)?.slug : undefined,
       title: n.title,
       body: n.body,
       kind: n.kind,
