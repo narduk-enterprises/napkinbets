@@ -9,6 +9,7 @@ import type {
   NapkinbetsAdminFeaturedBetsResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
+  NapkinbetsEventDetailResponse,
   NapkinbetsFriendSearchResponse,
   NapkinbetsFriendsResponse,
   NapkinbetsGroupsResponse,
@@ -37,7 +38,9 @@ export function useNapkinbetsApi() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
     },
     getEventDetail(id: string) {
-      return fetch<{ event: NapkinbetsDiscoveryResponse['spotlights'][0] | null }>(`/api/napkinbets/events/${encodeURIComponent(id)}`)
+      return fetch<NapkinbetsEventDetailResponse>(
+        `/api/napkinbets/events/${encodeURIComponent(id)}`,
+      )
     },
     getTaxonomy() {
       return fetch<NapkinbetsTaxonomyResponse>('/api/napkinbets/taxonomy')

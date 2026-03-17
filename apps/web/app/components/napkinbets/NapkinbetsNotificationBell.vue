@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 const { loggedIn } = useAuth()
 const notificationsState = loggedIn.value ? useNapkinbetsNotifications() : null
 
@@ -48,10 +47,7 @@ function timeAgo(value: string) {
         aria-label="Notifications"
         class="relative"
       >
-        <span
-          v-if="unreadCount > 0"
-          class="napkinbets-notification-badge"
-        >
+        <span v-if="unreadCount > 0" class="napkinbets-notification-badge">
           {{ unreadCount > 9 ? '9+' : unreadCount }}
         </span>
       </UButton>

@@ -8,7 +8,9 @@ const { logout } = useAuth()
 const isMobileMenuOpen = ref(false)
 
 const headerLinks = computed(() =>
-  primaryLinks.value.filter((link) => ['/dashboard', '/events', '/napkins/create'].includes(link.to)),
+  primaryLinks.value.filter((link) =>
+    ['/dashboard', '/events', '/napkins/create'].includes(link.to),
+  ),
 )
 
 const mobilePrimaryLinks = computed(() =>

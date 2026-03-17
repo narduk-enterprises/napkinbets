@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import type {
-  NapkinbetsEventOddsMarket,
-} from '../../../types/napkinbets'
+import { useNapkinbetsApi } from '../../services/napkinbets-api'
+import type { NapkinbetsEventDetail, NapkinbetsEventOddsMarket } from '../../../types/napkinbets'
 
 const route = useRoute()
 const eventId = route.params.id as string
 const api = useNapkinbetsApi()
 
-const { data: eventData } = await useAsyncData(
-  `event-detail:${eventId}`,
-  () => api.getEventDetail(eventId),
+const { data: eventData } = await useAsyncData(`event-detail:${eventId}`, () =>
+  api.getEventDetail(eventId),
 )
 
-const eventDetail = computed(() => eventData.value?.event ?? null)
+const eventDetail = computed<NapkinbetsEventDetail | null>(() => eventData.value?.event ?? null)
 const odds = computed(() => eventDetail.value?.odds ?? null)
 const moneylineOdds = computed(() => odds.value?.moneyline ?? null)
 const secondaryOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
@@ -20,9 +18,7 @@ const secondaryOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
     .filter((market): market is NapkinbetsEventOddsMarket => Boolean(market))
     .slice(0, 2),
 )
-const extraOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
-  odds.value?.extraMarkets ?? [],
-)
+const extraOdds = computed<NapkinbetsEventOddsMarket[]>(() => odds.value?.extraMarkets ?? [])
 const volumeLabel = computed(() => {
   const vol = odds.value?.volume
   if (!vol || vol <= 0) return null
@@ -89,7 +85,13 @@ useWebPageSchema({
       <div class="napkinbets-hero napkinbets-hero-compact">
         <div class="space-y-2">
           <div class="flex flex-wrap items-center gap-2">
-            <UButton to="/events" color="neutral" variant="ghost" size="xs" icon="i-lucide-arrow-left">
+            <UButton
+              to="/events"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              icon="i-lucide-arrow-left"
+            >
               Events
             </UButton>
             <UBadge :color="statusColor" variant="soft">{{ statusLabel }}</UBadge>
@@ -194,7 +196,8 @@ useWebPageSchema({
                     class="napkinbets-event-odds-chip"
                   >
                     <span>
-                      {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
+                      {{ market.label
+                      }}<template v-if="market.detail"> · {{ market.detail }}</template>
                     </span>
                     <strong>
                       {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
@@ -210,7 +213,8 @@ useWebPageSchema({
                     class="napkinbets-event-odds-chip"
                   >
                     <span>
-                      {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
+                      {{ market.label
+                      }}<template v-if="market.detail"> · {{ market.detail }}</template>
                     </span>
                     <strong>
                       {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
@@ -250,11 +254,7 @@ useWebPageSchema({
                 <p class="napkinbets-kicker">Bet ideas</p>
                 <h2 class="napkinbets-subsection-title">Start from a template</h2>
               </div>
-              <div
-                v-for="idea in eventDetail.ideas"
-                :key="idea.title"
-                class="napkinbets-note-row"
-              >
+              <div v-for="idea in eventDetail.ideas" :key="idea.title" class="napkinbets-note-row">
                 <div class="space-y-1">
                   <p class="font-semibold text-default">{{ idea.title }}</p>
                   <p class="text-sm text-muted">{{ idea.description }}</p>

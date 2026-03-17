@@ -75,7 +75,7 @@ watch(
 
 const myParticipant = computed(() =>
   props.currentUserId
-    ? props.wager.participants.find((p) => p.userId === props.currentUserId) ?? null
+    ? (props.wager.participants.find((p) => p.userId === props.currentUserId) ?? null)
     : null,
 )
 
@@ -335,9 +335,12 @@ function submitSettlement() {
           </div>
         </div>
 
-        <USeparator />        <div :class="isOneOnOne ? '' : 'napkinbets-two-column'">
+        <USeparator />
+        <div :class="isOneOnOne ? '' : 'napkinbets-two-column'">
           <div class="space-y-3">
-            <h3 class="napkinbets-subsection-title">{{ isOneOnOne ? 'Players' : 'Draft order' }}</h3>
+            <h3 class="napkinbets-subsection-title">
+              {{ isOneOnOne ? 'Players' : 'Draft order' }}
+            </h3>
             <div class="space-y-2">
               <div
                 v-for="participant in wager.participants"
@@ -345,7 +348,9 @@ function submitSettlement() {
                 class="napkinbets-list-row"
               >
                 <div class="flex items-center gap-3">
-                  <span v-if="!isOneOnOne" class="napkinbets-order-pill">#{{ participant.draftOrder ?? '—' }}</span>
+                  <span v-if="!isOneOnOne" class="napkinbets-order-pill"
+                    >#{{ participant.draftOrder ?? '—' }}</span
+                  >
                   <span class="napkinbets-event-avatar">
                     <img
                       v-if="participant.avatarUrl"
@@ -371,7 +376,13 @@ function submitSettlement() {
                 </UBadge>
                 <UBadge
                   v-else
-                  :color="participant.paymentStatus === 'confirmed' ? 'success' : participant.paymentStatus === 'submitted' ? 'info' : 'warning'"
+                  :color="
+                    participant.paymentStatus === 'confirmed'
+                      ? 'success'
+                      : participant.paymentStatus === 'submitted'
+                        ? 'info'
+                        : 'warning'
+                  "
                   variant="soft"
                 >
                   {{ participant.paymentStatus }}
@@ -391,12 +402,16 @@ function submitSettlement() {
                 <div>
                   <p class="font-semibold text-default">{{ row.displayName }}</p>
                   <p class="text-sm text-muted">
-                    {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{ row.pickCount === 1 ? '' : 's' }}
+                    {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{
+                      row.pickCount === 1 ? '' : 's'
+                    }}
                   </p>
                 </div>
                 <div class="text-right">
                   <p class="font-semibold text-default">{{ row.score }} pts</p>
-                  <p class="text-sm text-muted">{{ formatCurrency(row.projectedPayoutCents) }} projected</p>
+                  <p class="text-sm text-muted">
+                    {{ formatCurrency(row.projectedPayoutCents) }} projected
+                  </p>
                 </div>
               </div>
             </div>
@@ -559,38 +574,38 @@ function submitSettlement() {
 
           <!-- Not a participant yet: show generic join form (pool bets only) -->
           <template v-else-if="!isOneOnOne">
-          <div class="space-y-4">
-            <h3 class="napkinbets-subsection-title">Join the bet</h3>
-            <div class="napkinbets-chip-grid">
-              <span
-                v-for="option in wager.sideOptions"
-                :key="option"
-                class="napkinbets-choice-chip"
-              >
-                {{ option }}
-              </span>
+            <div class="space-y-4">
+              <h3 class="napkinbets-subsection-title">Join the bet</h3>
+              <div class="napkinbets-chip-grid">
+                <span
+                  v-for="option in wager.sideOptions"
+                  :key="option"
+                  class="napkinbets-choice-chip"
+                >
+                  {{ option }}
+                </span>
+              </div>
+              <UForm :state="joinState" class="space-y-3" @submit.prevent="submitJoin">
+                <UFormField name="displayName" label="Participant name">
+                  <UInput v-model="joinState.displayName" class="w-full" />
+                </UFormField>
+                <UFormField name="sideLabel" label="Chosen side">
+                  <USelect
+                    v-model="joinState.sideLabel"
+                    :items="wager.sideOptions.map((option) => ({ label: option, value: option }))"
+                    class="w-full"
+                  />
+                </UFormField>
+                <UButton
+                  type="submit"
+                  color="primary"
+                  icon="i-lucide-user-plus"
+                  :loading="isBusy(`join:${wager.id}`)"
+                >
+                  Join bet
+                </UButton>
+              </UForm>
             </div>
-            <UForm :state="joinState" class="space-y-3" @submit.prevent="submitJoin">
-              <UFormField name="displayName" label="Participant name">
-                <UInput v-model="joinState.displayName" class="w-full" />
-              </UFormField>
-              <UFormField name="sideLabel" label="Chosen side">
-                <USelect
-                  v-model="joinState.sideLabel"
-                  :items="wager.sideOptions.map((option) => ({ label: option, value: option }))"
-                  class="w-full"
-                />
-              </UFormField>
-              <UButton
-                type="submit"
-                color="primary"
-                icon="i-lucide-user-plus"
-                :loading="isBusy(`join:${wager.id}`)"
-              >
-                Join bet
-              </UButton>
-            </UForm>
-          </div>
           </template>
         </div>
 

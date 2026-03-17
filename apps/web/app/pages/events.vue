@@ -150,11 +150,7 @@ useWebPageSchema({
     </ClientOnly>
 
     <div class="space-y-6">
-      <div
-        v-for="section in filteredSections"
-        :key="section.key"
-        class="napkinbets-section-stack"
-      >
+      <div v-for="section in filteredSections" :key="section.key" class="napkinbets-section-stack">
         <div class="flex items-end justify-between gap-3">
           <div class="space-y-1">
             <p class="napkinbets-kicker">{{ section.label }}</p>

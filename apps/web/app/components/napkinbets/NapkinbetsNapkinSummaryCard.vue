@@ -57,10 +57,7 @@ const shortName = computed(() => {
 </script>
 
 <template>
-  <NuxtLink
-    :to="`/napkins/${wager.slug}`"
-    class="napkinbets-compact-card group"
-  >
+  <NuxtLink :to="`/napkins/${wager.slug}`" class="napkinbets-compact-card group">
     <!-- Badges -->
     <div class="napkinbets-compact-badges">
       <UBadge :color="statusBadgeColor(wager.status)" variant="soft" size="xs">

@@ -22,7 +22,7 @@ const canManage = computed(() =>
 
 const myParticipant = computed(() =>
   wager.value && user.value?.id
-    ? wager.value.participants.find((p) => p.userId === user.value!.id) ?? null
+    ? (wager.value.participants.find((p) => p.userId === user.value!.id) ?? null)
     : null,
 )
 
@@ -157,7 +157,10 @@ useWebPageSchema({
             <p class="napkinbets-kicker">Invitation</p>
             <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
             <p class="napkinbets-hero-lede">
-              {{ wager.creatorName }} challenged you as <strong>{{ myParticipant!.displayName }}</strong> on <strong>{{ myParticipant!.sideLabel || 'Open side' }}</strong>.
+              {{ wager.creatorName }} challenged you as
+              <strong>{{ myParticipant!.displayName }}</strong> on
+              <strong>{{ myParticipant!.sideLabel || 'Open side' }}</strong
+              >.
             </p>
           </div>
 

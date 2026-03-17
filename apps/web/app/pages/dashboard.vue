@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { NapkinbetsWager } from '../../types/napkinbets'
+
 definePageMeta({ middleware: ['auth'] })
 
 const workspaceState = useNapkinbetsWorkspace({
@@ -26,7 +28,7 @@ type DashboardFilter = 'all' | 'upcoming' | 'live' | 'finished' | 'settled' | 'u
 
 const activeFilter = ref<DashboardFilter>('all')
 
-const filterChips: Array<{ value: DashboardFilter, label: string, icon: string }> = [
+const filterChips: Array<{ value: DashboardFilter; label: string; icon: string }> = [
   { value: 'all', label: 'All', icon: 'i-lucide-layers' },
   { value: 'upcoming', label: 'Upcoming', icon: 'i-lucide-calendar-clock' },
   { value: 'live', label: 'Live', icon: 'i-lucide-zap' },
@@ -35,40 +37,36 @@ const filterChips: Array<{ value: DashboardFilter, label: string, icon: string }
   { value: 'unsettled', label: 'Unsettled', icon: 'i-lucide-circle-alert' },
 ]
 
-interface WagerSettlement {
-  verificationStatus: string
-}
-
 interface TaggedWager {
-  wager: {
-    id: string
-    status: string
-    napkinType: string
-    eventStatus: string
-    settlements: WagerSettlement[]
-    [key: string]: unknown
-  }
+  wager: NapkinbetsWager
   role: 'owner' | 'player' | 'invited'
 }
 
 const allBets = computed<TaggedWager[]>(() => {
-  const owned: TaggedWager[] = workspace.value.ownedWagers.map((w) => ({ wager: w as TaggedWager['wager'], role: 'owner' as const }))
-  const joined: TaggedWager[] = workspace.value.joinedWagers.map((w) => ({ wager: w as TaggedWager['wager'], role: 'player' as const }))
+  const owned: TaggedWager[] = workspace.value.ownedWagers.map((w) => ({
+    wager: w,
+    role: 'owner' as const,
+  }))
+  const joined: TaggedWager[] = workspace.value.joinedWagers.map((w) => ({
+    wager: w,
+    role: 'player' as const,
+  }))
   return [...owned, ...joined]
 })
 
 function isFinished(wager: TaggedWager['wager']): boolean {
-  return wager.status === 'settling'
-    || wager.status === 'settled'
-    || wager.status === 'closed'
-    || wager.status === 'archived'
+  return (
+    wager.status === 'settling' ||
+    wager.status === 'settled' ||
+    wager.status === 'closed' ||
+    wager.status === 'archived'
+  )
 }
 
 function isFullySettled(wager: TaggedWager['wager']): boolean {
   if (!isFinished(wager)) return false
   const settlements = wager.settlements ?? []
-  return settlements.length > 0
-    && settlements.every((s) => s.verificationStatus === 'confirmed')
+  return settlements.length > 0 && settlements.every((s) => s.verificationStatus === 'confirmed')
 }
 
 const filteredBets = computed(() => {
@@ -77,8 +75,7 @@ const filteredBets = computed(() => {
       case 'upcoming':
         return wager.status === 'open'
       case 'live':
-        return wager.status === 'live'
-          || wager.status === 'locked'
+        return wager.status === 'live' || wager.status === 'locked'
       case 'finished':
         return isFinished(wager)
       case 'settled':
@@ -146,9 +143,7 @@ useWebPageSchema({
 
         <div v-else-if="isInitialWorkspaceLoad" class="napkinbets-aside-note">
           <p class="napkinbets-kicker">Loading</p>
-          <p class="napkinbets-support-copy">
-            Pulling your bets, invitations, and settlements.
-          </p>
+          <p class="napkinbets-support-copy">Pulling your bets, invitations, and settlements.</p>
           <div class="pt-3">
             <UButton color="neutral" variant="ghost" loading> Loading your bets </UButton>
           </div>

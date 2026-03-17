@@ -204,7 +204,11 @@ function submit() {
             Find a game
           </UButton>
           <UFormField name="title" label="Or type a custom bet title">
-            <UInput v-model="formState.title" class="w-full" placeholder="e.g. Will it rain on Saturday?" />
+            <UInput
+              v-model="formState.title"
+              class="w-full"
+              placeholder="e.g. Will it rain on Saturday?"
+            />
           </UFormField>
         </div>
       </div>
@@ -231,12 +235,7 @@ function submit() {
             <span class="text-sm text-muted">One opponent, one winner.</span>
           </UButton>
 
-          <UButton
-            color="neutral"
-            variant="ghost"
-            class="napkinbets-choice-panel h-auto"
-            disabled
-          >
+          <UButton color="neutral" variant="ghost" class="napkinbets-choice-panel h-auto" disabled>
             <span class="flex items-center gap-2">
               <UIcon name="i-lucide-users" class="size-5" />
               <span class="font-semibold text-default">Group Pool</span>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useNapkinbetsApi } from '../services/napkinbets-api'
 import type { NapkinbetsAdminFeaturedBet, SaveFeaturedBetInput } from '../../types/napkinbets'
 
 definePageMeta({ middleware: ['admin'] })
@@ -164,8 +165,6 @@ function runDuration(startedAt: string, completedAt: string | null) {
   return `${(ms / 1000).toFixed(1)}s`
 }
 
-
-
 const ingestRunColumns = [
   { accessorKey: 'tier', header: 'Tier' },
   { accessorKey: 'league', header: 'League' },
@@ -302,11 +301,7 @@ useWebPageSchema({
             </div>
 
             <div class="grid gap-3 sm:grid-cols-2">
-              <UCard
-                v-for="tier in tierCards"
-                :key="tier.key"
-                class="napkinbets-panel"
-              >
+              <UCard v-for="tier in tierCards" :key="tier.key" class="napkinbets-panel">
                 <div class="space-y-3">
                   <div class="flex items-start justify-between gap-2">
                     <div class="space-y-1">
@@ -320,7 +315,13 @@ useWebPageSchema({
 
                   <div v-if="tier.summary?.lastRunAt" class="flex flex-wrap items-center gap-2">
                     <UBadge
-                      :color="tier.summary.lastStatus === 'success' ? 'success' : tier.summary.lastStatus === 'error' ? 'error' : 'warning'"
+                      :color="
+                        tier.summary.lastStatus === 'success'
+                          ? 'success'
+                          : tier.summary.lastStatus === 'error'
+                            ? 'error'
+                            : 'warning'
+                      "
                       variant="soft"
                       size="sm"
                     >
@@ -376,10 +377,7 @@ useWebPageSchema({
             <div class="space-y-2">
               <p class="font-semibold text-default">Recent runs</p>
               <div class="overflow-x-auto">
-                <UTable
-                  :data="ingestRunRows"
-                  :columns="ingestRunColumns"
-                />
+                <UTable :data="ingestRunRows" :columns="ingestRunColumns" />
               </div>
             </div>
           </div>
@@ -453,22 +451,53 @@ useWebPageSchema({
               </p>
 
               <div class="grid gap-3 sm:grid-cols-2">
-                <UInput v-model="featuredForm.label" placeholder="Label (e.g. Major watch)" class="w-full" />
+                <UInput
+                  v-model="featuredForm.label"
+                  placeholder="Label (e.g. Major watch)"
+                  class="w-full"
+                />
                 <UInput v-model="featuredForm.title" placeholder="Title" class="w-full" />
                 <UInput v-model="featuredForm.subtitle" placeholder="Subtitle" class="w-full" />
-                <UInput v-model="featuredForm.windowLabel" placeholder="Window label (e.g. Apr 6-12)" class="w-full" />
-                <UInput v-model="featuredForm.venueLabel" placeholder="Venue label" class="w-full" />
+                <UInput
+                  v-model="featuredForm.windowLabel"
+                  placeholder="Window label (e.g. Apr 6-12)"
+                  class="w-full"
+                />
+                <UInput
+                  v-model="featuredForm.venueLabel"
+                  placeholder="Venue label"
+                  class="w-full"
+                />
                 <UInput v-model="featuredForm.imageUrl" placeholder="Image URL" class="w-full" />
                 <USelect
                   v-model="featuredForm.accent"
-                  :items="[{ label: 'Major', value: 'major' }, { label: 'Tour', value: 'tour' }, { label: 'Watch', value: 'watch' }]"
+                  :items="[
+                    { label: 'Major', value: 'major' },
+                    { label: 'Tour', value: 'tour' },
+                    { label: 'Watch', value: 'watch' },
+                  ]"
                   class="w-full"
                 />
-                <UInput v-model.number="featuredForm.sortOrder" type="number" placeholder="Sort order" class="w-full" />
+                <UInput
+                  v-model.number="featuredForm.sortOrder"
+                  type="number"
+                  placeholder="Sort order"
+                  class="w-full"
+                />
               </div>
 
-              <UTextarea v-model="featuredForm.summary" placeholder="Summary" class="w-full" :rows="2" />
-              <UTextarea v-model="featuredForm.prefillJson" placeholder="Prefill JSON" class="w-full" :rows="3" />
+              <UTextarea
+                v-model="featuredForm.summary"
+                placeholder="Summary"
+                class="w-full"
+                :rows="2"
+              />
+              <UTextarea
+                v-model="featuredForm.prefillJson"
+                placeholder="Prefill JSON"
+                class="w-full"
+                :rows="3"
+              />
 
               <div class="flex gap-2">
                 <UButton
@@ -479,12 +508,7 @@ useWebPageSchema({
                 >
                   {{ editingFeaturedBet ? 'Update' : 'Create' }}
                 </UButton>
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  @click="resetFeaturedForm"
-                >
+                <UButton color="neutral" variant="ghost" size="sm" @click="resetFeaturedForm">
                   Cancel
                 </UButton>
               </div>
@@ -504,10 +528,14 @@ useWebPageSchema({
                     <UBadge color="warning" variant="soft" size="sm">
                       {{ bet.accent }}
                     </UBadge>
-                    <span v-if="bet.windowLabel" class="text-xs text-muted">{{ bet.windowLabel }}</span>
+                    <span v-if="bet.windowLabel" class="text-xs text-muted">{{
+                      bet.windowLabel
+                    }}</span>
                   </div>
                   <p class="font-semibold text-default">{{ bet.title }}</p>
-                  <p class="text-sm text-muted">{{ bet.subtitle || bet.summary || 'No description' }}</p>
+                  <p class="text-sm text-muted">
+                    {{ bet.subtitle || bet.summary || 'No description' }}
+                  </p>
                 </div>
 
                 <div class="flex gap-2 shrink-0">

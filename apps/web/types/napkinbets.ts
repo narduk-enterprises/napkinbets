@@ -7,7 +7,14 @@ export interface NapkinbetsMetric {
 
 export type NapkinbetsBoardType = 'event-backed' | 'manual-curated' | 'community-created'
 export type NapkinbetsNapkinType = 'simple-bet' | 'pool'
-export type NapkinbetsWagerStatus = 'open' | 'locked' | 'live' | 'settling' | 'settled' | 'closed' | 'archived'
+export type NapkinbetsWagerStatus =
+  | 'open'
+  | 'locked'
+  | 'live'
+  | 'settling'
+  | 'settled'
+  | 'closed'
+  | 'archived'
 export type NapkinbetsJoinStatus = 'invited' | 'accepted'
 export type NapkinbetsPaymentStatus = 'pending' | 'submitted' | 'confirmed'
 export type NapkinbetsPickOutcome = 'pending' | 'winning' | 'won' | 'lost' | 'push'
@@ -218,6 +225,36 @@ export interface NapkinbetsEventOdds {
   volume: number | null
   priceChange24h: number | null
   commentCount: number | null
+}
+
+export interface NapkinbetsEventDetail {
+  id: string
+  source: string
+  sport: string
+  sportLabel: string
+  contextKey: string
+  contextLabel: string
+  league: string
+  leagueLabel: string
+  eventTitle: string
+  summary: string
+  status: string
+  state: 'pre' | 'in' | 'post'
+  shortStatus: string
+  startTime: string
+  venueName: string
+  venueLocation: string
+  broadcast: string
+  homeTeam: NapkinbetsEventTeam
+  awayTeam: NapkinbetsEventTeam
+  leaders: NapkinbetsEventLeader[]
+  ideas: NapkinbetsEventIdea[]
+  lastSyncedAt: string
+  odds: NapkinbetsEventOdds | null
+}
+
+export interface NapkinbetsEventDetailResponse {
+  event: NapkinbetsEventDetail | null
 }
 
 export interface NapkinbetsCreatePrefillQuery {

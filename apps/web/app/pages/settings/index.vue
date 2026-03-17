@@ -98,7 +98,9 @@ const initials = computed(() => {
   const name = formName.value || profile.value?.email || ''
   if (!name) return '?'
   const parts = name.split(/[\s@]+/)
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  const firstInitial = parts[0]?.[0]
+  const secondInitial = parts[1]?.[0]
+  if (firstInitial && secondInitial) return (firstInitial + secondInitial).toUpperCase()
   return name.slice(0, 2).toUpperCase()
 })
 
@@ -128,7 +130,12 @@ useWebPageSchema({
           Update your profile details. Changes show up across all your bets and shared views.
         </p>
         <div class="flex flex-wrap gap-2">
-          <UButton to="/settings/payments" color="neutral" variant="soft" icon="i-lucide-wallet-cards">
+          <UButton
+            to="/settings/payments"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-wallet-cards"
+          >
             Payment profiles
           </UButton>
           <UButton to="/notifications" color="neutral" variant="soft" icon="i-lucide-bell">
@@ -166,7 +173,11 @@ useWebPageSchema({
             <div class="flex items-center gap-4">
               <div class="napkinbets-settings-avatar-wrapper">
                 <span v-if="previewAvatarUrl" class="napkinbets-settings-avatar">
-                  <img :src="previewAvatarUrl" alt="Avatar preview" class="napkinbets-user-avatar-img" />
+                  <img
+                    :src="previewAvatarUrl"
+                    alt="Avatar preview"
+                    class="napkinbets-user-avatar-img"
+                  />
                 </span>
                 <span v-else class="napkinbets-settings-avatar napkinbets-user-avatar-initials">
                   {{ initials }}
@@ -215,12 +226,7 @@ useWebPageSchema({
               <UInput :model-value="profile?.email ?? ''" class="w-full" disabled />
             </UFormField>
 
-            <UButton
-              color="primary"
-              icon="i-lucide-save"
-              :loading="isSaving"
-              @click="handleSave"
-            >
+            <UButton color="primary" icon="i-lucide-save" :loading="isSaving" @click="handleSave">
               Save changes
             </UButton>
           </div>

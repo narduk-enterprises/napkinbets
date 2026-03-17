@@ -14,7 +14,11 @@ export default defineEventHandler(async (event) => {
   // Find all wager IDs where the user is the owner or a participant
   const [ownedWagers, participantRows] = await Promise.all([
     db
-      .select({ id: napkinbetsWagers.id, title: napkinbetsWagers.title, slug: napkinbetsWagers.slug })
+      .select({
+        id: napkinbetsWagers.id,
+        title: napkinbetsWagers.title,
+        slug: napkinbetsWagers.slug,
+      })
       .from(napkinbetsWagers)
       .where(eq(napkinbetsWagers.ownerUserId, user.id)),
     db
@@ -26,10 +30,7 @@ export default defineEventHandler(async (event) => {
   ])
 
   const wagerIds = [
-    ...new Set([
-      ...ownedWagers.map((w) => w.id),
-      ...participantRows.map((p) => p.wagerId),
-    ]),
+    ...new Set([...ownedWagers.map((w) => w.id), ...participantRows.map((p) => p.wagerId)]),
   ]
 
   if (wagerIds.length === 0) {

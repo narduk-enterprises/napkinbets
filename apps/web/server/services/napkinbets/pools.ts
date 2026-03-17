@@ -1111,9 +1111,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
 
   // Build userId → avatarUrl lookup from the users table
   const participantUserIds = [
-    ...new Set(
-      participants.map((p) => p.userId).filter((id): id is string => Boolean(id)),
-    ),
+    ...new Set(participants.map((p) => p.userId).filter((id): id is string => Boolean(id))),
   ]
   const userAvatars = new Map<string, string>()
   if (participantUserIds.length) {
@@ -1137,13 +1135,11 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     .filter((eventId): eventId is string => Boolean(eventId))
 
   // Always load cached events (cheap DB query needed for logos and live scores)
-  const cachedEventsById = cachedEventIds.length > 0
-    ? await loadCachedEventsByIds(event, cachedEventIds)
-    : new Map()
+  const cachedEventsById =
+    cachedEventIds.length > 0 ? await loadCachedEventsByIds(event, cachedEventIds) : new Map()
 
-  const featuredLiveGames = options.includeContext !== false
-    ? await loadFeaturedLiveGames(event)
-    : []
+  const featuredLiveGames =
+    options.includeContext !== false ? await loadFeaturedLiveGames(event) : []
 
   if (options.includeContext !== false) {
     const weatherRequests = new Map<
@@ -1241,7 +1237,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       awayTeamLogo: eventContext?.awayTeam.logo ?? '',
       participants: wagerParticipants.map((p) => ({
         ...p,
-        avatarUrl: p.avatarUrl || (p.userId ? userAvatars.get(p.userId) ?? '' : ''),
+        avatarUrl: p.avatarUrl || (p.userId ? (userAvatars.get(p.userId) ?? '') : ''),
       })),
       pots: wagerPots,
       picks: wagerPicks,
@@ -1496,9 +1492,7 @@ export async function joinPool(event: H3Event, wagerId: string, input: JoinPoolI
         .from(napkinbetsParticipants)
         .where(eq(napkinbetsParticipants.wagerId, wagerId))
 
-      const acceptedCount = updatedRows.filter(
-        (p) => p.joinStatus === 'accepted',
-      ).length
+      const acceptedCount = updatedRows.filter((p) => p.joinStatus === 'accepted').length
 
       if (acceptedCount >= 2) {
         await db
@@ -1555,9 +1549,7 @@ export async function joinPool(event: H3Event, wagerId: string, input: JoinPoolI
       .from(napkinbetsParticipants)
       .where(eq(napkinbetsParticipants.wagerId, wagerId))
 
-    const acceptedCount = updatedParticipants.filter(
-      (p) => p.joinStatus === 'accepted',
-    ).length
+    const acceptedCount = updatedParticipants.filter((p) => p.joinStatus === 'accepted').length
 
     if (acceptedCount >= 2) {
       await db

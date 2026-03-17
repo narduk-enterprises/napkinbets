@@ -1287,9 +1287,7 @@ async function pruneExpiredEvents(event: H3Event) {
   const linkedEventRows = await db
     .select({ eventId: napkinbetsWagers.eventId })
     .from(napkinbetsWagers)
-    .where(and(
-      eq(napkinbetsWagers.eventSource, 'espn'),
-    ))
+    .where(and(eq(napkinbetsWagers.eventSource, 'espn')))
 
   const linkedEventIds = linkedEventRows
     .map((row) => row.eventId)
@@ -1303,18 +1301,10 @@ async function pruneExpiredEvents(event: H3Event) {
   if (linkedEventIds.length > 0) {
     await db
       .delete(napkinbetsEvents)
-      .where(
-        and(
-          baseCondition,
-          notInArray(napkinbetsEvents.id, linkedEventIds),
-        ),
-      )
+      .where(and(baseCondition, notInArray(napkinbetsEvents.id, linkedEventIds)))
       .run()
   } else {
-    await db
-      .delete(napkinbetsEvents)
-      .where(baseCondition)
-      .run()
+    await db.delete(napkinbetsEvents).where(baseCondition).run()
   }
 }
 
