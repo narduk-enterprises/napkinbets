@@ -8,6 +8,7 @@ import {
   napkinbetsFriendships,
   napkinbetsGroupMembers,
   napkinbetsGroups,
+  napkinbetsNotifications,
 } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 
@@ -463,6 +464,16 @@ export async function sendNapkinbetsFriendRequest(event: H3Event, targetUserId: 
     respondedAt: null,
     createdAt: timestamp,
     updatedAt: timestamp,
+  })
+
+  await db.insert(napkinbetsNotifications).values({
+    id: crypto.randomUUID(),
+    targetUserId,
+    kind: 'friend_request',
+    title: 'Friend Request',
+    body: `${toDisplayName(authUser)} sent you a friend request.`,
+    deliveryStatus: 'queued',
+    createdAt: timestamp,
   })
 
   return { ok: true }

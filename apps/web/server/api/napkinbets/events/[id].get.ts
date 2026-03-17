@@ -1,5 +1,10 @@
 import { eq } from 'drizzle-orm'
-import { napkinbetsEvents, napkinbetsEventOdds } from '#server/database/schema'
+import {
+  napkinbetsEvents,
+  napkinbetsEventOdds,
+  napkinbetsTeams,
+  napkinbetsVenues,
+} from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 
 export default defineEventHandler(async (event) => {
@@ -21,6 +26,17 @@ export default defineEventHandler(async (event) => {
   }
 
   const oddsRow = oddsRows[0] ?? null
+  const [homeTeamRows, awayTeamRows, venueRows] = await Promise.all([
+    row.homeTeamId
+      ? db.select().from(napkinbetsTeams).where(eq(napkinbetsTeams.id, row.homeTeamId)).limit(1)
+      : Promise.resolve([]),
+    row.awayTeamId
+      ? db.select().from(napkinbetsTeams).where(eq(napkinbetsTeams.id, row.awayTeamId)).limit(1)
+      : Promise.resolve([]),
+    row.venueId
+      ? db.select().from(napkinbetsVenues).where(eq(napkinbetsVenues.id, row.venueId)).limit(1)
+      : Promise.resolve([]),
+  ])
 
   function parseJson<T>(value: string, fallback: T): T {
     try {
@@ -69,6 +85,11 @@ export default defineEventHandler(async (event) => {
       leaders: parseJson(row.leadersJson, []),
       ideas: parseJson(row.ideasJson, []),
       lastSyncedAt: row.lastSyncedAt,
+      sourceUpdatedAt: row.sourceUpdatedAt ?? null,
+      homeTeamProfileSlug: homeTeamRows[0]?.slug ?? null,
+      awayTeamProfileSlug: awayTeamRows[0]?.slug ?? null,
+      venueProfileSlug: venueRows[0]?.slug ?? null,
+      leagueProfileKey: row.league,
       odds,
     },
   }

@@ -29,7 +29,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Force non-secure cookies + SameSite=Lax for Safari dev compatibility
-    ...(import.meta.dev
+    ...(process.env.NODE_ENV === 'development'
       ? {
           session: {
             cookie: {
@@ -44,6 +44,7 @@ export default defineNuxtConfig({
     posthogApiKey: process.env.POSTHOG_PERSONAL_API_KEY || '',
     gaPropertyId: process.env.GA_PROPERTY_ID || '',
     posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
+    apiSportsKey: process.env.API_SPORTS_KEY || '',
     xaiApiKey: process.env.XAI_API_KEY || process.env.GROK_API_KEY || '',
     xaiModel: process.env.XAI_MODEL || 'grok-4-1-fast-non-reasoning',
     public: {

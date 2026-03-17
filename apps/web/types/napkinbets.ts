@@ -250,6 +250,11 @@ export interface NapkinbetsEventDetail {
   leaders: NapkinbetsEventLeader[]
   ideas: NapkinbetsEventIdea[]
   lastSyncedAt: string
+  sourceUpdatedAt?: string | null
+  homeTeamProfileSlug?: string | null
+  awayTeamProfileSlug?: string | null
+  venueProfileSlug?: string | null
+  leagueProfileKey?: string | null
   odds: NapkinbetsEventOdds | null
 }
 
@@ -380,6 +385,18 @@ export interface NapkinbetsUserNotification {
 export interface NapkinbetsNotificationsResponse {
   notifications: NapkinbetsUserNotification[]
   unreadCount: number
+}
+
+export interface NapkinbetsNotificationSettingsResponse {
+  notifyFriendRequests: boolean
+  notifyGroupInvites: boolean
+  notifyWagerUpdates: boolean
+}
+
+export interface UpdateNotificationSettingsInput {
+  notifyFriendRequests: boolean
+  notifyGroupInvites: boolean
+  notifyWagerUpdates: boolean
 }
 
 export interface NapkinbetsProfileResponse {
@@ -557,6 +574,244 @@ export interface NapkinbetsTaxonomyLeague {
   supportsEventDiscovery: boolean
 }
 
+export interface NapkinbetsAdminTaxonomySport {
+  key: string
+  label: string
+  icon: string
+  supportsEventDiscovery: boolean
+}
+
+export interface NapkinbetsAdminTaxonomyContext {
+  key: string
+  label: string
+  description: string
+}
+
+export interface NapkinbetsAdminTaxonomyLeague {
+  key: string
+  label: string
+  sportKey: string
+  sportLabel?: string
+  primaryContextKey: string
+  primaryContextLabel?: string
+  contextKeys: string[]
+  provider: 'espn' | 'manual'
+  providerLeagueKey?: string
+  entityProvider?: 'manual' | 'api-sports'
+  entityProviderSportKey?: 'american-football' | 'baseball' | 'basketball' | 'football' | 'hockey'
+  entityProviderLeagueId?: string
+  entityProviderSeason?: string
+  entitySyncEnabled?: boolean
+  scoreSyncEnabled?: boolean
+  entityLastSyncAt?: string | null
+  entityLastSyncStatus?: 'idle' | 'success' | 'error' | 'partial'
+  entityLastSyncMessage?: string | null
+  entityResolvedSeason?: string | null
+  scoreboardQueryParams?: Record<string, string>
+  eventShape?: 'head-to-head' | 'tournament'
+  activeMonths: number[]
+  supportsDateWindow?: boolean
+  supportsEventDiscovery: boolean
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export interface NapkinbetsAdminTaxonomyResponse {
+  sports: NapkinbetsAdminTaxonomySport[]
+  contexts: NapkinbetsAdminTaxonomyContext[]
+  leagues: NapkinbetsAdminTaxonomyLeague[]
+  entityCounts: {
+    teams: number
+    players: number
+    venues: number
+    rosters: number
+  }
+}
+
+export interface SaveNapkinbetsTaxonomyLeagueInput {
+  key: string
+  label: string
+  sportKey: string
+  primaryContextKey: string
+  contextKeys: string[]
+  provider: 'espn' | 'manual'
+  providerLeagueKey?: string
+  entityProvider?: 'manual' | 'api-sports'
+  entityProviderSportKey?: 'american-football' | 'baseball' | 'basketball' | 'football' | 'hockey'
+  entityProviderLeagueId?: string
+  entityProviderSeason?: string
+  entitySyncEnabled?: boolean
+  scoreSyncEnabled?: boolean
+  scoreboardQueryParams?: Record<string, string>
+  eventShape?: 'head-to-head' | 'tournament' | null
+  activeMonths: number[]
+  supportsDateWindow?: boolean
+  supportsEventDiscovery?: boolean
+  sortOrder?: number
+  isActive?: boolean
+}
+
+export interface NapkinbetsScoreEventSummary {
+  id: string
+  leagueKey: string
+  leagueLabel: string
+  eventTitle: string
+  startTime: string
+  state: 'pre' | 'in' | 'post'
+  status: string
+  venueName: string
+  venueLocation: string
+  homeTeam: {
+    name: string
+    score: string
+  }
+  awayTeam: {
+    name: string
+    score: string
+  }
+}
+
+export interface NapkinbetsLeagueProfileResponse {
+  league: NapkinbetsAdminTaxonomyLeague
+  teams: Array<{
+    id: string
+    slug: string
+    name: string
+    abbreviation: string
+    city: string
+    logoUrl: string
+  }>
+  recentEvents: NapkinbetsScoreEventSummary[]
+}
+
+export interface NapkinbetsTeamProfileResponse {
+  team: {
+    id: string
+    slug: string
+    source: string
+    externalTeamId: string
+    sportKey: string
+    primaryLeagueKey: string | null
+    venueId: string | null
+    name: string
+    shortName: string
+    abbreviation: string
+    city: string
+    country: string
+    logoUrl: string
+    isNational: boolean
+    foundedYear: number | null
+    metadataJson: string
+    rawPayloadJson: string | null
+    sourceUpdatedAt: string | null
+    lastSyncedAt: string
+    createdAt: string
+    updatedAt: string
+    venue: {
+      id: string
+      slug: string
+      name: string
+      city: string
+      stateRegion: string
+      country: string
+      capacity: number | null
+    } | null
+  }
+  rosterSeason: string
+  roster: Array<{
+    id: string
+    slug: string
+    displayName: string
+    position: string
+    jerseyNumber: string
+    imageUrl: string
+    nationality: string
+  }>
+  recentEvents: NapkinbetsScoreEventSummary[]
+}
+
+export interface NapkinbetsPlayerProfileResponse {
+  player: {
+    id: string
+    slug: string
+    source: string
+    externalPlayerId: string
+    sportKey: string
+    currentTeamId: string | null
+    currentLeagueKey: string | null
+    displayName: string
+    firstName: string
+    lastName: string
+    shortName: string
+    position: string
+    groupLabel: string
+    jerseyNumber: string
+    nationality: string
+    age: number | null
+    birthDate: string | null
+    height: string
+    weight: string
+    imageUrl: string
+    metadataJson: string
+    rawPayloadJson: string | null
+    sourceUpdatedAt: string | null
+    lastSyncedAt: string
+    createdAt: string
+    updatedAt: string
+  }
+  rosterHistory: Array<{
+    season: string
+    team: {
+      id: string
+      slug: string
+      name: string
+      logoUrl: string
+    } | null
+    position: string
+    jerseyNumber: string
+    status: string
+  }>
+  recentEvents: NapkinbetsScoreEventSummary[]
+}
+
+export interface NapkinbetsVenueProfileResponse {
+  venue: {
+    id: string
+    slug: string
+    source: string
+    externalVenueId: string | null
+    sportKey: string | null
+    primaryLeagueKey: string | null
+    name: string
+    shortName: string
+    city: string
+    stateRegion: string
+    country: string
+    address: string
+    postalCode: string
+    timezone: string
+    latitude: string
+    longitude: string
+    capacity: number | null
+    surface: string
+    roofType: string
+    imageUrl: string
+    metadataJson: string
+    rawPayloadJson: string | null
+    sourceUpdatedAt: string | null
+    lastSyncedAt: string
+    createdAt: string
+    updatedAt: string
+  }
+  teams: Array<{
+    id: string
+    slug: string
+    name: string
+    logoUrl: string
+  }>
+  recentEvents: NapkinbetsScoreEventSummary[]
+}
+
 export interface NapkinbetsTaxonomyResponse {
   sports: NapkinbetsTaxonomySport[]
   contexts: NapkinbetsTaxonomyContext[]
@@ -697,4 +952,27 @@ export interface SaveFeaturedBetInput {
   sortOrder?: number
   isActive?: boolean
   prefillJson?: string
+}
+
+export interface NapkinbetsAdminWagersResponse {
+  wagers: NapkinbetsAdminWager[]
+  total: number
+}
+
+export interface NapkinbetsAdminWagerCreateInput {
+  title: string
+  description: string
+  status: NapkinbetsWagerStatus
+  league: string
+  eventTitle: string
+  slug?: string
+}
+
+export interface NapkinbetsAdminWagerUpdateInput {
+  title?: string
+  description?: string
+  status?: NapkinbetsWagerStatus
+  league?: string
+  eventTitle?: string
+  slug?: string
 }

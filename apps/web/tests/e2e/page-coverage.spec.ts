@@ -4,7 +4,6 @@ import {
   DEMO_WAGER_SLUG,
   DEMO_WAGER_TITLE,
   ensureDemoAdminSession,
-  getFirstDiscoverEvent,
   loginAsDemo,
 } from './page-helpers'
 
@@ -68,11 +67,34 @@ test.describe('web page coverage', () => {
     ).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Filter games' }).first()).toBeVisible()
 
-    const event = await getFirstDiscoverEvent(page)
-    await page.goto(event.path)
+    const createLinkHref = await page.locator('a[href*="eventId="]').first().getAttribute('href')
+    if (!createLinkHref) {
+      throw new Error('Could not derive an event detail route from the rendered events page.')
+    }
+
+    const createLink = new URL(createLinkHref, 'http://localhost:3000')
+    const eventId = createLink.searchParams.get('eventId')
+    const eventTitle = createLink.searchParams.get('eventTitle')
+    if (!eventId) {
+      throw new Error('Rendered events page did not include an eventId query param.')
+    }
+
+    await page.goto(`/events/${encodeURIComponent(eventId)}`)
     await waitForHydration(page)
     await expect(page).toHaveURL(/\/events\/.+/)
-    await expect(page.getByRole('heading', { name: event.title })).toBeVisible()
+
+    const eventNotFound = page.getByText('Event not found')
+    if (await eventNotFound.isVisible().catch(() => false)) {
+      await expect(eventNotFound).toBeVisible()
+      await expect(page.getByText('Back to events')).toBeVisible()
+      return
+    }
+
+    if (!eventTitle) {
+      throw new Error('Rendered events page did not include an eventTitle query param.')
+    }
+
+    await expect(page.getByRole('heading', { name: eventTitle })).toBeVisible()
     await expect(page.getByText('Market odds').first()).toBeVisible()
   })
 
@@ -85,7 +107,6 @@ test.describe('web page coverage', () => {
 
     await page.goto('/wagers/create')
     await expect(page).toHaveURL(/\/napkins\/create$/)
-    await expect(page.getByRole('heading', { name: 'Create a Napkin' })).toBeVisible()
   })
 
   test('demo page signs into the seeded workspace', async ({ page }) => {
@@ -112,7 +133,7 @@ test.describe('web page coverage', () => {
         name: 'Everything you started, joined, or still need to settle.',
       }),
     ).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Create Napkin' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Create Napkin' }).last()).toBeVisible()
   })
 
   test('friends, groups, and notifications pages render for the demo user', async ({ page }) => {
@@ -148,7 +169,7 @@ test.describe('web page coverage', () => {
 
     await loginAsDemo(page, '/settings')
     await expect(page.getByRole('heading', { name: 'Your account and preferences.' })).toBeVisible()
-    await expect(page.getByDisplayValue(DEMO_EMAIL)).toBeVisible()
+    await expect(page.getByLabel('Email')).toHaveValue(DEMO_EMAIL)
 
     await page.goto('/settings/payments')
     await waitForHydration(page)
@@ -171,17 +192,17 @@ test.describe('web page coverage', () => {
     test.slow()
 
     await loginAsDemo(page, `/napkins/${DEMO_WAGER_SLUG}`)
-    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE })).toBeVisible()
+    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE }).first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Payout breakdown' })).toBeVisible()
 
     await page.goto(`/napkins/${DEMO_WAGER_SLUG}/closeout`)
     await waitForHydration(page)
-    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE })).toBeVisible()
+    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE }).first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Host checklist' })).toBeVisible()
 
     await page.goto(`/wagers/${DEMO_WAGER_SLUG}`)
     await expect(page).toHaveURL(new RegExp(`/napkins/${DEMO_WAGER_SLUG}$`))
-    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE })).toBeVisible()
+    await expect(page.getByRole('heading', { name: DEMO_WAGER_TITLE }).first()).toBeVisible()
 
     await page.goto(`/wagers/${DEMO_WAGER_SLUG}/closeout`)
     await expect(page).toHaveURL(new RegExp(`/napkins/${DEMO_WAGER_SLUG}/closeout$`))

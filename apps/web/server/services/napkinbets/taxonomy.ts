@@ -63,6 +63,16 @@ export interface NapkinbetsLeagueDefinition {
   activeMonths: number[]
   supportsDateWindow?: boolean
   supportsEventDiscovery: boolean
+  entityProvider?: 'manual' | 'api-sports'
+  entityProviderSportKey?: 'american-football' | 'baseball' | 'basketball' | 'football' | 'hockey'
+  entityProviderLeagueId?: string
+  entityProviderSeason?: string
+  entitySyncEnabled?: boolean
+  scoreSyncEnabled?: boolean
+  entityLastSyncAt?: string | null
+  entityLastSyncStatus?: 'idle' | 'success' | 'error' | 'partial'
+  entityLastSyncMessage?: string | null
+  entityResolvedSeason?: string | null
 }
 
 interface CreateWagerTaxonomyInput {
@@ -198,6 +208,11 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     provider: 'espn',
     activeMonths: [1, 2, 3, 4, 5, 6, 10, 11, 12],
     supportsEventDiscovery: true,
+    entityProvider: 'api-sports',
+    entityProviderSportKey: 'basketball',
+    entityProviderLeagueId: '12',
+    entitySyncEnabled: true,
+    scoreSyncEnabled: true,
   },
   {
     key: 'wnba',
@@ -246,6 +261,11 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     provider: 'espn',
     activeMonths: [1, 8, 9, 10, 11, 12],
     supportsEventDiscovery: true,
+    entityProvider: 'api-sports',
+    entityProviderSportKey: 'american-football',
+    entityProviderLeagueId: '1',
+    entitySyncEnabled: true,
+    scoreSyncEnabled: true,
   },
   {
     key: 'ncaaf',
@@ -267,6 +287,11 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     provider: 'espn',
     activeMonths: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     supportsEventDiscovery: true,
+    entityProvider: 'api-sports',
+    entityProviderSportKey: 'baseball',
+    entityProviderLeagueId: '1',
+    entitySyncEnabled: true,
+    scoreSyncEnabled: true,
   },
   {
     key: 'nhl',
@@ -277,6 +302,11 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     provider: 'espn',
     activeMonths: [1, 2, 3, 4, 5, 6, 9, 10, 11, 12],
     supportsEventDiscovery: true,
+    entityProvider: 'api-sports',
+    entityProviderSportKey: 'hockey',
+    entityProviderLeagueId: '57',
+    entitySyncEnabled: true,
+    scoreSyncEnabled: true,
   },
   {
     key: 'pga',

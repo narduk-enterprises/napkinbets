@@ -14,6 +14,8 @@ function kindIcon(kind: string) {
       return 'i-lucide-trophy'
     case 'payment':
       return 'i-lucide-wallet'
+    case 'friend_request':
+      return 'i-lucide-users'
     default:
       return 'i-lucide-bell'
   }
@@ -29,6 +31,8 @@ function kindColor(kind: string) {
       return 'success'
     case 'payment':
       return 'neutral'
+    case 'friend_request':
+      return 'primary'
     default:
       return 'neutral'
   }
@@ -95,7 +99,7 @@ useWebPageSchema({
           <NuxtLink
             v-for="notification in notifications"
             :key="notification.id"
-            :to="`/napkins/${notification.wagerSlug}`"
+            :to="notification.wagerSlug ? `/napkins/${notification.wagerSlug}` : (notification.kind === 'friend_request' ? '/friends' : '/notifications')"
             class="napkinbets-notification-row"
           >
             <div class="napkinbets-notification-row-icon">
@@ -120,7 +124,7 @@ useWebPageSchema({
                   {{ notification.kind }}
                 </UBadge>
                 <span class="text-xs text-dimmed">
-                  {{ notification.wagerTitle }} · {{ timeAgo(notification.createdAt) }}
+                  <template v-if="notification.wagerTitle">{{ notification.wagerTitle }} · </template>{{ timeAgo(notification.createdAt) }}
                 </span>
               </div>
             </div>

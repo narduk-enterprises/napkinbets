@@ -3,10 +3,13 @@ import type {
   CreateWagerInput,
   JoinWagerInput,
   SaveFeaturedBetInput,
+  SaveNapkinbetsTaxonomyLeagueInput,
   UpdateNapkinbetsAiSettingsInput,
   WagerPickInput,
   WagerSettlementInput,
   WagerSettlementReviewInput,
+  NapkinbetsAdminWagerCreateInput,
+  NapkinbetsAdminWagerUpdateInput,
 } from '../../types/napkinbets'
 import { useNapkinbetsApi } from '../services/napkinbets-api'
 
@@ -121,6 +124,16 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         api.saveAdminAiSettings(payload),
       )
     },
+    saveAdminTaxonomyLeague(payload: SaveNapkinbetsTaxonomyLeagueInput) {
+      return runAction('admin-taxonomy-league:save', 'League settings updated.', () =>
+        api.saveAdminTaxonomyLeague(payload),
+      )
+    },
+    syncAdminTaxonomyLeague(key: string) {
+      return runAction(`admin-taxonomy-league:sync:${key}`, 'League entity sync completed.', () =>
+        api.syncAdminTaxonomyLeague(key),
+      )
+    },
     runAdminIngest(tier: string) {
       return runAction(`admin-ingest:${tier}`, 'Event refresh started.', () =>
         api.runAdminIngest(tier),
@@ -151,6 +164,21 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
     deleteFeaturedBet(id: string) {
       return runAction(`featured-bet:delete:${id}`, 'Featured bet removed.', () =>
         api.deleteAdminFeaturedBet(id),
+      )
+    },
+    createAdminWager(payload: NapkinbetsAdminWagerCreateInput) {
+      return runAction('admin-wager-create', 'Bet generated successfully.', () =>
+        api.createAdminWager(payload),
+      )
+    },
+    updateAdminWager(wagerId: string, payload: NapkinbetsAdminWagerUpdateInput) {
+      return runAction(`admin-wager-update:${wagerId}`, 'Bet successfully updated.', () =>
+        api.updateAdminWager(wagerId, payload),
+      )
+    },
+    deleteAdminWager(wagerId: string) {
+      return runAction(`admin-wager-delete:${wagerId}`, 'Bet successfully deleted.', () =>
+        api.deleteAdminWager(wagerId),
       )
     },
   }

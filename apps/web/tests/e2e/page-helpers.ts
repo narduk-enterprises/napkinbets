@@ -32,7 +32,10 @@ function runLocalD1Command(command: string) {
 }
 
 export async function loginAsDemo(page: Page, redirectPath = '/dashboard') {
-  await page.goto(`/auth/demo?redirect=${encodeURIComponent(redirectPath)}`)
+  await page.goto(`/auth/demo?redirect=${encodeURIComponent(redirectPath)}`, {
+    timeout: 15_000,
+    waitUntil: 'domcontentloaded',
+  })
   await page.waitForURL((url) => url.pathname === redirectPath, { timeout: 15_000 })
   await waitForHydration(page)
 }

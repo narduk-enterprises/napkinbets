@@ -103,6 +103,16 @@ async function ensureNapkinbetsTaxonomySeeded(event: H3Event) {
         contextKeysJson: JSON.stringify(league.contextKeys),
         provider: league.provider,
         providerLeagueKey: league.providerLeagueKey ?? null,
+        entityProvider: league.entityProvider ?? 'manual',
+        entityProviderSportKey: league.entityProviderSportKey ?? null,
+        entityProviderLeagueId: league.entityProviderLeagueId ?? null,
+        entityProviderSeason: league.entityProviderSeason ?? null,
+        entitySyncEnabled: league.entitySyncEnabled ?? false,
+        scoreSyncEnabled: league.scoreSyncEnabled ?? false,
+        entityLastSyncAt: league.entityLastSyncAt ?? null,
+        entityLastSyncStatus: league.entityLastSyncStatus ?? 'idle',
+        entityLastSyncMessage: league.entityLastSyncMessage ?? null,
+        entityResolvedSeason: league.entityResolvedSeason ?? null,
         scoreboardQueryParamsJson: JSON.stringify(league.scoreboardQueryParams ?? {}),
         eventShape: league.eventShape ?? null,
         activeMonthsJson: JSON.stringify([...league.activeMonths]),
@@ -177,6 +187,24 @@ export async function loadNapkinbetsTaxonomyCatalog(event: H3Event) {
       ]),
       provider: row.provider as 'espn' | 'manual',
       providerLeagueKey: row.providerLeagueKey ?? undefined,
+      entityProvider: (row.entityProvider as 'manual' | 'api-sports') ?? 'manual',
+      entityProviderSportKey:
+        (row.entityProviderSportKey as
+          | 'american-football'
+          | 'baseball'
+          | 'basketball'
+          | 'football'
+          | 'hockey'
+          | null) ?? undefined,
+      entityProviderLeagueId: row.entityProviderLeagueId ?? undefined,
+      entityProviderSeason: row.entityProviderSeason ?? undefined,
+      entitySyncEnabled: row.entitySyncEnabled,
+      scoreSyncEnabled: row.scoreSyncEnabled,
+      entityLastSyncAt: row.entityLastSyncAt ?? null,
+      entityLastSyncStatus:
+        (row.entityLastSyncStatus as 'idle' | 'success' | 'error' | 'partial') ?? 'idle',
+      entityLastSyncMessage: row.entityLastSyncMessage ?? null,
+      entityResolvedSeason: row.entityResolvedSeason ?? null,
       scoreboardQueryParams: parseJsonValue<Record<string, string>>(
         row.scoreboardQueryParamsJson,
         {},

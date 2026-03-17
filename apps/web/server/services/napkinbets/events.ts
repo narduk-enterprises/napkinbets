@@ -18,6 +18,7 @@ import {
   enrichNapkinbetsEventsWithPolymarketOdds,
   type NapkinbetsEventOdds,
 } from '#server/services/napkinbets/polymarket'
+import { linkEventsToCanonicalEntities } from '#server/services/napkinbets/entities'
 import { useAppDatabase } from '#server/utils/database'
 
 interface EspnTeamRecord {
@@ -193,6 +194,8 @@ export interface NapkinbetsCachedEvent {
   leaders: CachedDiscoverEventLeader[]
   ideas: CachedDiscoverEventIdea[]
   lastSyncedAt: string
+  sourceUpdatedAt: string | null
+  rawPayload: unknown
   odds?: NapkinbetsEventOdds | null
 }
 
@@ -887,6 +890,8 @@ export function normalizeMatchupEspnEvent(
     leaders: buildCompetitorLeaders(competitors),
     ideas: getLeagueIdeas(config.sportKey, homeName, awayName),
     lastSyncedAt: syncedAt,
+    sourceUpdatedAt: null,
+    rawPayload: event,
   }
 }
 
@@ -940,6 +945,8 @@ export function normalizeTournamentEspnEvent(
       featuredTeams.awayTeam.name,
     ),
     lastSyncedAt: syncedAt,
+    sourceUpdatedAt: null,
+    rawPayload: event,
   }
 }
 
@@ -1205,15 +1212,18 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
       summary: item.summary,
       venueName: item.venueName,
       venueLocation: item.venueLocation,
+      venueId: existing?.venueId ?? null,
       broadcast: item.broadcast,
+      homeTeamId: existing?.homeTeamId ?? null,
+      awayTeamId: existing?.awayTeamId ?? null,
       homeTeamJson: JSON.stringify(item.homeTeam),
       awayTeamJson: JSON.stringify(item.awayTeam),
       leadersJson: JSON.stringify(item.leaders),
       ideasJson: JSON.stringify(item.ideas),
       homeScore: item.homeTeam.score,
       awayScore: item.awayTeam.score,
-      rawPayloadJson: null,
-      sourceUpdatedAt: syncedAt,
+      rawPayloadJson: JSON.stringify(item.rawPayload ?? null),
+      sourceUpdatedAt: item.sourceUpdatedAt,
       lastSyncedAt: syncedAt,
       createdAt: existing?.createdAt ?? syncedAt,
       updatedAt: syncedAt,
@@ -1241,7 +1251,10 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
           summary: rowValues.summary,
           venueName: rowValues.venueName,
           venueLocation: rowValues.venueLocation,
+          venueId: rowValues.venueId,
           broadcast: rowValues.broadcast,
+          homeTeamId: rowValues.homeTeamId,
+          awayTeamId: rowValues.awayTeamId,
           homeTeamJson: rowValues.homeTeamJson,
           awayTeamJson: rowValues.awayTeamJson,
           leadersJson: rowValues.leadersJson,
@@ -1276,6 +1289,11 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
     for (const snapshotChunk of chunkItems(snapshotsToInsert, SNAPSHOT_INSERT_BATCH_SIZE)) {
       await db.insert(napkinbetsEventSnapshots).values(snapshotChunk).run()
     }
+  }
+
+  const leagues = [...new Set(events.map((item) => item.league))]
+  for (const league of leagues) {
+    await linkEventsToCanonicalEntities(event, league)
   }
 }
 
@@ -1392,6 +1410,8 @@ function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCac
     leaders: parseJsonValue<CachedDiscoverEventLeader[]>(row.leadersJson, []),
     ideas: parseJsonValue<CachedDiscoverEventIdea[]>(row.ideasJson, []),
     lastSyncedAt: row.lastSyncedAt,
+    sourceUpdatedAt: row.sourceUpdatedAt ?? null,
+    rawPayload: parseJsonValue<Record<string, unknown> | null>(row.rawPayloadJson ?? '', null),
     odds: null,
   }
 }

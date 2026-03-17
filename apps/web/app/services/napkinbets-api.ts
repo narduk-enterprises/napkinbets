@@ -7,24 +7,35 @@ import type {
   NapkinbetsAiTermsInput,
   NapkinbetsAdminResponse,
   NapkinbetsAdminFeaturedBetsResponse,
+  NapkinbetsAdminTaxonomyResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
   NapkinbetsEventDetailResponse,
   NapkinbetsFriendSearchResponse,
   NapkinbetsFriendsResponse,
   NapkinbetsGroupsResponse,
+  NapkinbetsNotificationSettingsResponse,
   NapkinbetsNotificationsResponse,
   NapkinbetsPaymentProfilesResponse,
+  NapkinbetsPlayerProfileResponse,
   NapkinbetsProfileResponse,
   NapkinbetsTaxonomyResponse,
+  NapkinbetsTeamProfileResponse,
+  NapkinbetsLeagueProfileResponse,
+  NapkinbetsVenueProfileResponse,
   NapkinbetsWorkspaceResponse,
   SaveFeaturedBetInput,
+  SaveNapkinbetsTaxonomyLeagueInput,
   UpdateNapkinbetsAiSettingsInput,
+  UpdateNotificationSettingsInput,
   UpdateProfileInput,
   WagerPickInput,
   NapkinbetsWagerResponse,
   WagerSettlementInput,
   WagerSettlementReviewInput,
+  NapkinbetsAdminWagersResponse,
+  NapkinbetsAdminWagerCreateInput,
+  NapkinbetsAdminWagerUpdateInput,
 } from '../../types/napkinbets'
 
 export function useNapkinbetsApi() {
@@ -40,6 +51,26 @@ export function useNapkinbetsApi() {
     getEventDetail(id: string) {
       return fetch<NapkinbetsEventDetailResponse>(
         `/api/napkinbets/events/${encodeURIComponent(id)}`,
+      )
+    },
+    getLeagueProfile(key: string) {
+      return fetch<NapkinbetsLeagueProfileResponse>(
+        `/api/napkinbets/leagues/${encodeURIComponent(key)}`,
+      )
+    },
+    getTeamProfile(slug: string) {
+      return fetch<NapkinbetsTeamProfileResponse>(
+        `/api/napkinbets/teams/${encodeURIComponent(slug)}`,
+      )
+    },
+    getPlayerProfile(slug: string) {
+      return fetch<NapkinbetsPlayerProfileResponse>(
+        `/api/napkinbets/players/${encodeURIComponent(slug)}`,
+      )
+    },
+    getVenueProfile(slug: string) {
+      return fetch<NapkinbetsVenueProfileResponse>(
+        `/api/napkinbets/venues/${encodeURIComponent(slug)}`,
       )
     },
     getTaxonomy() {
@@ -100,6 +131,29 @@ export function useNapkinbetsApi() {
     getAdminOverview() {
       return fetch<NapkinbetsAdminResponse>('/api/napkinbets/admin/overview')
     },
+    getAdminTaxonomy() {
+      return fetch<NapkinbetsAdminTaxonomyResponse>('/api/napkinbets/admin/taxonomy')
+    },
+    saveAdminTaxonomyLeague(payload: SaveNapkinbetsTaxonomyLeagueInput) {
+      return fetch<{ ok: true }>('/api/napkinbets/admin/taxonomy/leagues', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    syncAdminTaxonomyLeague(key: string) {
+      return fetch<{
+        ok: true
+        league: string
+        resolvedSeason: string
+        teamCount: number
+        playerCount: number
+        rosterCount: number
+        venueCount: number
+        warnings: string[]
+      }>(`/api/napkinbets/admin/taxonomy/leagues/${encodeURIComponent(key)}/sync`, {
+        method: 'POST',
+      })
+    },
     saveAdminAiSettings(payload: UpdateNapkinbetsAiSettingsInput) {
       return fetch('/api/napkinbets/admin/ai-settings', {
         method: 'POST',
@@ -138,6 +192,15 @@ export function useNapkinbetsApi() {
     updateProfile(payload: UpdateProfileInput) {
       return fetch<{ ok: true }>('/api/napkinbets/me/profile', {
         method: 'POST',
+        body: payload,
+      })
+    },
+    getNotificationSettings() {
+      return fetch<NapkinbetsNotificationSettingsResponse>('/api/napkinbets/settings/notifications')
+    },
+    updateNotificationSettings(payload: UpdateNotificationSettingsInput) {
+      return fetch<{ ok: true }>('/api/napkinbets/settings/notifications', {
+        method: 'PUT',
         body: payload,
       })
     },
@@ -206,6 +269,28 @@ export function useNapkinbetsApi() {
     },
     clearWager(wagerId: string) {
       return fetch('/api/napkinbets/wagers/' + wagerId, {
+        method: 'DELETE',
+      })
+    },
+    getAdminWagers(params: { page: number; limit: number; search?: string }) {
+      return fetch<NapkinbetsAdminWagersResponse>('/api/napkinbets/admin/wagers', {
+        query: params,
+      })
+    },
+    createAdminWager(payload: NapkinbetsAdminWagerCreateInput) {
+      return fetch<{ id: string; slug: string }>('/api/napkinbets/admin/wagers', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    updateAdminWager(wagerId: string, payload: NapkinbetsAdminWagerUpdateInput) {
+      return fetch<{ success: boolean }>(`/api/napkinbets/admin/wagers/${wagerId}`, {
+        method: 'PATCH',
+        body: payload,
+      })
+    },
+    deleteAdminWager(wagerId: string) {
+      return fetch<{ success: boolean }>(`/api/napkinbets/admin/wagers/${wagerId}`, {
         method: 'DELETE',
       })
     },

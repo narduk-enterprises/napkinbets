@@ -19,6 +19,8 @@ function kindIcon(kind: string) {
       return 'i-lucide-trophy'
     case 'payment':
       return 'i-lucide-wallet'
+    case 'friend_request':
+      return 'i-lucide-users'
     default:
       return 'i-lucide-bell'
   }
@@ -65,7 +67,7 @@ function timeAgo(value: string) {
             <NuxtLink
               v-for="notification in latestNotifications"
               :key="notification.id"
-              :to="`/napkins/${notification.wagerSlug}`"
+              :to="notification.wagerSlug ? `/napkins/${notification.wagerSlug}` : (notification.kind === 'friend_request' ? '/friends' : '/notifications')"
               class="napkinbets-notification-dropdown-item"
               @click="isOpen = false"
             >
@@ -76,7 +78,7 @@ function timeAgo(value: string) {
                 <p class="napkinbets-notification-dropdown-title">{{ notification.title }}</p>
                 <p class="napkinbets-notification-dropdown-body">{{ notification.body }}</p>
                 <p class="napkinbets-notification-dropdown-meta">
-                  {{ notification.wagerTitle }} · {{ timeAgo(notification.createdAt) }}
+                  <template v-if="notification.wagerTitle">{{ notification.wagerTitle }} · </template>{{ timeAgo(notification.createdAt) }}
                 </p>
               </div>
               <UBadge

@@ -82,13 +82,13 @@ export default defineNuxtConfig({
     /** Optional: secret for cron routes (e.g. cache warming). Set CRON_SECRET in Doppler; init.ts provisions it. */
     cronSecret: process.env.CRON_SECRET || '',
     /** Log level for server route logging. Supports: debug | info | warn | error | silent. Set LOG_LEVEL in env. */
-    logLevel: process.env.LOG_LEVEL || (import.meta.dev ? 'debug' : 'warn'),
+    logLevel: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'development' ? 'debug' : 'warn'),
     session: {
       password:
         process.env.NUXT_SESSION_PASSWORD ||
-        (import.meta.dev ? 'layer-auth-dev-session-secret-min-32-chars' : ''),
+        (process.env.NODE_ENV === 'development' ? 'layer-auth-dev-session-secret-min-32-chars' : ''),
       cookie: {
-        secure: !import.meta.dev,
+        secure: process.env.NODE_ENV !== 'development',
         sameSite: 'lax' as const,
       },
     },
@@ -141,7 +141,7 @@ export default defineNuxtConfig({
     colorMode: true,
   },
 
-  ...(import.meta.dev
+  ...(process.env.NODE_ENV === 'development'
     ? {
         colorMode: {
           preference: 'system',

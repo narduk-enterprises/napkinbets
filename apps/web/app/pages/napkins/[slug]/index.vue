@@ -4,7 +4,7 @@ import type {
   WagerPickInput,
   WagerSettlementInput,
   WagerSettlementReviewInput,
-} from '../../../types/napkinbets'
+} from '../../../../types/napkinbets'
 
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
