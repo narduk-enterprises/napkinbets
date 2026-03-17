@@ -55,15 +55,6 @@ function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
   }
 }
 
-function formatDateLabel(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
 function badgeLabel(team: NapkinbetsEvent['homeTeam']) {
   if (team.record) {
     return team.record
@@ -92,6 +83,7 @@ const eventTeams = computed(() => [props.event.awayTeam, props.event.homeTeam])
 const primaryIdea = computed(() => props.event.ideas[0] ?? null)
 const insightRows = computed(() => props.event.leaders.slice(0, 1))
 const createLink = computed(() => buildCreateLink(buildCreatePrefill(props.event)))
+const timeLabel = computed(() => props.event.shortStatus || props.event.status)
 const primaryIdeaLink = computed(() =>
   primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
 )
@@ -119,9 +111,7 @@ const primaryIdeaLink = computed(() =>
       <div class="space-y-1">
         <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
         <div class="napkinbets-event-meta">
-          <span>{{
-            event.state === 'in' ? event.shortStatus : formatDateLabel(event.startTime)
-          }}</span>
+          <span>{{ timeLabel }}</span>
           <span v-if="event.broadcast">{{ event.broadcast }}</span>
           <span>{{ event.venueName }}</span>
         </div>
