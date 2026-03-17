@@ -5,6 +5,13 @@ import {
   napkinbetsEventSnapshots,
   napkinbetsIngestRuns,
 } from '#server/database/schema'
+import {
+  NAPKINBETS_EVENT_LEAGUES,
+  getNapkinbetsContextLabel,
+  getNapkinbetsLeagues,
+  getNapkinbetsSportLabel,
+  type NapkinbetsLeagueDefinition,
+} from '#server/services/napkinbets/taxonomy'
 import { useAppDatabase } from '#server/utils/database'
 
 interface EspnTeamRecord {
@@ -107,6 +114,8 @@ export interface NapkinbetsCachedEvent {
   source: 'espn'
   sport: string
   sportLabel: string
+  contextKey: string
+  contextLabel: string
   league: string
   leagueLabel: string
   eventTitle: string
@@ -134,6 +143,7 @@ export interface NapkinbetsDiscoverSection {
 
 export interface NapkinbetsDiscoverFilters {
   sports: Array<{ value: string; label: string }>
+  contexts: Array<{ value: string; label: string }>
   leagues: Array<{ value: string; label: string }>
   states: Array<{ value: string; label: string }>
 }
@@ -142,57 +152,6 @@ type DiscoverTier = 'live-window' | 'next-48h' | 'next-7d' | 'manual'
 
 export type NapkinbetsEventIngestTier = DiscoverTier
 export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'all'
-
-interface DiscoverLeagueConfig {
-  sport: string
-  sportLabel: string
-  league: string
-  leagueLabel: string
-  activeMonths: number[]
-  espnPath?: string
-  supportsDateWindow?: boolean
-}
-
-const LEAGUES = [
-  {
-    sport: 'basketball',
-    sportLabel: 'Basketball',
-    league: 'nba',
-    leagueLabel: 'NBA',
-    activeMonths: [1, 2, 3, 4, 5, 6, 10, 11, 12],
-  },
-  {
-    sport: 'basketball',
-    sportLabel: 'Basketball',
-    league: 'ncaamb',
-    leagueLabel: "Men's College Basketball",
-    activeMonths: [1, 2, 3, 4, 11, 12],
-    espnPath: 'mens-college-basketball',
-    supportsDateWindow: false,
-  },
-  {
-    sport: 'football',
-    sportLabel: 'Football',
-    league: 'ncaaf',
-    leagueLabel: 'College Football',
-    activeMonths: [1, 8, 9, 10, 11, 12],
-    espnPath: 'college-football',
-  },
-  {
-    sport: 'hockey',
-    sportLabel: 'Hockey',
-    league: 'nhl',
-    leagueLabel: 'NHL',
-    activeMonths: [1, 2, 3, 4, 5, 6, 9, 10, 11, 12],
-  },
-  {
-    sport: 'baseball',
-    sportLabel: 'Baseball',
-    league: 'mlb',
-    leagueLabel: 'MLB',
-    activeMonths: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-  },
-] satisfies ReadonlyArray<DiscoverLeagueConfig>
 
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 
@@ -282,7 +241,7 @@ function formatEventTime(value: string) {
   }).format(new Date(value))
 }
 
-function isLeagueActive(config: (typeof LEAGUES)[number], now = new Date()) {
+function isLeagueActive(config: NapkinbetsLeagueDefinition, now = new Date()) {
   return (config.activeMonths as readonly number[]).includes(now.getMonth() + 1)
 }
 
@@ -455,6 +414,13 @@ function parseJsonValue<T>(value: string, fallback: T): T {
   }
 }
 
+function inferEventContextKey(leagueKey: string) {
+  return (
+    getNapkinbetsLeagues().find((league) => league.key === leagueKey)?.primaryContextKey ??
+    'community'
+  )
+}
+
 function readScoreFromJson(value: string) {
   const parsed = parseJsonValue<CachedDiscoverEventTeam>(value, {
     id: '',
@@ -473,7 +439,7 @@ function readScoreFromJson(value: string) {
 
 function normalizeEspnEvent(
   event: EspnEvent,
-  config: (typeof LEAGUES)[number],
+  config: NapkinbetsLeagueDefinition,
   syncedAt: string,
 ): NapkinbetsCachedEvent | null {
   const competition = event.competitions?.[0]
@@ -492,12 +458,14 @@ function normalizeEspnEvent(
   const awayName = awayTeam.team.displayName
 
   return {
-    id: buildEventId('espn', config.league, event.id),
+    id: buildEventId('espn', config.key, event.id),
     source: 'espn',
-    sport: config.sport,
-    sportLabel: config.sportLabel,
-    league: config.league,
-    leagueLabel: config.leagueLabel,
+    sport: config.sportKey,
+    sportLabel: getNapkinbetsSportLabel(config.sportKey),
+    contextKey: config.primaryContextKey,
+    contextLabel: getNapkinbetsContextLabel(config.primaryContextKey),
+    league: config.key,
+    leagueLabel: config.label,
     eventTitle: event.shortName ?? event.name ?? `${awayName} at ${homeName}`,
     summary:
       status.state === 'in'
@@ -533,7 +501,7 @@ function normalizeEspnEvent(
       winner: Boolean(awayTeam.winner),
     },
     leaders: buildLeaders(competitors),
-    ideas: getLeagueIdeas(config.sport, homeName, awayName),
+    ideas: getLeagueIdeas(config.sportKey, homeName, awayName),
     lastSyncedAt: syncedAt,
   }
 }
@@ -561,13 +529,13 @@ function eventNeedsSnapshot(
 }
 
 async function fetchLeagueEvents(
-  config: (typeof LEAGUES)[number],
+  config: NapkinbetsLeagueDefinition,
   tier: DiscoverTier,
   syncedAt: string,
 ) {
   const window = buildIngestWindow(tier)
   const url = new URL(
-    `https://site.web.api.espn.com/apis/site/v2/sports/${config.sport}/${config.espnPath ?? config.league}/scoreboard`,
+    `https://site.web.api.espn.com/apis/site/v2/sports/${config.sportKey}/${config.providerLeagueKey ?? config.key}/scoreboard`,
   )
 
   if (config.supportsDateWindow !== false) {
@@ -590,7 +558,7 @@ async function fetchLeagueEvents(
   }
 
   if (!response.ok) {
-    throw new Error(`ESPN ${config.league} returned ${response.status}.`)
+    throw new Error(`ESPN ${config.key} returned ${response.status}.`)
   }
 
   const payload = (await response.json()) as EspnScoreboardResponse
@@ -614,7 +582,7 @@ async function fetchLeagueEvents(
 
 async function recordIngestRunStart(
   event: H3Event,
-  config: (typeof LEAGUES)[number],
+  config: NapkinbetsLeagueDefinition,
   tier: DiscoverTier,
   window: ReturnType<typeof buildIngestWindow>,
 ) {
@@ -626,8 +594,8 @@ async function recordIngestRunStart(
     .values({
       id: runId,
       source: 'espn',
-      sport: config.sport,
-      league: config.league,
+      sport: config.sportKey,
+      league: config.key,
       tier,
       windowStartsAt: window.start.toISOString(),
       windowEndsAt: window.end.toISOString(),
@@ -791,6 +759,8 @@ function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCac
     source: row.source as 'espn',
     sport: row.sport,
     sportLabel: row.sportLabel,
+    contextKey: inferEventContextKey(row.league),
+    contextLabel: getNapkinbetsContextLabel(inferEventContextKey(row.league)),
     league: row.league,
     leagueLabel: row.leagueLabel,
     eventTitle: row.eventTitle,
@@ -914,11 +884,13 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
 
 function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscoverFilters {
   const sportMap = new Map<string, string>()
+  const contextMap = new Map<string, string>()
   const leagueMap = new Map<string, string>()
   const stateMap = new Map<string, string>()
 
   for (const event of events) {
     sportMap.set(event.sport, event.sportLabel)
+    contextMap.set(event.contextKey, event.contextLabel)
     leagueMap.set(event.league, event.leagueLabel)
     stateMap.set(
       event.state,
@@ -928,6 +900,9 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
 
   return {
     sports: Array.from(sportMap.entries())
+      .sort((left, right) => left[1].localeCompare(right[1]))
+      .map(([value, label]) => ({ value, label })),
+    contexts: Array.from(contextMap.entries())
       .sort((left, right) => left[1].localeCompare(right[1]))
       .map(([value, label]) => ({ value, label })),
     leagues: Array.from(leagueMap.entries())
@@ -941,7 +916,7 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
 
 export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTier = 'manual') {
   const syncedAt = nowIso()
-  const activeLeagues = LEAGUES.filter((config) => isLeagueActive(config))
+  const activeLeagues = NAPKINBETS_EVENT_LEAGUES.filter((config) => isLeagueActive(config))
   const summaries: Array<{
     league: string
     sport: string
@@ -961,8 +936,8 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
       await finishIngestRun(event, runId, 'success', result.events.length)
 
       summaries.push({
-        league: config.league,
-        sport: config.sport,
+        league: config.key,
+        sport: config.sportKey,
         tier,
         status: 'success',
         eventCount: result.events.length,
@@ -973,8 +948,8 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
       await finishIngestRun(event, runId, 'failed', 0, message)
 
       summaries.push({
-        league: config.league,
-        sport: config.sport,
+        league: config.key,
+        sport: config.sportKey,
         tier,
         status: 'failed',
         eventCount: 0,

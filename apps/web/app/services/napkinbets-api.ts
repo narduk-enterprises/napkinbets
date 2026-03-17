@@ -8,6 +8,7 @@ import type {
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
   NapkinbetsPaymentProfilesResponse,
+  NapkinbetsTaxonomyResponse,
   NapkinbetsWorkspaceResponse,
   UpdateNapkinbetsAiSettingsInput,
   WagerPickInput,
@@ -25,6 +26,9 @@ export function useNapkinbetsApi() {
     },
     getDiscover() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
+    },
+    getTaxonomy() {
+      return fetch<NapkinbetsTaxonomyResponse>('/api/napkinbets/taxonomy')
     },
     getWorkspace() {
       return fetch<NapkinbetsWorkspaceResponse>('/api/napkinbets/workspace')

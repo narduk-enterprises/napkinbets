@@ -2,14 +2,21 @@ import { createError, readBody } from 'h3'
 import { z } from 'zod'
 import { enforceRateLimit } from '#layer/server/utils/rateLimit'
 import { savePoolData } from '#server/services/napkinbets/pools'
+import {
+  normalizeCreateWagerTaxonomyInput,
+  NAPKINBETS_BOARD_TYPES,
+} from '#server/services/napkinbets/taxonomy'
 
 const bodySchema = z.object({
   title: z.string().min(3).max(120),
   creatorName: z.string().min(2).max(80),
   description: z.string().min(12).max(500),
+  boardType: z.enum(NAPKINBETS_BOARD_TYPES),
   format: z.string().min(2).max(40),
   sport: z.string().max(40),
+  contextKey: z.string().max(40),
   league: z.string().max(40),
+  customContextName: z.string().max(120),
   sideOptions: z.string().min(3).max(500),
   participantNames: z.string().max(500),
   potRules: z.string().min(3).max(500),
@@ -41,5 +48,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return await savePoolData(event, parsed.data)
+  let normalizedTaxonomy
+  try {
+    normalizedTaxonomy = normalizeCreateWagerTaxonomyInput(parsed.data)
+  } catch (error) {
+    throw createError({
+      statusCode: 400,
+      message: error instanceof Error ? error.message : 'Invalid board taxonomy.',
+    })
+  }
+
+  return await savePoolData(event, {
+    ...parsed.data,
+    ...normalizedTaxonomy,
+  })
 })

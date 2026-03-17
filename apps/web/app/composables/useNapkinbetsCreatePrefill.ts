@@ -7,6 +7,7 @@ interface NapkinbetsCreateEventPreview {
   startTime: string
   status: string
   sport: string
+  contextKey: string
   league: string
   venueName: string
   homeTeamName: string
@@ -18,9 +19,12 @@ export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
   creatorName: '',
   description:
     'A friendly board for tonight with a clean side market, manual payment proof, and one fast prop that settles off the broadcast.',
+  boardType: 'community-created',
   format: 'sports-game',
   sport: 'basketball',
+  contextKey: 'pro',
   league: 'nba',
+  customContextName: '',
   sideOptions: 'Home side\nAway side\nFeatured prop',
   participantNames: '',
   potRules: 'Winner: 70\nCloser call: 30',
@@ -68,6 +72,7 @@ export function useNapkinbetsCreatePrefill() {
     const startTime = getQueryString(route.query.eventStartsAt)
     const status = getQueryString(route.query.eventStatus)
     const sport = getQueryString(route.query.sport)
+    const contextKey = getQueryString(route.query.contextKey)
     const league = getQueryString(route.query.league)
     const venueName = getQueryString(route.query.venueName)
     const homeTeamName = getQueryString(route.query.homeTeamName)
@@ -84,6 +89,7 @@ export function useNapkinbetsCreatePrefill() {
       startTime,
       status,
       sport,
+      contextKey,
       league,
       venueName,
       homeTeamName,
@@ -117,8 +123,10 @@ export function useNapkinbetsCreatePrefill() {
         preview.homeTeamName && preview.awayTeamName
           ? `Friendly board for ${preview.awayTeamName} at ${preview.homeTeamName}, with a simple side market, one prop lane, and manual payment confirmation after the result is official.`
           : NAPKINBETS_DEFAULT_CREATE_INPUT.description,
+      boardType: 'event-backed',
       format: getQueryString(route.query.format) || NAPKINBETS_DEFAULT_CREATE_INPUT.format,
       sport: preview.sport || NAPKINBETS_DEFAULT_CREATE_INPUT.sport,
+      contextKey: preview.contextKey || NAPKINBETS_DEFAULT_CREATE_INPUT.contextKey,
       league: preview.league || NAPKINBETS_DEFAULT_CREATE_INPUT.league,
       sideOptions:
         getQueryString(route.query.sideOptions) ||

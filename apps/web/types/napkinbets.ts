@@ -5,6 +5,8 @@ export interface NapkinbetsMetric {
   icon: string
 }
 
+export type NapkinbetsBoardType = 'event-backed' | 'manual-curated' | 'community-created'
+
 export interface NapkinbetsConcept {
   summary: string
   featureRequirements: string[]
@@ -120,10 +122,13 @@ export interface NapkinbetsWager {
   slug: string
   title: string
   description: string
+  boardType: NapkinbetsBoardType
   category: string
   format: string
   sport: string
   league: string
+  contextKey: string
+  customContextName: string
   status: string
   creatorName: string
   sideOptions: string[]
@@ -180,6 +185,8 @@ export interface NapkinbetsEventCard {
   source: 'espn'
   sport: string
   sportLabel: string
+  contextKey: string
+  contextLabel: string
   league: string
   leagueLabel: string
   eventTitle: string
@@ -212,6 +219,7 @@ export interface NapkinbetsDiscoverFilterOption {
 
 export interface NapkinbetsDiscoverFilters {
   sports: NapkinbetsDiscoverFilterOption[]
+  contexts: NapkinbetsDiscoverFilterOption[]
   leagues: NapkinbetsDiscoverFilterOption[]
   states: NapkinbetsDiscoverFilterOption[]
 }
@@ -316,13 +324,44 @@ export interface NapkinbetsDashboardResponse {
   refreshedAt: string
 }
 
+export interface NapkinbetsTaxonomySport {
+  value: string
+  label: string
+  icon: string
+  supportsEventDiscovery: boolean
+}
+
+export interface NapkinbetsTaxonomyContext {
+  value: string
+  label: string
+  description: string
+}
+
+export interface NapkinbetsTaxonomyLeague {
+  value: string
+  label: string
+  sport: string
+  contextKey: string
+  contextKeys: string[]
+  supportsEventDiscovery: boolean
+}
+
+export interface NapkinbetsTaxonomyResponse {
+  sports: NapkinbetsTaxonomySport[]
+  contexts: NapkinbetsTaxonomyContext[]
+  leagues: NapkinbetsTaxonomyLeague[]
+}
+
 export interface CreateWagerInput {
   title: string
   creatorName: string
   description: string
+  boardType: NapkinbetsBoardType
   format: string
   sport: string
   league: string
+  contextKey: string
+  customContextName: string
   sideOptions: string
   participantNames: string
   potRules: string

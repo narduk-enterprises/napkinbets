@@ -21,9 +21,12 @@ interface SavePoolDataInput {
   title: string
   creatorName: string
   description: string
+  boardType: 'event-backed' | 'manual-curated' | 'community-created'
   format: string
   sport: string
   league: string
+  contextKey: string
+  customContextName: string
   sideOptions: string
   participantNames: string
   potRules: string
@@ -870,10 +873,13 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       slug: wager.slug,
       title: wager.title,
       description: wager.description,
+      boardType: wager.boardType as SavePoolDataInput['boardType'],
       category: wager.category,
       format: wager.format,
       sport: wager.sport,
       league: wager.league,
+      contextKey: wager.contextKey,
+      customContextName: wager.customContextName ?? '',
       status: wager.status,
       creatorName: wager.creatorName,
       sideOptions: parseJsonArray(wager.sideOptionsJson),
@@ -971,10 +977,13 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
     slug,
     title: input.title,
     description: input.description,
+    boardType: input.boardType,
     category: input.format.includes('golf') ? 'golf' : input.sport || 'custom',
     format: input.format,
     sport: input.sport,
     league: input.league,
+    contextKey: input.contextKey,
+    customContextName: input.customContextName || null,
     status: 'open',
     creatorName,
     sideOptionsJson: JSON.stringify(sideOptions),

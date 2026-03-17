@@ -5,6 +5,7 @@ import { NAPKINBETS_DEFAULT_CREATE_INPUT } from '../../composables/useNapkinbets
 
 const { loggedIn, user } = useUserSession()
 const { createMode, prefill, eventPreview } = useNapkinbetsCreatePrefill()
+const { data: taxonomy } = await useNapkinbetsTaxonomy()
 const actions = useNapkinbetsActions(async () => Promise.resolve())
 const paymentProfilesState = loggedIn.value ? await useNapkinbetsPaymentProfiles() : null
 
@@ -193,6 +194,7 @@ useWebPageSchema({
       :prefill="activePrefill"
       :mode="selectedMode"
       :event-preview="eventPreview"
+      :taxonomy="taxonomy"
       :is-authenticated="loggedIn"
       @create="handleCreate"
     />

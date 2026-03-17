@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { z } from 'zod'
-import type { CreateWagerInput } from '../../../types/napkinbets'
+import type { CreateWagerInput, NapkinbetsTaxonomyResponse } from '../../../types/napkinbets'
 
 interface NapkinbetsCreateEventPreview {
   source: string
@@ -10,6 +10,7 @@ interface NapkinbetsCreateEventPreview {
   startTime: string
   status: string
   sport: string
+  contextKey: string
   league: string
   venueName: string
   homeTeamName: string
@@ -25,6 +26,7 @@ const props = defineProps<{
   prefill: CreateWagerInput
   mode: 'event' | 'manual'
   eventPreview: NapkinbetsCreateEventPreview | null
+  taxonomy: NapkinbetsTaxonomyResponse
   isAuthenticated: boolean
 }>()
 
@@ -43,13 +45,18 @@ const paymentOptions = [
   { label: 'Zelle', value: 'Zelle' },
 ]
 
+const boardTypeValues = ['event-backed', 'manual-curated', 'community-created'] as const
+
 const schema = z.object({
   title: z.string().min(3),
   creatorName: z.string().min(2),
   description: z.string().min(12),
+  boardType: z.enum(boardTypeValues),
   format: z.string().min(2),
   sport: z.string(),
+  contextKey: z.string(),
   league: z.string(),
+  customContextName: z.string(),
   sideOptions: z.string().min(3),
   participantNames: z.string().min(0),
   potRules: z.string().min(3),
@@ -76,6 +83,62 @@ const ai = useNapkinbetsAi()
 const aiTermsPending = ref(false)
 const aiTermsError = ref('')
 
+const selectedSport = computed(
+  () => props.taxonomy.sports.find((sport) => sport.value === formState.sport) ?? null,
+)
+const selectedContext = computed(
+  () => props.taxonomy.contexts.find((context) => context.value === formState.contextKey) ?? null,
+)
+const selectedLeague = computed(
+  () => props.taxonomy.leagues.find((league) => league.value === formState.league) ?? null,
+)
+
+const sportOptions = computed(() =>
+  props.taxonomy.sports.map((sport) => ({
+    label: sport.label,
+    value: sport.value,
+  })),
+)
+
+const contextOptions = computed(() => {
+  const allContexts = props.taxonomy.contexts
+
+  switch (formState.sport) {
+    case 'entertainment':
+      return allContexts.filter((context) => ['entertainment', 'community'].includes(context.value))
+    case 'track-field':
+      return allContexts.filter((context) =>
+        ['high-school', 'college', 'community', 'tournament'].includes(context.value),
+      )
+    case 'other':
+      return allContexts.filter((context) =>
+        ['community', 'high-school', 'tournament', 'international'].includes(context.value),
+      )
+    default:
+      return allContexts.filter((context) => context.value !== 'entertainment')
+  }
+})
+
+const leagueOptions = computed(() =>
+  props.taxonomy.leagues
+    .filter(
+      (league) =>
+        league.sport === formState.sport && league.contextKeys.includes(formState.contextKey),
+    )
+    .map((league) => ({
+      label: league.label,
+      value: league.value,
+    })),
+)
+
+const showCustomContextName = computed(
+  () =>
+    props.mode === 'manual' &&
+    (leagueOptions.value.length === 0 ||
+      formState.contextKey === 'community' ||
+      formState.contextKey === 'high-school'),
+)
+
 watch(
   () => props.prefill,
   (prefill) => {
@@ -84,10 +147,38 @@ watch(
   { immediate: true },
 )
 
+watch(
+  () => props.mode,
+  (mode) => {
+    formState.boardType = mode === 'event' ? 'event-backed' : 'community-created'
+  },
+  { immediate: true },
+)
+
+watch(
+  [() => formState.sport, () => formState.contextKey, leagueOptions],
+  ([sport, contextKey, availableLeagues]) => {
+    if (props.mode === 'event' || !sport) {
+      return
+    }
+
+    const contextIsValid = contextOptions.value.some((context) => context.value === contextKey)
+    if (!contextIsValid) {
+      formState.contextKey = contextOptions.value[0]?.value || 'community'
+      return
+    }
+
+    if (!availableLeagues.some((league) => league.value === formState.league)) {
+      formState.league = availableLeagues[0]?.value || ''
+    }
+  },
+  { immediate: true },
+)
+
 const formSummary = computed(() =>
   props.mode === 'event'
     ? 'The discovery event is already attached. Finish the side market, participants, and collection rail.'
-    : 'Set up a manual board for golf drafts, entertainment prompts, or any room-specific wager.',
+    : 'Set up a manual or community board with controlled sport, context, and league inputs instead of raw text fields.',
 )
 
 async function rewriteTerms() {
@@ -157,8 +248,8 @@ function submit() {
         <div class="napkinbets-surface space-y-2">
           <p class="napkinbets-surface-label">Board shape</p>
           <p class="text-sm text-muted">
-            Napkinbets already has the sport, league, and suggested market angle. You are mostly
-            deciding the stake, the seat list, and the closeout rules.
+            Napkinbets already has the sport, context, league, and suggested market angle. You are
+            mostly deciding the stake, the seat list, and the closeout rules.
           </p>
         </div>
       </div>
@@ -195,13 +286,58 @@ function submit() {
           </div>
 
           <div class="napkinbets-form-grid">
-            <UFormField name="sport" label="Sport">
-              <UInput v-model="formState.sport" class="w-full" />
-            </UFormField>
+            <template v-if="mode === 'event'">
+              <div class="napkinbets-surface space-y-2">
+                <p class="napkinbets-surface-label">Sport</p>
+                <p class="font-semibold text-default">
+                  {{ selectedSport?.label || eventPreview?.sport || 'Attached from discovery' }}
+                </p>
+              </div>
 
-            <UFormField name="league" label="League">
-              <UInput v-model="formState.league" class="w-full" />
-            </UFormField>
+              <div class="napkinbets-surface space-y-2">
+                <p class="napkinbets-surface-label">Competition context</p>
+                <p class="font-semibold text-default">
+                  {{
+                    selectedContext?.label ||
+                    eventPreview?.contextKey ||
+                    'Inherited from the attached event'
+                  }}
+                </p>
+              </div>
+
+              <div class="napkinbets-surface space-y-2">
+                <p class="napkinbets-surface-label">League</p>
+                <p class="font-semibold text-default">
+                  {{ selectedLeague?.label || eventPreview?.league || 'Inherited from discovery' }}
+                </p>
+              </div>
+            </template>
+
+            <template v-else>
+              <UFormField name="sport" label="Sport">
+                <USelect v-model="formState.sport" :items="sportOptions" class="w-full" />
+              </UFormField>
+
+              <UFormField name="contextKey" label="Competition context">
+                <USelect v-model="formState.contextKey" :items="contextOptions" class="w-full" />
+              </UFormField>
+
+              <UFormField v-if="leagueOptions.length" name="league" label="League">
+                <USelect v-model="formState.league" :items="leagueOptions" class="w-full" />
+              </UFormField>
+
+              <UFormField
+                v-if="showCustomContextName"
+                name="customContextName"
+                label="Meet, circuit, or group label"
+              >
+                <UInput
+                  v-model="formState.customContextName"
+                  class="w-full"
+                  placeholder="District 4B meet"
+                />
+              </UFormField>
+            </template>
 
             <UFormField name="venueName" label="Venue or watch context">
               <UInput v-model="formState.venueName" class="w-full" />

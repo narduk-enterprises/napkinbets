@@ -19,6 +19,7 @@ function buildCreateLink(idea?: NapkinbetsEventIdea) {
       eventStartsAt: props.event.startTime,
       eventStatus: props.event.status,
       sport: props.event.sport,
+      contextKey: props.event.contextKey,
       league: props.event.league,
       venueName: props.event.venueName,
       homeTeamName: props.event.homeTeam.name,

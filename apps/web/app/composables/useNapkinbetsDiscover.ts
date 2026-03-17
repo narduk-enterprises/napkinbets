@@ -5,6 +5,7 @@ const EMPTY_DISCOVERY: NapkinbetsDiscoveryResponse = {
   sections: [],
   filters: {
     sports: [],
+    contexts: [],
     leagues: [],
     states: [],
   },
