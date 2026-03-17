@@ -145,9 +145,7 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
           </UBadge>
         </div>
 
-        <UButton :to="createLink" color="primary" size="xs" icon="i-lucide-plus">
-          Bet
-        </UButton>
+        <UButton :to="createLink" color="primary" size="xs" icon="i-lucide-plus"> Bet </UButton>
       </div>
 
       <div class="space-y-1.5">

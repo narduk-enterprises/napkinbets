@@ -34,9 +34,7 @@ export default defineNitroPlugin((nitroApp) => {
     } as const
 
     const job =
-      (cloudflareEvent?.cron
-        ? cronToJob[cloudflareEvent.cron as keyof typeof cronToJob]
-        : null) ??
+      (cloudflareEvent?.cron ? cronToJob[cloudflareEvent.cron as keyof typeof cronToJob] : null) ??
       cronToJob['* * * * *']
 
     try {

@@ -147,9 +147,7 @@ function buildSearchQueries(event: NapkinbetsOddsEventInput) {
   queries.add(`${event.awayTeam.name} ${event.homeTeam.name}`)
   queries.add(`${event.awayTeam.abbreviation} ${event.homeTeam.abbreviation}`)
 
-  return [...queries]
-    .map((query) => normalizeText(query))
-    .filter((query) => query.length >= 4)
+  return [...queries].map((query) => normalizeText(query)).filter((query) => query.length >= 4)
 }
 
 function isSupportedLeague(event: NapkinbetsOddsEventInput) {
@@ -213,7 +211,9 @@ function scoreCandidate(candidate: PolymarketEvent, event: NapkinbetsOddsEventIn
   }
 
   const candidateStartValue =
-    candidate.markets?.find((market) => market.gameStartTime)?.gameStartTime ?? candidate.updatedAt ?? ''
+    candidate.markets?.find((market) => market.gameStartTime)?.gameStartTime ??
+    candidate.updatedAt ??
+    ''
   const candidateStartMs = new Date(candidateStartValue).getTime()
   const targetStartMs = new Date(event.startTime).getTime()
   const deltaMs =
@@ -248,13 +248,15 @@ function pickCandidate(
   candidates: PolymarketEvent[],
   event: NapkinbetsOddsEventInput,
 ): PolymarketEvent | null {
-  return [...candidates]
-    .map((candidate) => ({
-      candidate,
-      score: scoreCandidate(candidate, event),
-    }))
-    .filter((entry) => Number.isFinite(entry.score))
-    .sort((left, right) => right.score - left.score)[0]?.candidate ?? null
+  return (
+    [...candidates]
+      .map((candidate) => ({
+        candidate,
+        score: scoreCandidate(candidate, event),
+      }))
+      .filter((entry) => Number.isFinite(entry.score))
+      .sort((left, right) => right.score - left.score)[0]?.candidate ?? null
+  )
 }
 
 function findOutcomeIndex(outcomes: string[], teamTerms: string[]) {
@@ -362,7 +364,9 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
   const total = buildGenericMarketOdds(
     totalMarket,
     'Total',
-    totalMarket?.line !== undefined && totalMarket?.line !== null ? `O/U ${totalMarket.line}` : null,
+    totalMarket?.line !== undefined && totalMarket?.line !== null
+      ? `O/U ${totalMarket.line}`
+      : null,
   )
 
   if (!moneyline && !spread && !total) {
@@ -371,7 +375,9 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
 
   return {
     source: 'polymarket' as const,
-    url: matchedEvent.slug ? `https://polymarket.com/event/${matchedEvent.slug}` : 'https://polymarket.com',
+    url: matchedEvent.slug
+      ? `https://polymarket.com/event/${matchedEvent.slug}`
+      : 'https://polymarket.com',
     updatedAt:
       moneylineMarket?.updatedAt ??
       spreadMarket?.updatedAt ??
@@ -398,5 +404,9 @@ export async function enrichNapkinbetsEventsWithPolymarketOdds<T extends Napkinb
     oddsEntries.push([event.id, await findPolymarketOddsForEvent(event)] as const)
   }
 
-  return new Map(oddsEntries.filter((entry): entry is readonly [string, NapkinbetsEventOdds] => Boolean(entry[1])))
+  return new Map(
+    oddsEntries.filter((entry): entry is readonly [string, NapkinbetsEventOdds] =>
+      Boolean(entry[1]),
+    ),
+  )
 }

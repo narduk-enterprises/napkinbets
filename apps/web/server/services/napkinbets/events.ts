@@ -1734,7 +1734,9 @@ export async function loadCachedDiscoverData(event: H3Event) {
   let freshestSync =
     snapshot.events
       .map((row) => row.lastSyncedAt)
-      .sort((left, right) => right.localeCompare(left))[0] ?? snapshot.latestRun?.completedAt ?? ''
+      .sort((left, right) => right.localeCompare(left))[0] ??
+    snapshot.latestRun?.completedAt ??
+    ''
 
   if (isDiscoverCacheOlderThan(freshestSync, 5 * 60 * 1000)) {
     await refreshDiscoverEventCache(event, 'live-window')
