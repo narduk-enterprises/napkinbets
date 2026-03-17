@@ -50,23 +50,6 @@ const statusColor = computed(() => {
   return 'warning'
 })
 
-const matchupRows = computed(() => {
-  if (!eventDetail.value) {
-    return []
-  }
-
-  return [
-    {
-      team: eventDetail.value.awayTeam,
-      slug: eventDetail.value.awayTeamProfileSlug ?? null,
-    },
-    {
-      team: eventDetail.value.homeTeam,
-      slug: eventDetail.value.homeTeamProfileSlug ?? null,
-    },
-  ]
-})
-
 function formatProbability(value: number | null) {
   return value === null ? '—' : `${value}%`
 }
@@ -146,44 +129,26 @@ useWebPageSchema({
       </div>
 
       <div class="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <UCard class="napkinbets-panel">
-          <div class="space-y-4">
-            <div class="space-y-2">
-              <p class="napkinbets-kicker">Matchup</p>
-              <h2 class="napkinbets-subsection-title">{{ eventDetail.summary }}</h2>
-            </div>
-
-            <div class="space-y-3">
-              <div v-for="row in matchupRows" :key="row.team?.name" class="napkinbets-event-side">
-                <div class="napkinbets-event-side-main">
-                  <span class="napkinbets-event-avatar">
-                    <img
-                      v-if="row.team?.logo"
-                      :src="row.team.logo"
-                      :alt="row.team.name"
-                      class="napkinbets-event-avatar-image"
-                    />
-                    <span v-else>{{
-                      (row.team?.abbreviation || row.team?.name || '').slice(0, 2)
-                    }}</span>
-                  </span>
-                  <div class="min-w-0">
-                    <p class="napkinbets-event-name">
-                      <ULink v-if="row.slug" :to="`/teams/${row.slug}`" class="text-inherit">
-                        {{ row.team?.name }}
-                      </ULink>
-                      <template v-else>
-                        {{ row.team?.name }}
-                      </template>
-                    </p>
-                    <p class="napkinbets-event-record">{{ row.team?.record }}</p>
-                  </div>
-                </div>
-                <p class="napkinbets-event-score">{{ row.team?.score || '—' }}</p>
-              </div>
-            </div>
-
-            <div v-if="eventDetail.leaders?.length" class="napkinbets-event-insights">
+        <NapkinbetsBoxScore
+          :state="eventDetail.state"
+          :status="eventDetail.shortStatus || eventDetail.status"
+          :start-time="eventDetail.startTime"
+          :venue-name="eventDetail.venueName"
+          :weather="null"
+          :away-team-name="eventDetail.awayTeam.name"
+          :away-team-logo="eventDetail.awayTeam.logo"
+          :away-score="eventDetail.awayTeam.score"
+          :away-team-profile-slug="eventDetail.awayTeamProfileSlug"
+          :home-team-name="eventDetail.homeTeam.name"
+          :home-team-logo="eventDetail.homeTeam.logo"
+          :home-score="eventDetail.homeTeam.score"
+          :home-team-profile-slug="eventDetail.homeTeamProfileSlug"
+        >
+          <template #footer>
+            <div
+              v-if="eventDetail.leaders?.length"
+              class="napkinbets-event-insights pt-2 border-t border-dashed border-default mt-4"
+            >
               <div
                 v-for="leader in eventDetail.leaders"
                 :key="`${leader.label}-${leader.athlete}`"
@@ -193,8 +158,8 @@ useWebPageSchema({
                 <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
               </div>
             </div>
-          </div>
-        </UCard>
+          </template>
+        </NapkinbetsBoxScore>
 
         <div class="space-y-4">
           <UCard v-if="moneylineOdds" class="napkinbets-panel">

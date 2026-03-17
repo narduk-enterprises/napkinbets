@@ -18,52 +18,13 @@ onUnmounted(() => {
 })
 
 // Format the date/time string based on eventStartsAt
-const isUpcoming = computed(() => props.wager.eventState === 'pre')
-const isLive = computed(() => props.wager.eventState === 'in')
+
 const isFinished = computed(
   () =>
     props.wager.eventState === 'post' ||
     props.wager.status === 'settling' ||
     props.wager.status === 'settled',
 )
-
-const countdownString = computed(() => {
-  if (!isUpcoming.value || !props.wager.eventStartsAt) return ''
-
-  const eventTime = new Date(props.wager.eventStartsAt).getTime()
-  const currentTime = now.value.getTime()
-  const diffMs = eventTime - currentTime
-
-  if (diffMs <= 0) return 'Starting soon'
-
-  const totalSeconds = Math.floor(diffMs / 1000)
-  const days = Math.floor(totalSeconds / (3600 * 24))
-  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  if (days > 0) {
-    return `${days}d ${hours}h ${minutes}m`
-  }
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`
-  }
-
-  return `${minutes}m ${seconds}s`
-})
-
-const badgeColor = computed(() => {
-  if (isLive.value) return 'success'
-  if (isFinished.value) return 'neutral'
-  return 'warning'
-})
-
-const badgeLabel = computed(() => {
-  if (isLive.value) return 'Live'
-  if (isFinished.value) return 'Final'
-  return 'Upcoming'
-})
 
 // Calculate Pick Distribution (Home vs Away)
 // Only applies if it's an event-backed bet where the choices usually align with the teams
@@ -121,124 +82,40 @@ const winningSideLabel = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <UCard class="napkinbets-panel bg-linear-to-br from-default to-muted border-default">
-      <!-- TOP: Status and Weather -->
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-2">
-          <UBadge :color="badgeColor" variant="soft" class="font-bold">
-            {{ badgeLabel }}
-          </UBadge>
-          <span v-if="isUpcoming" class="text-sm font-medium text-warning tabular-nums">
-            {{ countdownString }}
-          </span>
-          <span v-else class="text-sm font-medium text-muted">
-            {{ wager.eventStatus }}
-          </span>
-        </div>
-
-        <div
-          v-if="wager.venueName"
-          class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted"
-        >
-          <span class="flex items-center gap-1">
-            <UIcon name="i-lucide-map-pin" class="size-3.5" />
-            {{ wager.venueName }}
-          </span>
-          <span v-if="wager.weather" class="flex items-center gap-1">
-            <UIcon name="i-lucide-cloud" class="size-3.5" />
-            {{ wager.weather.temperatureF }}° {{ wager.weather.conditions }}
-          </span>
-        </div>
-      </div>
-
-      <!-- MIDDLE: Matchup & Scores -->
-      <div class="flex items-center justify-between py-2">
-        <!-- Away Team -->
-        <div class="flex flex-1 flex-col items-center gap-2 sm:flex-row sm:justify-start">
-          <span
-            class="napkinbets-event-avatar size-12 sm:size-16 bg-white border border-faint shadow-sm"
-          >
-            <img
-              v-if="wager.awayTeamLogo"
-              :src="wager.awayTeamLogo"
-              :alt="wager.awayTeamName"
-              class="napkinbets-event-avatar-image object-contain p-1"
-            />
-            <span v-else class="text-lg font-bold">{{
-              wager.awayTeamName.slice(0, 2).toUpperCase()
-            }}</span>
-          </span>
-          <div class="text-center sm:text-left">
-            <p class="font-display text-lg font-bold leading-tight">{{ wager.awayTeamName }}</p>
-            <p class="text-sm text-dimmed">Away</p>
+    <NapkinbetsBoxScore
+      :state="wager.eventState"
+      :status="wager.eventStatus"
+      :start-time="wager.eventStartsAt"
+      :venue-name="wager.venueName"
+      :weather="wager.weather"
+      :away-team-name="wager.awayTeamName"
+      :away-team-logo="wager.awayTeamLogo"
+      :away-score="wager.awayScore"
+      :home-team-name="wager.homeTeamName"
+      :home-team-logo="wager.homeTeamLogo"
+      :home-score="wager.homeScore"
+    >
+      <template #footer>
+        <!-- BOTTOM: Pick Distribution -->
+        <div v-if="showPickDistribution" class="pt-2 border-t border-dashed border-default">
+          <div class="flex items-center justify-between text-xs text-muted mb-1.5 font-medium">
+            <span>{{ awayPickPercentage }}% Picked Away</span>
+            <span>{{ homePickPercentage }}% Picked Home</span>
+          </div>
+          <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              class="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-500"
+              :style="{ width: `${awayPickPercentage}%` }"
+            ></div>
+            <div
+              class="absolute inset-y-0 right-0 bg-info/80 transition-all duration-500"
+              :style="{ width: `${homePickPercentage}%` }"
+            ></div>
+            <div class="absolute inset-y-0 left-1/2 w-px bg-white/50 -translate-x-1/2"></div>
           </div>
         </div>
-
-        <!-- Score / VS -->
-        <div class="flex flex-col items-center justify-center px-4">
-          <div v-if="!isUpcoming" class="flex items-center gap-3 font-display">
-            <span
-              class="text-3xl font-bold"
-              :class="{
-                'opacity-50': isFinished && Number(wager.awayScore) < Number(wager.homeScore),
-              }"
-              >{{ wager.awayScore || '0' }}</span
-            >
-            <span class="text-muted font-normal">-</span>
-            <span
-              class="text-3xl font-bold"
-              :class="{
-                'opacity-50': isFinished && Number(wager.homeScore) < Number(wager.awayScore),
-              }"
-              >{{ wager.homeScore || '0' }}</span
-            >
-          </div>
-          <div v-else class="flex flex-col items-center text-center">
-            <p class="font-display text-xl font-bold text-muted">VS</p>
-          </div>
-        </div>
-
-        <!-- Home Team -->
-        <div class="flex flex-1 flex-col items-center gap-2 sm:flex-row-reverse sm:justify-start">
-          <span
-            class="napkinbets-event-avatar size-12 sm:size-16 bg-white border border-faint shadow-sm"
-          >
-            <img
-              v-if="wager.homeTeamLogo"
-              :src="wager.homeTeamLogo"
-              :alt="wager.homeTeamName"
-              class="napkinbets-event-avatar-image object-contain p-1"
-            />
-            <span v-else class="text-lg font-bold">{{
-              wager.homeTeamName.slice(0, 2).toUpperCase()
-            }}</span>
-          </span>
-          <div class="text-center sm:text-right">
-            <p class="font-display text-lg font-bold leading-tight">{{ wager.homeTeamName }}</p>
-            <p class="text-sm text-dimmed">Home</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- BOTTOM: Pick Distribution -->
-      <div v-if="showPickDistribution" class="pt-2 border-t border-dashed border-default">
-        <div class="flex items-center justify-between text-xs text-muted mb-1.5 font-medium">
-          <span>{{ awayPickPercentage }}% Picked Away</span>
-          <span>{{ homePickPercentage }}% Picked Home</span>
-        </div>
-        <div class="relative h-2 w-full overflow-hidden rounded-full bg-muted">
-          <div
-            class="absolute inset-y-0 left-0 bg-primary/80 transition-all duration-500"
-            :style="{ width: `${awayPickPercentage}%` }"
-          ></div>
-          <div
-            class="absolute inset-y-0 right-0 bg-info/80 transition-all duration-500"
-            :style="{ width: `${homePickPercentage}%` }"
-          ></div>
-          <div class="absolute inset-y-0 left-1/2 w-px bg-white/50 -translate-x-1/2"></div>
-        </div>
-      </div>
-    </UCard>
+      </template>
+    </NapkinbetsBoxScore>
 
     <!-- COMPLETED STATE NEXT STEPS -->
     <UAlert
