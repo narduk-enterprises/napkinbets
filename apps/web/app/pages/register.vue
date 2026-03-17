@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({
   middleware: ['guest'],
+  layout: 'auth',
 })
 
 useSeo({
@@ -44,11 +45,7 @@ useWebPageSchema({
           <AuthRegisterCard
             title="Create an account"
             subtitle="Set up your identity for boards, reminders, and admin access"
-          >
-            <template #logo>
-              <NapkinbetsLogo />
-            </template>
-          </AuthRegisterCard>
+          />
         </NapkinbetsAuthStage>
       </div>
     </div>

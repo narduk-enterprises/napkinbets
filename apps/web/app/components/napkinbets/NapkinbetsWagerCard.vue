@@ -72,6 +72,13 @@ const participantOptions = computed(() =>
   })),
 )
 
+const participantNameOptions = computed(() =>
+  props.wager.participants.map((participant) => ({
+    label: participant.displayName,
+    value: participant.displayName,
+  })),
+)
+
 const participantNames = computed(
   () =>
     new Map(
@@ -393,7 +400,11 @@ function submitSettlement() {
                 <UInput v-model="joinState.displayName" class="w-full" />
               </UFormField>
               <UFormField name="sideLabel" label="Chosen side">
-                <UInput v-model="joinState.sideLabel" class="w-full" />
+                <USelect
+                  v-model="joinState.sideLabel"
+                  :items="wager.sideOptions.map((option) => ({ label: option, value: option }))"
+                  class="w-full"
+                />
               </UFormField>
               <UButton
                 type="submit"
@@ -410,7 +421,11 @@ function submitSettlement() {
             <h3 class="napkinbets-subsection-title">Log a pick</h3>
             <UForm :state="pickState" class="space-y-3" @submit.prevent="submitPick">
               <UFormField name="participantName" label="Participant">
-                <UInput v-model="pickState.participantName" class="w-full" />
+                <USelect
+                  v-model="pickState.participantName"
+                  :items="participantNameOptions"
+                  class="w-full"
+                />
               </UFormField>
               <UFormField name="pickLabel" label="Pick label">
                 <UInput v-model="pickState.pickLabel" class="w-full" />
@@ -450,7 +465,11 @@ function submitSettlement() {
                 <UInput v-model="settlementState.confirmationCode" class="w-full" />
               </UFormField>
               <UFormField name="note" label="Note">
-                <UTextarea v-model="settlementState.note" class="w-full" :rows="3" />
+                <UInput
+                  v-model="settlementState.note"
+                  class="w-full"
+                  placeholder="Paid after final whistle"
+                />
               </UFormField>
               <UButton
                 type="submit"

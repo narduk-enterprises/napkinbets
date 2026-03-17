@@ -38,6 +38,25 @@ export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
     'Friendly wagers only. Napkinbets tracks the board, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
 }
 
+const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>> = {
+  'masters-week': {
+    title: 'Masters week board',
+    description:
+      'A golf-first board for Masters week with featured golfer lanes, low-round sweats, and manual settlement after the final round is official.',
+    boardType: 'manual-curated',
+    format: 'golf-draft',
+    sport: 'golf',
+    contextKey: 'tournament',
+    league: 'pga',
+    customContextName: '',
+    sideOptions: 'Green Jacket winner\nLow Thursday round\nPlayoff yes/no',
+    potRules: 'Champion: 50\nLow round: 25\nWeekend charge: 25',
+    venueName: 'Augusta watch party or clubhouse',
+    terms:
+      'Friendly wagers only. Masters week boards settle manually after the official result posts, and payment proof still lives outside the app.',
+  },
+}
+
 function getQueryString(value: QueryValue) {
   if (Array.isArray(value)) {
     return value.find((item): item is string => typeof item === 'string') ?? ''
@@ -64,6 +83,7 @@ function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: stri
 
 export function useNapkinbetsCreatePrefill() {
   const route = useRoute()
+  const preset = computed(() => getQueryString(route.query.preset))
 
   const eventPreview = computed<NapkinbetsCreateEventPreview | null>(() => {
     const source = getQueryString(route.query.source)
@@ -112,12 +132,15 @@ export function useNapkinbetsCreatePrefill() {
 
   const prefill = computed<CreateWagerInput>(() => {
     const preview = eventPreview.value
+    const presetDefaults = NAPKINBETS_PRESET_CREATE_INPUTS[preset.value] ?? {}
+
     if (!preview) {
-      return { ...NAPKINBETS_DEFAULT_CREATE_INPUT }
+      return { ...NAPKINBETS_DEFAULT_CREATE_INPUT, ...presetDefaults }
     }
 
     return {
       ...NAPKINBETS_DEFAULT_CREATE_INPUT,
+      ...presetDefaults,
       title: buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName),
       description:
         preview.homeTeamName && preview.awayTeamName

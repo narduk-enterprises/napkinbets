@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" role="img" aria-label="Napkinbets auth table scene">
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7f0e1" />
+      <stop offset="100%" stop-color="#ebddc6" />
+    </linearGradient>
+    <radialGradient id="glow" cx="82%" cy="16%" r="44%">
+      <stop offset="0%" stop-color="#e7aa49" stop-opacity=".34" />
+      <stop offset="100%" stop-color="#e7aa49" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#bg)" rx="46" />
+  <rect width="1600" height="1200" fill="url(#glow)" rx="46" />
+  <path d="M0 870c230-88 448-86 652 10 170 80 350 100 560 42 134-38 266-94 388-166v444H0Z" fill="#1b7c47" fill-opacity=".1" />
+  <g transform="translate(162 260) rotate(-5)">
+    <rect width="684" height="410" fill="#fff9ef" stroke="#255937" stroke-opacity=".12" stroke-width="4" rx="34" />
+    <line x1="68" x2="608" y1="92" y2="92" stroke="#255937" stroke-opacity=".18" stroke-width="6" />
+    <line x1="68" x2="608" y1="150" y2="150" stroke="#255937" stroke-opacity=".12" stroke-width="5" />
+    <line x1="68" x2="420" y1="208" y2="208" stroke="#255937" stroke-opacity=".12" stroke-width="5" />
+    <rect x="68" y="268" width="178" height="50" fill="#1b7c47" fill-opacity=".16" rx="20" />
+    <rect x="264" y="268" width="144" height="50" fill="#d3891a" fill-opacity=".18" rx="20" />
+  </g>
+  <g transform="translate(1030 212) rotate(8)">
+    <rect width="258" height="486" fill="#15202b" rx="38" />
+    <rect x="16" y="18" width="226" height="450" fill="#faf5e8" rx="28" />
+    <rect x="42" y="70" width="174" height="88" fill="#1b7c47" fill-opacity=".14" rx="22" />
+    <rect x="42" y="188" width="174" height="18" fill="#15202b" fill-opacity=".16" rx="9" />
+    <rect x="42" y="228" width="138" height="18" fill="#15202b" fill-opacity=".1" rx="9" />
+    <rect x="42" y="284" width="174" height="124" fill="#f1e4ca" rx="24" />
+  </g>
+  <g transform="translate(1110 782) rotate(-10)">
+    <ellipse cx="0" cy="0" rx="84" ry="84" fill="#fff8ec" stroke="#255937" stroke-opacity=".12" stroke-width="5" />
+    <ellipse cx="0" cy="0" rx="64" ry="64" fill="#f3ead8" />
+  </g>
+</svg>

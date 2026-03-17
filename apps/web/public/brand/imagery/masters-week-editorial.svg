@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-label="Napkinbets Masters week editorial art">
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8f1e1" />
+      <stop offset="100%" stop-color="#eee2cb" />
+    </linearGradient>
+    <radialGradient id="sun" cx="84%" cy="10%" r="44%">
+      <stop offset="0%" stop-color="#f0bd69" stop-opacity=".34" />
+      <stop offset="100%" stop-color="#f0bd69" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="sweep" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#1b7c47" stop-opacity=".94" />
+      <stop offset="100%" stop-color="#14532d" stop-opacity=".92" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" rx="42" />
+  <rect width="1600" height="900" fill="url(#sun)" rx="42" />
+  <path d="M0 648c186-96 394-112 598-28 144 58 310 80 530 36 150-30 300-84 472-170v414H0Z" fill="url(#sweep)" />
+  <path d="M0 720c230-54 438-24 630 72 152 76 332 92 560 42 136-30 274-82 410-156V900H0Z" fill="#0f3f24" fill-opacity=".54" />
+  <g transform="translate(204 168) rotate(-6)">
+    <rect width="520" height="320" fill="#fffaf0" stroke="#255937" stroke-opacity=".12" stroke-width="4" rx="30" />
+    <line x1="56" x2="464" y1="82" y2="82" stroke="#255937" stroke-opacity=".14" stroke-width="6" />
+    <line x1="56" x2="464" y1="134" y2="134" stroke="#255937" stroke-opacity=".1" stroke-width="5" />
+    <line x1="56" x2="386" y1="186" y2="186" stroke="#255937" stroke-opacity=".1" stroke-width="5" />
+    <rect x="56" y="226" width="158" height="42" fill="#d3891a" fill-opacity=".2" rx="18" />
+    <rect x="228" y="226" width="124" height="42" fill="#1b7c47" fill-opacity=".16" rx="18" />
+  </g>
+  <g transform="translate(1110 264)">
+    <path d="M0 364V18" stroke="#fff8ec" stroke-width="9" stroke-linecap="round" />
+    <path d="M10 40c52-14 92-42 128-40-24 48-72 94-128 118Z" fill="#f7e6c2" />
+    <circle cx="-2" cy="362" r="20" fill="#fff8ec" fill-opacity=".66" />
+  </g>
+  <g transform="translate(946 150) rotate(8)">
+    <rect width="244" height="468" fill="#faf5e8" stroke="#255937" stroke-opacity=".12" stroke-width="4" rx="34" />
+    <rect x="36" y="56" width="170" height="86" fill="#1b7c47" fill-opacity=".15" rx="22" />
+    <rect x="36" y="170" width="170" height="18" fill="#15202b" fill-opacity=".14" rx="9" />
+    <rect x="36" y="208" width="124" height="18" fill="#15202b" fill-opacity=".1" rx="9" />
+    <rect x="36" y="260" width="170" height="122" fill="#f2e7cf" rx="24" />
+    <circle cx="86" cy="320" r="30" fill="#d3891a" fill-opacity=".28" />
+    <rect x="128" y="296" width="60" height="16" fill="#15202b" fill-opacity=".14" rx="8" />
+    <rect x="128" y="324" width="44" height="14" fill="#15202b" fill-opacity=".1" rx="7" />
+  </g>
+</svg>

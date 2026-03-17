@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { z } from 'zod'
 import type { CreateWagerInput, NapkinbetsTaxonomyResponse } from '../../../types/napkinbets'
 
@@ -31,11 +31,11 @@ const props = defineProps<{
 }>()
 
 const formatOptions = [
-  { label: 'Sports game board', value: 'sports-game' },
-  { label: 'Sports prop board', value: 'sports-prop' },
-  { label: 'Sports race board', value: 'sports-race' },
-  { label: 'Golf draft board', value: 'golf-draft' },
-  { label: 'Custom prop board', value: 'custom-prop' },
+  { label: 'Game board', value: 'sports-game' },
+  { label: 'Prop board', value: 'sports-prop' },
+  { label: 'Race board', value: 'sports-race' },
+  { label: 'Golf draft', value: 'golf-draft' },
+  { label: 'Custom board', value: 'custom-prop' },
 ]
 
 const paymentOptions = [
@@ -45,13 +45,11 @@ const paymentOptions = [
   { label: 'Zelle', value: 'Zelle' },
 ]
 
-const boardTypeValues = ['event-backed', 'manual-curated', 'community-created'] as const
-
 const schema = z.object({
   title: z.string().min(3),
   creatorName: z.string().min(2),
   description: z.string().min(12),
-  boardType: z.enum(boardTypeValues),
+  boardType: z.enum(['event-backed', 'manual-curated', 'community-created']),
   format: z.string().min(2),
   sport: z.string(),
   contextKey: z.string(),
@@ -76,136 +74,53 @@ const schema = z.object({
   awayTeamName: z.string().optional(),
 })
 
-const formState = reactive<CreateWagerInput>({
-  ...props.prefill,
-})
-const ai = useNapkinbetsAi()
-const aiTermsPending = ref(false)
-const aiTermsError = ref('')
-
-const selectedSport = computed(
-  () => props.taxonomy.sports.find((sport) => sport.value === formState.sport) ?? null,
-)
-const selectedContext = computed(
-  () => props.taxonomy.contexts.find((context) => context.value === formState.contextKey) ?? null,
-)
-const selectedLeague = computed(
-  () => props.taxonomy.leagues.find((league) => league.value === formState.league) ?? null,
-)
-
-const sportOptions = computed(() =>
-  props.taxonomy.sports.map((sport) => ({
-    label: sport.label,
-    value: sport.value,
-  })),
-)
-
-const contextOptions = computed(() => {
-  const allContexts = props.taxonomy.contexts
-
-  switch (formState.sport) {
-    case 'entertainment':
-      return allContexts.filter((context) => ['entertainment', 'community'].includes(context.value))
-    case 'track-field':
-      return allContexts.filter((context) =>
-        ['high-school', 'college', 'community', 'tournament'].includes(context.value),
-      )
-    case 'other':
-      return allContexts.filter((context) =>
-        ['community', 'high-school', 'tournament', 'international'].includes(context.value),
-      )
-    default:
-      return allContexts.filter((context) => context.value !== 'entertainment')
-  }
+const {
+  formState,
+  selectedSport,
+  selectedLeague,
+  sportOptions,
+  contextOptions,
+  leagueOptions,
+  venueOptions,
+  potTemplateOptions,
+  seatPresetOptions,
+  showCustomContextName,
+  showCustomVenue,
+  sideOptionList,
+  participantList,
+  sideTemplateOptions,
+  sideOptionDraft,
+  participantDraft,
+  selectedPotTemplate,
+  selectedVenuePreset,
+  suggestedSideOptions,
+  boardSummary,
+  closeoutTerms,
+  payload,
+  addParticipant,
+  removeParticipant,
+  applySeatPreset,
+  addSideOption,
+  removeSideOption,
+  applySideTemplate,
+  resetSideOptions,
+} = useNapkinbetsCreateBuilder({
+  prefill: computed(() => props.prefill),
+  mode: computed(() => props.mode),
+  taxonomy: computed(() => props.taxonomy),
 })
 
-const leagueOptions = computed(() =>
-  props.taxonomy.leagues
-    .filter(
-      (league) =>
-        league.sport === formState.sport && league.contextKeys.includes(formState.contextKey),
-    )
-    .map((league) => ({
-      label: league.label,
-      value: league.value,
-    })),
-)
-
-const showCustomContextName = computed(
-  () =>
-    props.mode === 'manual' &&
-    (leagueOptions.value.length === 0 ||
-      formState.contextKey === 'community' ||
-      formState.contextKey === 'high-school'),
-)
-
-watch(
-  () => props.prefill,
-  (prefill) => {
-    Object.assign(formState, prefill)
-  },
-  { immediate: true },
-)
-
-watch(
-  () => props.mode,
-  (mode) => {
-    formState.boardType = mode === 'event' ? 'event-backed' : 'community-created'
-  },
-  { immediate: true },
-)
-
-watch(
-  [() => formState.sport, () => formState.contextKey, leagueOptions],
-  ([sport, contextKey, availableLeagues]) => {
-    if (props.mode === 'event' || !sport) {
-      return
-    }
-
-    const contextIsValid = contextOptions.value.some((context) => context.value === contextKey)
-    if (!contextIsValid) {
-      formState.contextKey = contextOptions.value[0]?.value || 'community'
-      return
-    }
-
-    if (!availableLeagues.some((league) => league.value === formState.league)) {
-      formState.league = availableLeagues[0]?.value || ''
-    }
-  },
-  { immediate: true },
-)
+const formatLabel = computed(() => formState.format.replaceAll('-', ' '))
+const potRuleChips = computed(() => payload.value.potRules.split('\n').filter(Boolean))
 
 const formSummary = computed(() =>
   props.mode === 'event'
-    ? 'The discovery event is already attached. Finish the side market, participants, and collection rail.'
-    : 'Set up a manual or community board with controlled sport, context, and league inputs instead of raw text fields.',
+    ? 'Event locked. Set the market, seats, and payment rail.'
+    : 'Pick the structure first, then add only what the room needs.',
 )
 
-async function rewriteTerms() {
-  aiTermsPending.value = true
-  aiTermsError.value = ''
-
-  try {
-    const result = await ai.rewriteTerms({
-      title: formState.title,
-      description: formState.description,
-      format: formState.format,
-      paymentService: formState.paymentService,
-      terms: formState.terms,
-    })
-
-    if (result.terms) {
-      formState.terms = result.terms
-    }
-  } catch (error) {
-    aiTermsError.value = error instanceof Error ? error.message : 'AI terms rewrite failed.'
-  } finally {
-    aiTermsPending.value = false
-  }
-}
-
 function submit() {
-  const parsed = schema.safeParse(formState)
+  const parsed = schema.safeParse(payload.value)
   if (!parsed.success) {
     return
   }
@@ -220,17 +135,18 @@ function submit() {
       <div class="space-y-2">
         <p class="napkinbets-kicker">Board setup</p>
         <h2 class="napkinbets-section-title">
-          {{ mode === 'event' ? 'Finish the event-backed board' : 'Set the manual board details' }}
+          {{ mode === 'event' ? 'Finish the board' : 'Start a room-ready board' }}
         </h2>
-        <p class="napkinbets-support-copy">
-          {{ formSummary }}
-        </p>
+        <p class="napkinbets-support-copy">{{ formSummary }}</p>
       </div>
     </template>
 
     <UForm :state="formState" :schema="schema" class="space-y-6" @submit.prevent="submit">
-      <div v-if="mode === 'event' && eventPreview" class="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <div class="napkinbets-surface space-y-2">
+      <div
+        v-if="mode === 'event' && eventPreview"
+        class="napkinbets-event-preview napkinbets-surface"
+      >
+        <div>
           <p class="napkinbets-surface-label">Attached event</p>
           <p class="font-semibold text-default">
             {{
@@ -245,12 +161,10 @@ function submit() {
           </p>
         </div>
 
-        <div class="napkinbets-surface space-y-2">
-          <p class="napkinbets-surface-label">Board shape</p>
-          <p class="text-sm text-muted">
-            Napkinbets already has the sport, context, league, and suggested market angle. You are
-            mostly deciding the stake, the seat list, and the closeout rules.
-          </p>
+        <div class="napkinbets-chip-grid">
+          <span class="napkinbets-choice-chip">{{ selectedSport?.label || 'Attached sport' }}</span>
+          <span class="napkinbets-choice-chip">{{ selectedLeague?.label || 'Attached league' }}</span>
+          <span class="napkinbets-choice-chip">{{ formatLabel }}</span>
         </div>
       </div>
 
@@ -272,44 +186,23 @@ function submit() {
         </UFormField>
       </div>
 
-      <UFormField name="description" label="Board description">
-        <UTextarea v-model="formState.description" class="w-full" :rows="3" />
-      </UFormField>
-
-      <USeparator />
-
-      <div class="grid gap-4 xl:grid-cols-[1fr_1fr]">
+      <div class="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
         <div class="space-y-4">
           <div class="space-y-2">
-            <p class="napkinbets-kicker">Event and context</p>
-            <h3 class="napkinbets-subsection-title">What the board is attached to</h3>
+            <p class="napkinbets-kicker">Context</p>
+            <h3 class="napkinbets-subsection-title">What this board belongs to</h3>
           </div>
 
           <div class="napkinbets-form-grid">
             <template v-if="mode === 'event'">
               <div class="napkinbets-surface space-y-2">
                 <p class="napkinbets-surface-label">Sport</p>
-                <p class="font-semibold text-default">
-                  {{ selectedSport?.label || eventPreview?.sport || 'Attached from discovery' }}
-                </p>
-              </div>
-
-              <div class="napkinbets-surface space-y-2">
-                <p class="napkinbets-surface-label">Competition context</p>
-                <p class="font-semibold text-default">
-                  {{
-                    selectedContext?.label ||
-                    eventPreview?.contextKey ||
-                    'Inherited from the attached event'
-                  }}
-                </p>
+                <p class="font-semibold text-default">{{ selectedSport?.label }}</p>
               </div>
 
               <div class="napkinbets-surface space-y-2">
                 <p class="napkinbets-surface-label">League</p>
-                <p class="font-semibold text-default">
-                  {{ selectedLeague?.label || eventPreview?.league || 'Inherited from discovery' }}
-                </p>
+                <p class="font-semibold text-default">{{ selectedLeague?.label }}</p>
               </div>
             </template>
 
@@ -318,18 +211,26 @@ function submit() {
                 <USelect v-model="formState.sport" :items="sportOptions" class="w-full" />
               </UFormField>
 
-              <UFormField name="contextKey" label="Competition context">
-                <USelect v-model="formState.contextKey" :items="contextOptions" class="w-full" />
+              <UFormField name="contextKey" label="Context">
+                <USelect
+                  v-model="formState.contextKey"
+                  :items="contextOptions"
+                  class="w-full"
+                />
               </UFormField>
 
               <UFormField v-if="leagueOptions.length" name="league" label="League">
-                <USelect v-model="formState.league" :items="leagueOptions" class="w-full" />
+                <USelect
+                  v-model="formState.league"
+                  :items="leagueOptions"
+                  class="w-full"
+                />
               </UFormField>
 
               <UFormField
                 v-if="showCustomContextName"
                 name="customContextName"
-                label="Meet, circuit, or group label"
+                label="Meet, circuit, or room label"
               >
                 <UInput
                   v-model="formState.customContextName"
@@ -339,71 +240,180 @@ function submit() {
               </UFormField>
             </template>
 
-            <UFormField name="venueName" label="Venue or watch context">
+            <UFormField v-if="mode === 'manual'" name="venuePreset" label="Watch context">
+              <USelect v-model="selectedVenuePreset" :items="venueOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField
+              v-if="showCustomVenue || mode === 'event'"
+              name="venueName"
+              :label="mode === 'event' ? 'Venue' : 'Custom venue or room'"
+            >
               <UInput v-model="formState.venueName" class="w-full" />
-            </UFormField>
-
-            <UFormField name="paymentService" label="Settlement app">
-              <USelect v-model="formState.paymentService" :items="paymentOptions" class="w-full" />
-            </UFormField>
-
-            <UFormField name="paymentHandle" label="Collection handle or account">
-              <UInput v-model="formState.paymentHandle" class="w-full" />
-            </UFormField>
-
-            <UFormField name="participantNames" label="Seed participants">
-              <UTextarea
-                v-model="formState.participantNames"
-                class="w-full"
-                :rows="4"
-                placeholder="Avery&#10;Jules&#10;Nina"
-              />
             </UFormField>
           </div>
         </div>
 
         <div class="space-y-4">
           <div class="space-y-2">
-            <p class="napkinbets-kicker">Market and closeout</p>
-            <h3 class="napkinbets-subsection-title">How the board will run</h3>
+            <p class="napkinbets-kicker">Market</p>
+            <h3 class="napkinbets-subsection-title">Sides and seats without the text wall</h3>
           </div>
 
-          <UFormField name="sideOptions" label="Sides or prop options">
-            <UTextarea v-model="formState.sideOptions" class="w-full" :rows="5" />
-          </UFormField>
+          <div class="napkinbets-surface space-y-3">
+            <div class="flex items-center justify-between gap-3">
+              <p class="napkinbets-surface-label">Board options</p>
+              <UButton
+                v-if="suggestedSideOptions.length"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                icon="i-lucide-rotate-ccw"
+                @click="resetSideOptions"
+              >
+                Reset suggestions
+              </UButton>
+            </div>
 
-          <UFormField name="potRules" label="Pot split">
-            <UTextarea
-              v-model="formState.potRules"
-              class="w-full"
-              :rows="4"
-              placeholder="Winner: 70&#10;Closer call: 30"
-            />
-          </UFormField>
+            <div v-if="sideTemplateOptions.length" class="space-y-2">
+              <p class="napkinbets-surface-label">Quick patterns</p>
+              <div class="napkinbets-chip-grid">
+                <UButton
+                  v-for="template in sideTemplateOptions"
+                  :key="template.value"
+                  color="neutral"
+                  variant="soft"
+                  size="sm"
+                  @click="applySideTemplate(template.value)"
+                >
+                  {{ template.label }}
+                </UButton>
+              </div>
+            </div>
 
-          <UFormField name="terms" label="Terms and closeout note">
-            <UTextarea v-model="formState.terms" class="w-full" :rows="4" />
-          </UFormField>
+            <div class="napkinbets-chip-grid">
+              <span v-for="option in sideOptionList" :key="option" class="napkinbets-choice-chip">
+                {{ option }}
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  icon="i-lucide-x"
+                  @click="removeSideOption(option)"
+                />
+              </span>
+            </div>
 
-          <UAlert
-            v-if="aiTermsError"
-            color="warning"
-            variant="soft"
-            icon="i-lucide-circle-alert"
-            title="AI rewrite unavailable"
-            :description="aiTermsError"
-          />
+            <div class="napkinbets-inline-form">
+              <UInput
+                v-model="sideOptionDraft"
+                class="w-full"
+                placeholder="Add one more side or prop"
+                @keydown.enter.prevent="addSideOption"
+              />
+              <UButton color="neutral" variant="soft" icon="i-lucide-plus" @click="addSideOption">
+                Add
+              </UButton>
+            </div>
+          </div>
 
-          <div v-if="ai.enabled && isAuthenticated" class="napkinbets-card-actions">
-            <UButton
-              color="neutral"
-              variant="soft"
-              icon="i-lucide-sparkles"
-              :loading="aiTermsPending"
-              @click="rewriteTerms"
-            >
-              Rewrite terms with Grok
-            </UButton>
+          <div class="napkinbets-surface space-y-3">
+            <div class="space-y-2">
+              <p class="napkinbets-surface-label">Seed participants</p>
+              <div class="napkinbets-chip-grid">
+                <UButton
+                  v-for="preset in seatPresetOptions"
+                  :key="preset.value"
+                  color="neutral"
+                  variant="soft"
+                  size="sm"
+                  @click="applySeatPreset(preset.value)"
+                >
+                  {{ preset.label }}
+                </UButton>
+              </div>
+            </div>
+
+            <div class="napkinbets-chip-grid">
+              <span v-for="participant in participantList" :key="participant" class="napkinbets-choice-chip">
+                {{ participant }}
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  icon="i-lucide-x"
+                  @click="removeParticipant(participant)"
+                />
+              </span>
+            </div>
+
+            <div class="napkinbets-inline-form">
+              <UInput
+                v-model="participantDraft"
+                class="w-full"
+                placeholder="Add a participant"
+                @keydown.enter.prevent="addParticipant"
+              />
+              <UButton
+                color="neutral"
+                variant="soft"
+                icon="i-lucide-user-plus"
+                @click="addParticipant"
+              >
+                Add
+              </UButton>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <p class="napkinbets-kicker">Collection</p>
+            <h3 class="napkinbets-subsection-title">Payment rail and pot shape</h3>
+          </div>
+
+          <div class="napkinbets-form-grid">
+            <UFormField name="paymentService" label="Settlement app">
+              <USelect v-model="formState.paymentService" :items="paymentOptions" class="w-full" />
+            </UFormField>
+
+            <UFormField name="paymentHandle" label="Collection handle">
+              <UInput v-model="formState.paymentHandle" class="w-full" />
+            </UFormField>
+
+            <UFormField name="potTemplate" label="Pot split">
+              <USelect v-model="selectedPotTemplate" :items="potTemplateOptions" class="w-full" />
+            </UFormField>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <p class="napkinbets-kicker">Generated board note</p>
+            <h3 class="napkinbets-subsection-title">Clear by default</h3>
+          </div>
+
+          <div class="napkinbets-surface space-y-3">
+            <div class="space-y-2">
+              <p class="napkinbets-surface-label">Board summary</p>
+              <p class="napkinbets-support-copy">{{ boardSummary }}</p>
+            </div>
+
+            <div class="space-y-2">
+              <p class="napkinbets-surface-label">Pot rules</p>
+              <div class="napkinbets-chip-grid">
+                <span v-for="rule in potRuleChips" :key="rule" class="napkinbets-choice-chip">
+                  {{ rule }}
+                </span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <p class="napkinbets-surface-label">Closeout note</p>
+              <p class="napkinbets-support-copy">{{ closeoutTerms }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -413,7 +423,7 @@ function submit() {
         variant="soft"
         icon="i-lucide-wallet-cards"
         title="Settlement stays manual"
-        description="Napkinbets records the payment rail, proof, and review state, but no money is processed in-app."
+        description="Napkinbets tracks the rail and proof, but money still moves outside the app."
       />
 
       <div class="napkinbets-form-actions">

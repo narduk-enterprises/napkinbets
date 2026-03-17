@@ -189,6 +189,41 @@ export interface NapkinbetsCachedEvent {
   lastSyncedAt: string
 }
 
+interface NapkinbetsCreatePrefillQuery {
+  source: string
+  eventId: string
+  eventTitle: string
+  eventStartsAt: string
+  eventStatus: string
+  sport: string
+  contextKey: string
+  league: string
+  venueName: string
+  homeTeamName: string
+  awayTeamName: string
+  format: string
+  sideOptions: string[]
+}
+
+interface NapkinbetsDiscoverySpotlightAsset {
+  kind: 'editorial' | 'mark' | 'logo' | 'headshot'
+  src: string
+  alt: string
+}
+
+interface NapkinbetsDiscoverySpotlight {
+  id: string
+  label: string
+  title: string
+  subtitle: string
+  summary: string
+  windowLabel: string
+  venueLabel: string
+  accent: 'major' | 'tour' | 'watch'
+  assets: NapkinbetsDiscoverySpotlightAsset[]
+  prefill: NapkinbetsCreatePrefillQuery
+}
+
 export interface NapkinbetsDiscoverSection {
   key: 'live-now' | 'starting-soon' | 'today' | 'next-up'
   label: string
@@ -210,6 +245,12 @@ export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'all'
 
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 const EVENT_LOOKUP_BATCH_SIZE = 64
+const NAPKINBETS_EDITORIAL_IMAGE_PATHS = {
+  auth: '/brand/imagery/auth-table-scene.webp',
+  discovery: '/brand/imagery/discovery-paper-grid.webp',
+  liveRoom: '/brand/imagery/live-room-editorial.webp',
+  masters: '/brand/imagery/masters-week-editorial.webp',
+} as const
 
 export const NAPKINBETS_PROP_IDEAS = [
   {
@@ -256,6 +297,66 @@ export const NAPKINBETS_PROP_IDEAS = [
       'Only use prompts with clear public outcomes that the group can verify together.',
   },
 ] as const
+
+const NAPKINBETS_GOLF_EDITORIAL = [
+  {
+    id: 'masters-2026',
+    label: 'Major watch',
+    title: 'Masters week room',
+    subtitle: 'Build the Augusta board before Monday, then let it carry the whole week.',
+    summary:
+      'Cover the full official Masters week with one room for Green Jacket futures, Thursday pace-setters, and Sunday closeout sweats.',
+    windowLabel: 'Apr 6-12, 2026',
+    venueLabel: 'Augusta National Golf Club',
+    accent: 'major',
+    assets: [],
+    prefill: {
+      source: 'curated',
+      eventId: 'masters-2026',
+      eventTitle: 'Masters Tournament',
+      eventStartsAt: '2026-04-06T12:00:00Z',
+      eventStatus: 'Upcoming',
+      sport: 'golf',
+      contextKey: 'tournament',
+      league: 'pga',
+      venueName: 'Augusta National Golf Club',
+      homeTeamName: 'Masters field',
+      awayTeamName: 'Featured golfers',
+      format: 'golf-draft',
+      sideOptions: ['Green Jacket winner', 'Leader after Thursday', 'Playoff yes/no'],
+    },
+  },
+  {
+    id: 'masters-weekend-2026',
+    label: 'Sunday sweat',
+    title: 'Masters weekend closeout',
+    subtitle: 'Once the cut is set, shrink the board and turn the leaderboard into one clean finish lane.',
+    summary:
+      'Use a smaller Augusta board for best weekend score, final pairing winner, or the biggest Sunday charge once the field is trimmed.',
+    windowLabel: 'Apr 11-12, 2026',
+    venueLabel: 'Augusta National Golf Club',
+    accent: 'watch',
+    assets: [],
+    prefill: {
+      source: 'curated',
+      eventId: 'masters-weekend-2026',
+      eventTitle: 'Masters Tournament Weekend',
+      eventStartsAt: '2026-04-11T14:00:00Z',
+      eventStatus: 'Upcoming',
+      sport: 'golf',
+      contextKey: 'tournament',
+      league: 'pga',
+      venueName: 'Augusta National Golf Club',
+      homeTeamName: 'Masters leaders',
+      awayTeamName: 'Weekend chasers',
+      format: 'sports-prop',
+      sideOptions: ['Leader after Saturday', 'Best Sunday charge', 'Winning score under 280'],
+    },
+  },
+] as const satisfies readonly NapkinbetsDiscoverySpotlight[]
+
+const GOLF_MAJOR_EVENT_PATTERN =
+  /masters|u\.s\. open|us open|open championship|the open|pga championship/i
 
 function nowIso() {
   return new Date().toISOString()
@@ -374,19 +475,24 @@ function getLeagueIdeas(
     case 'golf':
       return [
         {
-          title: 'Tournament finish board',
-          description: `Turn ${awayTeam} and ${homeTeam} into a clean leaderboard lane.`,
+          title: 'Featured golfer lane',
+          description: `Keep ${awayTeam} and ${homeTeam} at the center of a board that still settles cleanly from the leaderboard.`,
           sideOptions: [
             'Best finish among featured golfers',
-            'Leader after round one',
-            'Cut made by both featured golfers',
+            'Both golfers make the cut',
+            'Top-10 finisher count',
           ],
           format: 'golf-draft',
         },
         {
-          title: 'Round-by-round sweat',
-          description: 'Keep the board small enough to settle from the leaderboard.',
-          sideOptions: ['Lowest Thursday round', 'Best weekend score', 'Playoff yes/no'],
+          title: 'Round and cut sweat',
+          description: 'Use one quick tournament pulse instead of asking the room to track the full field.',
+          sideOptions: [
+            'Leader after round one',
+            'Cut made by both featured golfers',
+            'Best weekend score',
+            'Playoff yes/no',
+          ],
           format: 'sports-prop',
         },
       ]
@@ -602,6 +708,10 @@ function buildIngestWindow(tier: DiscoverTier, now = new Date()) {
 
 function isWithinHours(date: Date, hours: number, now: Date) {
   return date.getTime() <= now.getTime() + hours * 60 * 60 * 1000
+}
+
+function isWithinDays(date: Date, days: number, now: Date) {
+  return date.getTime() <= now.getTime() + days * 24 * 60 * 60 * 1000
 }
 
 function parseJsonValue<T>(value: string, fallback: T): T {
@@ -1281,6 +1391,194 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
   }
 }
 
+function buildCreatePrefillFromEvent(
+  event: NapkinbetsCachedEvent,
+  idea?: CachedDiscoverEventIdea,
+): NapkinbetsCreatePrefillQuery {
+  return {
+    source: event.source,
+    eventId: event.id,
+    eventTitle: event.eventTitle,
+    eventStartsAt: event.startTime,
+    eventStatus: event.status,
+    sport: event.sport,
+    contextKey: event.contextKey,
+    league: event.league,
+    venueName: event.venueName,
+    homeTeamName: event.homeTeam.homeAway === 'home' ? event.homeTeam.name : '',
+    awayTeamName: event.awayTeam.homeAway === 'away' ? event.awayTeam.name : '',
+    format: idea?.format || (event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
+    sideOptions: idea?.sideOptions ?? [],
+  }
+}
+
+function isGolfMajorEvent(event: Pick<NapkinbetsCachedEvent, 'sport' | 'eventTitle'>) {
+  return event.sport === 'golf' && GOLF_MAJOR_EVENT_PATTERN.test(event.eventTitle)
+}
+
+function dedupeSpotlightAssets(assets: NapkinbetsDiscoverySpotlightAsset[]) {
+  const unique = new Map<string, NapkinbetsDiscoverySpotlightAsset>()
+
+  for (const asset of assets) {
+    if (!asset.src) {
+      continue
+    }
+
+    const key = `${asset.kind}:${asset.src}`
+    if (!unique.has(key)) {
+      unique.set(key, asset)
+    }
+  }
+
+  return [...unique.values()]
+}
+
+function buildEditorialSpotlightAsset(
+  src: string,
+  alt: string,
+): NapkinbetsDiscoverySpotlightAsset {
+  return {
+    kind: 'editorial',
+    src,
+    alt,
+  }
+}
+
+function buildSpotlightAssetsFromEvent(
+  event: NapkinbetsCachedEvent,
+  options?: { includeMark?: boolean },
+): NapkinbetsDiscoverySpotlightAsset[] {
+  const editorialAsset =
+    event.sport === 'golf'
+      ? [
+          buildEditorialSpotlightAsset(
+            isGolfMajorEvent(event)
+              ? NAPKINBETS_EDITORIAL_IMAGE_PATHS.masters
+              : NAPKINBETS_EDITORIAL_IMAGE_PATHS.liveRoom,
+            `${event.eventTitle} editorial`,
+          ),
+        ]
+      : []
+
+  const markAsset = options?.includeMark
+    ? [
+        {
+          kind: 'mark',
+          src: '/brand/napkinbets-mark.svg',
+          alt: 'Napkinbets spotlight',
+        } satisfies NapkinbetsDiscoverySpotlightAsset,
+      ]
+    : []
+
+  const teamAssets = [event.awayTeam, event.homeTeam]
+    .filter((team) => team.logo)
+    .slice(0, 2)
+    .map(
+      (team) =>
+        ({
+          kind: event.sport === 'golf' ? 'headshot' : 'logo',
+          src: team.logo,
+          alt: team.name,
+        }) satisfies NapkinbetsDiscoverySpotlightAsset,
+    )
+
+  const assets = dedupeSpotlightAssets([...editorialAsset, ...markAsset, ...teamAssets]).slice(0, 3)
+
+  if (assets.length > 0) {
+    return assets
+  }
+
+  return [
+    buildEditorialSpotlightAsset(
+      NAPKINBETS_EDITORIAL_IMAGE_PATHS.discovery,
+      `${event.leagueLabel} spotlight`,
+    ),
+  ]
+}
+
+function buildEditorialSpotlightAssets(
+  events: NapkinbetsCachedEvent[],
+): NapkinbetsDiscoverySpotlightAsset[] {
+  const assets = events.flatMap((event) =>
+    buildSpotlightAssetsFromEvent(event).filter((asset) => asset.kind !== 'editorial'),
+  )
+
+  return dedupeSpotlightAssets([
+    buildEditorialSpotlightAsset(
+      NAPKINBETS_EDITORIAL_IMAGE_PATHS.masters,
+      'Napkinbets golf spotlight',
+    ),
+    ...assets,
+  ]).slice(0, 3)
+}
+
+function buildTourSpotlightFromEvent(
+  event: NapkinbetsCachedEvent,
+  label: string,
+): NapkinbetsDiscoverySpotlight {
+  const isMajor = isGolfMajorEvent(event)
+  const leaderNames = [event.awayTeam.name, event.homeTeam.name].filter(Boolean).join(' and ')
+
+  return {
+    id: `spotlight:${event.id}`,
+    label: isMajor ? 'Major watch' : label,
+    title: event.eventTitle,
+    subtitle:
+      event.sport === 'golf'
+        ? event.state === 'in'
+          ? `${leaderNames || 'The field'} gives you a live leaderboard lane without needing a sportsbook feed.`
+          : `${leaderNames || 'Featured golfers'} give this tournament a clean featured lane before the round starts.`
+        : event.summary,
+    summary:
+      event.sport === 'golf'
+        ? `${event.summary} Keep the side market tight enough to settle from the official leaderboard.`
+        : event.ideas[0]?.description ||
+          'Use the live event context first, then keep the side market small enough to settle fast.',
+    windowLabel: event.shortStatus,
+    venueLabel: event.venueName,
+    accent: isMajor ? 'major' : event.sport === 'golf' ? 'tour' : 'tour',
+    assets: buildSpotlightAssetsFromEvent(event, { includeMark: event.state === 'in' }),
+    prefill: buildCreatePrefillFromEvent(event, event.ideas[0]),
+  }
+}
+
+export function buildDiscoverSpotlights(events: NapkinbetsCachedEvent[], now = new Date()) {
+  const spotlights: NapkinbetsDiscoverySpotlight[] = []
+  const golfEvents = events.filter((event) => event.sport === 'golf')
+  const pgaEvent = golfEvents.find((event) => event.league === 'pga')
+  const lpgaEvent = golfEvents.find((event) => event.league === 'lpga')
+  const editorialAssets = buildEditorialSpotlightAssets(
+    [pgaEvent, lpgaEvent].filter((event): event is NapkinbetsCachedEvent => Boolean(event)),
+  )
+
+  for (const spotlight of NAPKINBETS_GOLF_EDITORIAL) {
+    const start = new Date(spotlight.prefill.eventStartsAt)
+    if (start >= now && isWithinDays(start, 45, now)) {
+      spotlights.push({
+        ...spotlight,
+        assets: editorialAssets,
+      })
+    }
+  }
+
+  if (pgaEvent) {
+    spotlights.push(
+      buildTourSpotlightFromEvent(pgaEvent, pgaEvent.state === 'in' ? 'Live on tour' : 'PGA tour'),
+    )
+  }
+
+  if (lpgaEvent) {
+    spotlights.push(
+      buildTourSpotlightFromEvent(
+        lpgaEvent,
+        lpgaEvent.state === 'in' ? 'Live on tour' : 'LPGA tour',
+      ),
+    )
+  }
+
+  return spotlights.slice(0, 4)
+}
+
 export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTier = 'manual') {
   const syncedAt = nowIso()
   const activeLeagues = NAPKINBETS_EVENT_LEAGUES.filter((config) => isLeagueActive(config))
@@ -1342,6 +1640,7 @@ export async function loadCachedDiscoverData(event: H3Event) {
 
   const events = eventRows.map((row) => toCachedEvent(row))
   const sections = buildDiscoverSections(events)
+  const spotlights = buildDiscoverSpotlights(events)
   const freshestSync =
     eventRows.map((row) => row.lastSyncedAt).sort((left, right) => right.localeCompare(left))[0] ??
     latestRun[0]?.completedAt ??
@@ -1351,6 +1650,7 @@ export async function loadCachedDiscoverData(event: H3Event) {
 
   return {
     sections,
+    spotlights,
     filters: buildDiscoverFilters(events),
     propIdeas: [...NAPKINBETS_PROP_IDEAS],
     refreshedAt: freshestSync || nowIso(),

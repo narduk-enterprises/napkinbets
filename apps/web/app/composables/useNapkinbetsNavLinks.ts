@@ -2,20 +2,35 @@ interface NapkinbetsNavLink {
   label: string
   to: string
   icon: string
+  mobileLabel?: string
   requiresAuth?: boolean
   adminOnly?: boolean
 }
 
-const BASE_NAV_LINKS: NapkinbetsNavLink[] = [
-  { label: 'Home', to: '/', icon: 'i-lucide-house' },
-  { label: 'Discover', to: '/discover', icon: 'i-lucide-calendar-range' },
-  { label: 'Create', to: '/wagers/create', icon: 'i-lucide-ticket-plus' },
+const PRIMARY_NAV_LINKS: NapkinbetsNavLink[] = [
+  { label: 'Home', to: '/', icon: 'i-lucide-house', mobileLabel: 'Home' },
+  {
+    label: 'Discover',
+    to: '/discover',
+    icon: 'i-lucide-radar',
+    mobileLabel: 'Discover',
+  },
+  {
+    label: 'Create',
+    to: '/wagers/create',
+    icon: 'i-lucide-ticket-plus',
+    mobileLabel: 'Create',
+  },
   {
     label: 'Dashboard',
     to: '/dashboard',
     icon: 'i-lucide-layout-dashboard',
+    mobileLabel: 'Boards',
     requiresAuth: true,
   },
+]
+
+const ACCOUNT_LINKS: NapkinbetsNavLink[] = [
   {
     label: 'Payments',
     to: '/settings/payments',
@@ -31,45 +46,78 @@ const BASE_NAV_LINKS: NapkinbetsNavLink[] = [
   },
 ]
 
+function withActiveState(routePath: string, links: NapkinbetsNavLink[]) {
+  return links.map((link) => ({
+    ...link,
+    active:
+      link.to === '/' ? routePath === '/' : routePath === link.to || routePath.startsWith(`${link.to}/`),
+  }))
+}
+
 export function useNapkinbetsNavLinks() {
   const route = useRoute()
-  const { loggedIn, user } = useUserSession()
+  const { loggedIn, user } = useAuth()
 
   const isAuthenticated = computed(() => Boolean(loggedIn.value))
   const isAdmin = computed(() => Boolean(user.value?.isAdmin))
 
-  const publicLinks = computed(() =>
-    BASE_NAV_LINKS.filter((link) => !link.requiresAuth && !link.adminOnly).map((link) => ({
-      ...link,
-      active:
-        link.to === '/'
-          ? route.path === '/'
-          : route.path === link.to || route.path.startsWith(`${link.to}/`),
-    })),
+  const primaryLinks = computed(() =>
+    withActiveState(
+      route.path,
+      PRIMARY_NAV_LINKS.filter((link) => {
+        if (link.requiresAuth && !isAuthenticated.value) {
+          return false
+        }
+
+        return true
+      }),
+    ),
   )
 
-  const links = computed(() =>
-    BASE_NAV_LINKS.filter((link) => {
-      if (link.adminOnly && !isAdmin.value) {
-        return false
-      }
+  const accountLinks = computed(() =>
+    withActiveState(
+      route.path,
+      ACCOUNT_LINKS.filter((link) => {
+        if (link.adminOnly && !isAdmin.value) {
+          return false
+        }
 
-      if (link.requiresAuth && !isAuthenticated.value) {
-        return false
-      }
+        if (link.requiresAuth && !isAuthenticated.value) {
+          return false
+        }
 
-      return true
-    }).map((link) => ({
-      ...link,
-      active:
-        link.to === '/'
-          ? route.path === '/'
-          : route.path === link.to || route.path.startsWith(`${link.to}/`),
-    })),
+        return true
+      }),
+    ),
+  )
+
+  const mobileLinks = computed(() => {
+    if (isAuthenticated.value) {
+      return primaryLinks.value
+    }
+
+    return withActiveState(route.path, [
+      ...PRIMARY_NAV_LINKS.filter((link) => !link.requiresAuth),
+      {
+        label: 'Account',
+        mobileLabel: 'Account',
+        to: '/login',
+        icon: 'i-lucide-log-in',
+      },
+    ])
+  })
+
+  const publicLinks = computed(() =>
+    withActiveState(
+      route.path,
+      PRIMARY_NAV_LINKS.filter((link) => !link.requiresAuth),
+    ),
   )
 
   return {
-    links,
+    primaryLinks,
+    accountLinks,
+    mobileLinks,
     publicLinks,
     isAdmin,
     isAuthenticated,

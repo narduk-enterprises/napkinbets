@@ -3,6 +3,7 @@ import { useNapkinbetsApi } from '../services/napkinbets-api'
 
 const EMPTY_DISCOVERY: NapkinbetsDiscoveryResponse = {
   sections: [],
+  spotlights: [],
   filters: {
     sports: [],
     contexts: [],

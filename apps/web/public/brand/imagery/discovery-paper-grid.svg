@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1200" role="img" aria-label="Napkinbets discovery paper grid">
+  <defs>
+    <linearGradient id="paper" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbf6ea" />
+      <stop offset="100%" stop-color="#f2ead9" />
+    </linearGradient>
+    <radialGradient id="glow" cx="82%" cy="12%" r="52%">
+      <stop offset="0%" stop-color="#f3b95e" stop-opacity=".28" />
+      <stop offset="100%" stop-color="#f3b95e" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="120" height="120" patternUnits="userSpaceOnUse">
+      <path d="M120 0H0V120" fill="none" stroke="#29653f" stroke-opacity=".08" stroke-width="1.5" />
+    </pattern>
+    <pattern id="lines" width="1800" height="58" patternUnits="userSpaceOnUse">
+      <line x1="0" x2="1800" y1="57" y2="57" stroke="#29653f" stroke-opacity=".08" stroke-width="2" />
+    </pattern>
+  </defs>
+  <rect width="1800" height="1200" fill="url(#paper)" rx="48" />
+  <rect width="1800" height="1200" fill="url(#grid)" rx="48" />
+  <rect width="1800" height="1200" fill="url(#lines)" rx="48" />
+  <rect width="1800" height="1200" fill="url(#glow)" rx="48" />
+  <path d="M-40 210C210 140 390 180 610 112c240-74 410-44 670 40 224 72 382 78 600 18V0H0v254c54-10 102-24 140-44Z" fill="#1b7c47" fill-opacity=".07" />
+  <path d="M1320 954c118 12 260 0 480-74v320h-516c-36-120-24-198 36-246Z" fill="#d3891a" fill-opacity=".12" />
+  <path d="M146 1024c118-40 258-42 420 4 98 28 172 34 246 22l-36 150H118z" fill="#1b7c47" fill-opacity=".08" />
+  <g fill="#fff9ef" fill-opacity=".88" stroke="#29653f" stroke-opacity=".1" stroke-width="2">
+    <rect x="144" y="126" width="404" height="242" rx="30" transform="rotate(-5 144 126)" />
+    <rect x="1188" y="154" width="342" height="220" rx="26" transform="rotate(6 1188 154)" />
+    <rect x="1042" y="820" width="442" height="246" rx="34" transform="rotate(-4 1042 820)" />
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type {
+  NapkinbetsCreatePrefillQuery,
   NapkinbetsEventCard as NapkinbetsEvent,
   NapkinbetsEventIdea,
 } from '../../../types/napkinbets'
@@ -9,118 +10,187 @@ const props = defineProps<{
   event: NapkinbetsEvent
 }>()
 
-const isMatchupEvent = computed(
-  () => props.event.awayTeam.homeAway === 'away' && props.event.homeTeam.homeAway === 'home',
-)
+function buildCreatePrefill(
+  event: NapkinbetsEvent,
+  idea?: NapkinbetsEventIdea,
+): NapkinbetsCreatePrefillQuery {
+  const isMatchupEvent = event.awayTeam.homeAway === 'away' && event.homeTeam.homeAway === 'home'
 
-function buildCreateLink(idea?: NapkinbetsEventIdea) {
+  return {
+    source: event.source,
+    eventId: event.id,
+    eventTitle: event.eventTitle,
+    eventStartsAt: event.startTime,
+    eventStatus: event.status,
+    sport: event.sport,
+    contextKey: event.contextKey,
+    league: event.league,
+    venueName: event.venueName,
+    homeTeamName: isMatchupEvent ? event.homeTeam.name : '',
+    awayTeamName: isMatchupEvent ? event.awayTeam.name : '',
+    format: idea?.format || (event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
+    sideOptions: idea?.sideOptions ?? [],
+  }
+}
+
+function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
   return {
     path: '/wagers/create',
     query: {
       createMode: 'event',
-      source: props.event.source,
-      eventId: props.event.id,
-      eventTitle: props.event.eventTitle,
-      eventStartsAt: props.event.startTime,
-      eventStatus: props.event.status,
-      sport: props.event.sport,
-      contextKey: props.event.contextKey,
-      league: props.event.league,
-      venueName: props.event.venueName,
-      homeTeamName: isMatchupEvent.value ? props.event.homeTeam.name : '',
-      awayTeamName: isMatchupEvent.value ? props.event.awayTeam.name : '',
-      format: idea?.format || (props.event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
-      sideOptions: idea?.sideOptions.join('\n') || '',
+      source: prefill.source,
+      eventId: prefill.eventId,
+      eventTitle: prefill.eventTitle,
+      eventStartsAt: prefill.eventStartsAt,
+      eventStatus: prefill.eventStatus,
+      sport: prefill.sport,
+      contextKey: prefill.contextKey,
+      league: prefill.league,
+      venueName: prefill.venueName,
+      homeTeamName: prefill.homeTeamName,
+      awayTeamName: prefill.awayTeamName,
+      format: prefill.format,
+      sideOptions: prefill.sideOptions.join('\n'),
     },
   }
 }
 
-function formatIsoLabel(value: string) {
-  return value.replace('T', ' ').replace('Z', ' UTC').slice(0, 20)
+function formatDateLabel(value: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value))
 }
+
+function badgeLabel(team: NapkinbetsEvent['homeTeam']) {
+  if (team.record) {
+    return team.record
+  }
+
+  if (team.homeAway === 'featured') {
+    return 'Featured'
+  }
+
+  if (team.homeAway === 'field') {
+    return 'Field'
+  }
+
+  return 'Ready'
+}
+
+const cardClass = computed(() => [
+  'napkinbets-panel',
+  'napkinbets-event-card',
+  props.event.sport === 'golf' ? 'napkinbets-event-card-golf' : '',
+])
+const isMatchupEvent = computed(
+  () => props.event.awayTeam.homeAway === 'away' && props.event.homeTeam.homeAway === 'home',
+)
+const eventTeams = computed(() => [props.event.awayTeam, props.event.homeTeam])
+const primaryIdea = computed(() => props.event.ideas[0] ?? null)
+const secondaryIdea = computed(() => props.event.ideas[1] ?? null)
+const insightRows = computed(() => props.event.leaders.slice(0, 2))
+const createLink = computed(() => buildCreateLink(buildCreatePrefill(props.event)))
+const primaryIdeaLink = computed(() =>
+  primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
+)
+const secondaryIdeaLink = computed(() =>
+  secondaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, secondaryIdea.value)) : null,
+)
 </script>
 
 <template>
-  <UCard class="napkinbets-panel napkinbets-event-card">
-    <div class="space-y-4">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="space-y-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <UBadge :color="event.state === 'in' ? 'success' : 'info'" variant="soft">
-              {{ event.state === 'in' ? 'Live' : 'Upcoming' }}
-            </UBadge>
-            <UBadge color="neutral" variant="subtle">{{ event.leagueLabel }}</UBadge>
-            <UBadge v-if="event.broadcast" color="warning" variant="soft">{{
-              event.broadcast
-            }}</UBadge>
-          </div>
-          <h3 class="napkinbets-subsection-title">{{ event.eventTitle }}</h3>
-          <p class="napkinbets-support-copy">{{ event.shortStatus }}</p>
-        </div>
-
-        <UButton :to="buildCreateLink()" color="primary" icon="i-lucide-ticket-plus">
-          Create board
-        </UButton>
+  <UCard :class="cardClass">
+    <div class="napkinbets-event-card-top">
+      <div class="flex flex-wrap items-center gap-2">
+        <UBadge :color="event.state === 'in' ? 'success' : 'warning'" variant="soft">
+          {{ event.state === 'in' ? 'Live' : 'Upcoming' }}
+        </UBadge>
+        <UBadge color="neutral" variant="subtle">{{ event.leagueLabel }}</UBadge>
+        <UBadge v-if="event.contextKey === 'tournament'" color="warning" variant="soft">
+          Tournament
+        </UBadge>
       </div>
 
-      <div class="napkinbets-event-scoreboard">
-        <div class="napkinbets-event-team">
-          <div class="space-y-1">
-            <p class="font-semibold text-default">{{ event.awayTeam.name }}</p>
-            <p class="text-sm text-muted">{{ event.awayTeam.record || 'Record pending' }}</p>
-          </div>
-          <p class="napkinbets-event-score">{{ event.awayTeam.score || '0' }}</p>
-        </div>
+      <UButton :to="createLink" color="primary" variant="soft" size="sm" icon="i-lucide-plus">
+        Board
+      </UButton>
+    </div>
 
-        <div class="napkinbets-event-team">
-          <div class="space-y-1">
-            <p class="font-semibold text-default">{{ event.homeTeam.name }}</p>
-            <p class="text-sm text-muted">{{ event.homeTeam.record || 'Record pending' }}</p>
-          </div>
-          <p class="napkinbets-event-score">{{ event.homeTeam.score || '0' }}</p>
+    <div class="space-y-3">
+      <div class="space-y-1">
+        <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
+        <div class="napkinbets-event-meta">
+          <span>{{ event.shortStatus }}</span>
+          <span v-if="event.broadcast">{{ event.broadcast }}</span>
+          <span>{{ event.venueName }}</span>
         </div>
       </div>
 
-      <div class="napkinbets-meta-row">
-        <span>{{ event.venueName }}</span>
-        <span v-if="event.venueLocation">{{ event.venueLocation }}</span>
-        <span>Starts {{ formatIsoLabel(event.startTime) }}</span>
-        <span>Synced {{ formatIsoLabel(event.lastSyncedAt) }}</span>
-      </div>
+      <div
+        class="napkinbets-event-matchup"
+        :class="{ 'napkinbets-event-matchup-tournament': !isMatchupEvent }"
+      >
+        <div
+          v-for="team in eventTeams"
+          :key="`${event.id}-${team.name}`"
+          class="napkinbets-event-side"
+        >
+          <div class="napkinbets-event-side-main">
+            <span class="napkinbets-event-avatar">
+              <img
+                v-if="team.logo"
+                :src="team.logo"
+                :alt="team.name"
+                class="napkinbets-event-avatar-image"
+              />
+              <span v-else>{{ team.abbreviation.slice(0, 2) || team.name.slice(0, 2) }}</span>
+            </span>
 
-      <div v-if="event.leaders.length" class="space-y-2">
-        <p class="napkinbets-surface-label">Live angles</p>
-        <div class="napkinbets-chip-grid">
-          <div
-            v-for="leader in event.leaders"
-            :key="`${leader.label}-${leader.athlete}`"
-            class="napkinbets-chip-card"
-          >
-            <span class="font-semibold text-default">{{ leader.label }}</span>
-            <span class="text-sm text-muted">{{ leader.athlete }} • {{ leader.value }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <p class="napkinbets-surface-label">Suggested markets</p>
-        <div class="space-y-2">
-          <div v-for="idea in event.ideas" :key="idea.title" class="napkinbets-idea-row">
-            <div class="space-y-1">
-              <p class="font-semibold text-default">{{ idea.title }}</p>
-              <p class="text-sm text-muted">{{ idea.description }}</p>
+            <div class="min-w-0">
+              <p class="napkinbets-event-name">{{ team.shortName || team.name }}</p>
+              <p class="napkinbets-event-record">{{ badgeLabel(team) }}</p>
             </div>
-
-            <UButton
-              :to="buildCreateLink(idea)"
-              color="neutral"
-              variant="soft"
-              size="sm"
-              icon="i-lucide-arrow-right"
-            >
-              Use this
-            </UButton>
           </div>
+
+          <p class="napkinbets-event-score">{{ team.score || (isMatchupEvent ? '0' : '—') }}</p>
+        </div>
+      </div>
+
+      <div v-if="insightRows.length" class="napkinbets-event-insights">
+        <div
+          v-for="leader in insightRows"
+          :key="`${leader.label}-${leader.athlete}`"
+          class="napkinbets-event-insight"
+        >
+          <span>{{ leader.label }}</span>
+          <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
+        </div>
+      </div>
+
+      <div class="napkinbets-event-footer">
+        <span>Synced {{ formatDateLabel(event.lastSyncedAt) }}</span>
+        <div class="napkinbets-event-action-row">
+          <UButton
+            v-if="primaryIdea && primaryIdeaLink"
+            :to="primaryIdeaLink"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+          >
+            {{ primaryIdea.title }}
+          </UButton>
+          <UButton
+            v-if="secondaryIdea && secondaryIdeaLink"
+            :to="secondaryIdeaLink"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+          >
+            {{ secondaryIdea.title }}
+          </UButton>
         </div>
       </div>
     </div>

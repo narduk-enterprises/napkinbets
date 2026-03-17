@@ -1,11 +1,76 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildDiscoverSpotlights,
   buildEspnScoreboardUrl,
   isDiscoverCacheStale,
+  type NapkinbetsCachedEvent,
   normalizeMatchupEspnEvent,
   normalizeTournamentEspnEvent,
 } from '../../server/services/napkinbets/events'
 import { findNapkinbetsLeague } from '../../server/services/napkinbets/taxonomy'
+
+function createCachedGolfEvent(
+  overrides: Partial<NapkinbetsCachedEvent> = {},
+): NapkinbetsCachedEvent {
+  return {
+    id: 'espn:pga:401811941',
+    source: 'espn',
+    sport: 'golf',
+    sportLabel: 'Golf',
+    contextKey: 'tournament',
+    contextLabel: 'Tournament',
+    league: 'pga',
+    leagueLabel: 'PGA Tour',
+    eventTitle: 'Valspar Championship',
+    summary: 'Rory McIlroy leads the Valspar Championship.',
+    status: 'Scheduled',
+    state: 'pre',
+    shortStatus: 'Thu, Mar 19',
+    startTime: '2026-03-19T15:00:00.000Z',
+    venueName: 'Innisbrook Resort',
+    venueLocation: 'Palm Harbor, FL',
+    broadcast: 'Golf Channel',
+    homeTeam: {
+      id: '4363',
+      name: 'Scottie Scheffler',
+      shortName: 'S. Scheffler',
+      abbreviation: '2',
+      logo: 'https://example.com/scottie.png',
+      homeAway: 'chase',
+      score: '-6',
+      record: '2',
+      winner: false,
+    },
+    awayTeam: {
+      id: '3470',
+      name: 'Rory McIlroy',
+      shortName: 'R. McIlroy',
+      abbreviation: '1',
+      logo: 'https://example.com/rory.png',
+      homeAway: 'leader',
+      score: '-8',
+      record: '1',
+      winner: false,
+    },
+    leaders: [
+      {
+        label: '1',
+        athlete: 'Rory McIlroy',
+        value: '-8',
+      },
+    ],
+    ideas: [
+      {
+        title: 'Featured golfer lane',
+        description: 'Keep the featured golfers at the center of the board.',
+        sideOptions: ['Best finish among featured golfers', 'Both golfers make the cut'],
+        format: 'golf-draft',
+      },
+    ],
+    lastSyncedAt: '2026-03-17T12:00:00.000Z',
+    ...overrides,
+  }
+}
 
 describe('napkinbets event ingest helpers', () => {
   it('builds ESPN scoreboard URLs with league-specific query params', () => {
@@ -246,5 +311,76 @@ describe('napkinbets event ingest helpers', () => {
       isDiscoverCacheStale('2026-03-17T11:20:00.000Z', Date.parse('2026-03-17T12:35:00.000Z')),
     ).toBe(true)
     expect(isDiscoverCacheStale('', Date.parse('2026-03-17T12:35:00.000Z'))).toBe(true)
+  })
+  it('builds golf spotlights for masters week and active tours with imagery', () => {
+    const pgaEvent = createCachedGolfEvent()
+    const lpgaEvent = createCachedGolfEvent({
+      id: 'espn:lpga:401811950',
+      league: 'lpga',
+      leagueLabel: 'LPGA Tour',
+      eventTitle: 'Ford Championship',
+      summary: 'Nelly Korda sets the pace heading into the weekend.',
+      venueName: 'Whirlwind Golf Club',
+      awayTeam: {
+        id: '1',
+        name: 'Nelly Korda',
+        shortName: 'N. Korda',
+        abbreviation: '1',
+        logo: 'https://example.com/nelly.png',
+        homeAway: 'leader',
+        score: '-9',
+        record: '1',
+        winner: false,
+      },
+      homeTeam: {
+        id: '2',
+        name: 'Lydia Ko',
+        shortName: 'L. Ko',
+        abbreviation: '2',
+        logo: 'https://example.com/lydia.png',
+        homeAway: 'chase',
+        score: '-7',
+        record: '2',
+        winner: false,
+      },
+    })
+
+    const spotlights = buildDiscoverSpotlights(
+      [pgaEvent, lpgaEvent],
+      new Date('2026-03-17T12:00:00.000Z'),
+    )
+
+    expect(spotlights).toHaveLength(4)
+
+    const mastersWeek = spotlights.find((spotlight) => spotlight.id === 'masters-2026')
+    expect(mastersWeek?.windowLabel).toBe('Apr 6-12, 2026')
+    expect(mastersWeek?.assets[0]).toEqual({
+      kind: 'editorial',
+      src: '/brand/imagery/masters-week-editorial.webp',
+      alt: 'Napkinbets golf spotlight',
+    })
+    expect(mastersWeek?.assets).toHaveLength(3)
+
+    const pgaSpotlight = spotlights.find(
+      (spotlight) => spotlight.id === 'spotlight:espn:pga:401811941',
+    )
+    expect(pgaSpotlight?.label).toBe('PGA tour')
+    expect(pgaSpotlight?.assets).toEqual([
+      {
+        kind: 'editorial',
+        src: '/brand/imagery/live-room-editorial.webp',
+        alt: 'Valspar Championship editorial',
+      },
+      {
+        kind: 'headshot',
+        src: 'https://example.com/rory.png',
+        alt: 'Rory McIlroy',
+      },
+      {
+        kind: 'headshot',
+        src: 'https://example.com/scottie.png',
+        alt: 'Scottie Scheffler',
+      },
+    ])
   })
 })

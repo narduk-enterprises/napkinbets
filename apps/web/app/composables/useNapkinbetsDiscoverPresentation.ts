@@ -65,22 +65,22 @@ export function useNapkinbetsDiscoverPresentation(
 
     return [
       {
-        label: 'Live boards to launch',
+        label: 'Live now',
         value: String(liveCount),
-        hint: 'events already in progress',
+        hint: 'events already running',
         icon: 'i-lucide-activity',
       },
       {
-        label: 'Upcoming events',
+        label: 'On deck',
         value: String(upcomingCount),
-        hint: 'fresh matchups from the cache',
+        hint: 'fresh events from the cache',
         icon: 'i-lucide-calendar-range',
       },
       {
-        label: 'Prop contexts',
-        value: String(discovery.value.propIdeas.length),
-        hint: 'ideas that keep the board social',
-        icon: 'i-lucide-lightbulb',
+        label: 'Golf cues',
+        value: String(discovery.value.spotlights.length),
+        hint: 'majors and tour windows',
+        icon: 'i-lucide-flag',
       },
     ]
   })
@@ -95,6 +95,7 @@ export function useNapkinbetsDiscoverPresentation(
     leagueOptions,
     stateOptions,
     filteredSections,
+    spotlights: computed(() => discovery.value.spotlights),
     metrics,
     hasFilteredResults,
   }

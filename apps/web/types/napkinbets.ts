@@ -180,9 +180,44 @@ export interface NapkinbetsEventIdea {
   format: string
 }
 
+export interface NapkinbetsCreatePrefillQuery {
+  source: string
+  eventId: string
+  eventTitle: string
+  eventStartsAt: string
+  eventStatus: string
+  sport: string
+  contextKey: string
+  league: string
+  venueName: string
+  homeTeamName: string
+  awayTeamName: string
+  format: string
+  sideOptions: string[]
+}
+
+export interface NapkinbetsSpotlightAsset {
+  kind: 'editorial' | 'mark' | 'logo' | 'headshot'
+  src: string
+  alt: string
+}
+
+export interface NapkinbetsDiscoverySpotlight {
+  id: string
+  label: string
+  title: string
+  subtitle: string
+  summary: string
+  windowLabel: string
+  venueLabel: string
+  accent: 'major' | 'tour' | 'watch'
+  assets: NapkinbetsSpotlightAsset[]
+  prefill: NapkinbetsCreatePrefillQuery
+}
+
 export interface NapkinbetsEventCard {
   id: string
-  source: 'espn'
+  source: 'espn' | 'curated'
   sport: string
   sportLabel: string
   contextKey: string
@@ -236,6 +271,7 @@ export interface NapkinbetsPropIdea {
 
 export interface NapkinbetsDiscoveryResponse {
   sections: NapkinbetsDiscoverySection[]
+  spotlights: NapkinbetsDiscoverySpotlight[]
   filters: NapkinbetsDiscoverFilters
   propIdeas: NapkinbetsPropIdea[]
   refreshedAt: string
