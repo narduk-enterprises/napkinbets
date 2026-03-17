@@ -1,0 +1,45 @@
+import { createError, readBody } from 'h3'
+import { z } from 'zod'
+import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { savePoolData } from '#server/services/napkinbets/pools'
+
+const bodySchema = z.object({
+  title: z.string().min(3).max(120),
+  creatorName: z.string().min(2).max(80),
+  description: z.string().min(12).max(500),
+  format: z.string().min(2).max(40),
+  sport: z.string().max(40),
+  league: z.string().max(40),
+  sideOptions: z.string().min(3).max(500),
+  participantNames: z.string().min(3).max(500),
+  potRules: z.string().min(3).max(500),
+  entryFeeDollars: z.coerce.number().min(0).max(1000),
+  paymentService: z.string().min(2).max(40),
+  paymentHandle: z.string().max(120),
+  venueName: z.string().max(120),
+  latitude: z.string().max(32),
+  longitude: z.string().max(32),
+  terms: z.string().min(12).max(600),
+  eventSource: z.string().max(40).optional(),
+  eventId: z.string().max(120).optional(),
+  eventTitle: z.string().max(160).optional(),
+  eventStartsAt: z.string().max(64).optional(),
+  eventStatus: z.string().max(40).optional(),
+  homeTeamName: z.string().max(80).optional(),
+  awayTeamName: z.string().max(80).optional(),
+})
+
+export default defineEventHandler(async (event) => {
+  await enforceRateLimit(event, 'napkinbets-create', 20, 60_000)
+
+  const body = await readBody(event)
+  const parsed = bodySchema.safeParse(body)
+  if (!parsed.success) {
+    throw createError({
+      statusCode: 400,
+      message: parsed.error.issues.map((issue) => issue.message).join(', '),
+    })
+  }
+
+  return await savePoolData(event, parsed.data)
+})

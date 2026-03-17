@@ -8,6 +8,8 @@ export default defineNuxtConfig({
   // Extend the published Narduk Nuxt Layer
   extends: ['@narduk-enterprises/narduk-nuxt-template-layer'],
 
+  css: [resolve(__dirname, 'app/assets/css/napkinbets.css')],
+
   // nitro-cloudflare-dev proxies D1 bindings to the local dev server
   modules: ['nitro-cloudflare-dev'],
 
@@ -47,7 +49,7 @@ export default defineNuxtConfig({
     url: process.env.SITE_URL || 'https://napkinbets.nard.uk',
     name: 'Napkinbets',
     description:
-      'Napkinbets — powered by Nuxt 4 and Cloudflare Workers.',
+      'Napkinbets is a friendly wagering board for side bets, golf drafts, and watch-party pools with manual settlement and live sports context.',
     defaultLocale: 'en',
   },
 
@@ -63,6 +65,28 @@ export default defineNuxtConfig({
   image: {
     cloudflare: {
       baseURL: process.env.SITE_URL || 'https://napkinbets.nard.uk',
+    },
+  },
+
+  routeRules: {
+    '/admin': { ssr: false },
+    '/admin/**': { ssr: false },
+    '/dashboard': { ssr: false },
+    '/dashboard/**': { ssr: false },
+    '/settings/**': { ssr: false },
+    '/wagers/create': { ssr: false },
+  },
+
+  app: {
+    head: {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap',
+        },
+      ],
     },
   },
 })

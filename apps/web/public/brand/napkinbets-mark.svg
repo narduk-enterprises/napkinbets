@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="napkinbets-gradient" x1="16" y1="12" x2="112" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FB7185" />
+      <stop offset="0.55" stop-color="#BE123C" />
+      <stop offset="1" stop-color="#2563EB" />
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="30" fill="url(#napkinbets-gradient)" />
+  <path
+    d="M38 26H77L94 43V83C94 90.732 87.732 97 80 97H38C30.268 97 24 90.732 24 83V40C24 32.268 30.268 26 38 26Z"
+    fill="#FFF7F8"
+  />
+  <path d="M77 26V45H94" stroke="#BE123C" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M42 54H77" stroke="#BE123C" stroke-width="6" stroke-linecap="round" />
+  <path d="M42 68H66" stroke="#BE123C" stroke-width="6" stroke-linecap="round" />
+  <path
+    d="M46 87L57 76L67 85L86 62"
+    stroke="#2563EB"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

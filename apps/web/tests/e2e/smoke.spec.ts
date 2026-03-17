@@ -10,11 +10,17 @@ test.describe('web smoke', () => {
     await warmUpApp(browser, baseURL)
   })
 
-  test('home page renders the coming soon hero', async ({ page }) => {
+  test('home and discovery routes render the new Napkinbets flow', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
-    await expect(page.getByText('Coming Soon').first()).toBeVisible()
-    await expect(page.getByText('Something amazing is on the way').first()).toBeVisible()
-    await expect(page).toHaveTitle(/Coming Soon/)
+    await expect(page.getByText('Friendly boards for live games, drafts, and side bets.')).toBeVisible()
+    await expect(page.getByText('Discover. Board. Close out.')).toBeVisible()
+    await expect(page.getByText('Tracked board').first()).toBeVisible()
+    await expect(page).toHaveTitle(/Friendly wager boards for sports nights/)
+
+    await page.goto('/discover')
+    await waitForHydration(page)
+    await expect(page.getByText('Start from current and upcoming sports events.')).toBeVisible()
+    await expect(page.getByText('Ideas beyond a straight game winner')).toBeVisible()
   })
 })
