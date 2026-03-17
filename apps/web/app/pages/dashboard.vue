@@ -43,8 +43,8 @@ useWebPageSchema({
           Everything you host, joined, or still need to settle.
         </h1>
         <p class="napkinbets-hero-lede">
-          Keep the active napkins, player follow-up, and payment confirmation in one place instead of
-          chasing it through messages.
+          Keep the active napkins, player follow-up, and payment confirmation in one place instead
+          of chasing it through messages.
         </p>
         <div class="flex flex-wrap gap-2">
           <UButton to="/friends" color="neutral" variant="soft" icon="i-lucide-user-round-plus">
@@ -64,7 +64,9 @@ useWebPageSchema({
       <template #fallback>
         <div class="napkinbets-aside-note">
           <p class="napkinbets-kicker">Loading</p>
-          <p class="napkinbets-support-copy">Pulling your napkins, reminders, and settle-up queue.</p>
+          <p class="napkinbets-support-copy">
+            Pulling your napkins, reminders, and settle-up queue.
+          </p>
         </div>
       </template>
 

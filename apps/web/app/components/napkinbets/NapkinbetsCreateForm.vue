@@ -103,8 +103,8 @@ const canSubmit = computed(() => {
   if (isSimpleBet.value) {
     return Boolean(
       resolvedSimpleSides.value[0]?.trim() &&
-        resolvedSimpleSides.value[1]?.trim() &&
-        (selectedOpponent.value?.displayName || manualOpponentName.value.trim()),
+      resolvedSimpleSides.value[1]?.trim() &&
+      (selectedOpponent.value?.displayName || manualOpponentName.value.trim()),
     )
   }
 
@@ -149,7 +149,9 @@ function submit() {
         >
           <span class="napkinbets-surface-label">Simple bet</span>
           <span class="font-semibold text-default">One opponent, one stake, one clear side.</span>
-          <span class="text-sm text-muted">This is the default napkin for quick win-or-lose bets.</span>
+          <span class="text-sm text-muted"
+            >This is the default napkin for quick win-or-lose bets.</span
+          >
         </UButton>
 
         <UButton
@@ -160,7 +162,9 @@ function submit() {
           @click="formState.napkinType = 'pool'"
         >
           <span class="napkinbets-surface-label">Pool</span>
-          <span class="font-semibold text-default">Use this when there are several people or payout lanes.</span>
+          <span class="font-semibold text-default"
+            >Use this when there are several people or payout lanes.</span
+          >
           <span class="text-sm text-muted">Keep this for a room, draft, or a shared board.</span>
         </UButton>
       </div>
@@ -179,19 +183,27 @@ function submit() {
             }}
           </p>
           <p class="text-sm text-muted">
-            {{ eventPreview.status || 'Scheduled' }} • {{ eventPreview.venueName || 'Venue pending' }}
+            {{ eventPreview.status || 'Scheduled' }} •
+            {{ eventPreview.venueName || 'Venue pending' }}
           </p>
         </div>
 
         <div class="napkinbets-chip-grid">
           <span class="napkinbets-choice-chip">{{ selectedSport?.label || 'Attached sport' }}</span>
-          <span class="napkinbets-choice-chip">{{ selectedLeague?.label || 'Attached league' }}</span>
-          <span class="napkinbets-choice-chip">{{ formState.napkinType === 'simple-bet' ? 'Simple bet' : 'Pool' }}</span>
+          <span class="napkinbets-choice-chip">{{
+            selectedLeague?.label || 'Attached league'
+          }}</span>
+          <span class="napkinbets-choice-chip">{{
+            formState.napkinType === 'simple-bet' ? 'Simple bet' : 'Pool'
+          }}</span>
         </div>
       </div>
 
       <div class="napkinbets-form-grid">
-        <UFormField name="title" :label="formState.napkinType === 'simple-bet' ? 'Napkin title' : 'Pool title'">
+        <UFormField
+          name="title"
+          :label="formState.napkinType === 'simple-bet' ? 'Napkin title' : 'Pool title'"
+        >
           <UInput v-model="formState.title" class="w-full" />
         </UFormField>
 
@@ -241,7 +253,11 @@ function submit() {
                 <USelect v-model="formState.league" :items="leagueOptions" class="w-full" />
               </UFormField>
 
-              <UFormField v-if="showCustomContextName" name="customContextName" label="Room or circuit name">
+              <UFormField
+                v-if="showCustomContextName"
+                name="customContextName"
+                label="Room or circuit name"
+              >
                 <UInput
                   v-model="formState.customContextName"
                   class="w-full"
@@ -282,7 +298,11 @@ function submit() {
               <USelect v-model="selectedVenuePreset" :items="venueOptions" class="w-full" />
             </UFormField>
 
-            <UFormField v-if="showCustomVenue || mode === 'event'" name="venueName" :label="mode === 'event' ? 'Venue' : 'Custom venue'">
+            <UFormField
+              v-if="showCustomVenue || mode === 'event'"
+              name="venueName"
+              :label="mode === 'event' ? 'Venue' : 'Custom venue'"
+            >
               <UInput v-model="formState.venueName" class="w-full" />
             </UFormField>
           </div>
@@ -290,7 +310,9 @@ function submit() {
           <div v-if="selectedGroup" class="napkinbets-surface space-y-1">
             <p class="napkinbets-surface-label">Selected group</p>
             <p class="font-semibold text-default">{{ selectedGroup.name }}</p>
-            <p class="text-sm text-muted">{{ selectedGroup.description || 'No group note yet.' }}</p>
+            <p class="text-sm text-muted">
+              {{ selectedGroup.description || 'No group note yet.' }}
+            </p>
           </div>
         </div>
 
@@ -298,7 +320,9 @@ function submit() {
           <div class="space-y-2">
             <p class="napkinbets-kicker">People and sides</p>
             <h3 class="napkinbets-subsection-title">
-              {{ isSimpleBet ? 'Pick the opponent and your side' : 'Set the room without a text wall' }}
+              {{
+                isSimpleBet ? 'Pick the opponent and your side' : 'Set the room without a text wall'
+              }}
             </h3>
           </div>
 
@@ -324,7 +348,9 @@ function submit() {
                     variant="ghost"
                     size="sm"
                     class="napkinbets-choice-panel"
-                    :class="{ 'napkinbets-choice-panel-active': selectedOpponentId === friend.value }"
+                    :class="{
+                      'napkinbets-choice-panel-active': selectedOpponentId === friend.value,
+                    }"
                     @click="selectedOpponentId = friend.value"
                   >
                     {{ friend.label }}
@@ -333,11 +359,7 @@ function submit() {
               </div>
 
               <UFormField v-if="!selectedOpponent" name="manualOpponentName" label="Opponent name">
-                <UInput
-                  v-model="manualOpponentName"
-                  class="w-full"
-                  placeholder="Marcus Lee"
-                />
+                <UInput v-model="manualOpponentName" class="w-full" placeholder="Marcus Lee" />
               </UFormField>
 
               <div v-if="mode === 'manual'" class="grid gap-4 sm:grid-cols-2">
@@ -384,7 +406,9 @@ function submit() {
                 description="You can still type one opponent name, or add friends first to make this faster next time."
               >
                 <template #actions>
-                  <UButton to="/friends" color="primary" variant="soft" size="sm">Open friends</UButton>
+                  <UButton to="/friends" color="primary" variant="soft" size="sm"
+                    >Open friends</UButton
+                  >
                 </template>
               </UAlert>
             </div>
@@ -398,7 +422,11 @@ function submit() {
                 </UFormField>
 
                 <UFormField name="potTemplate" label="Payout split">
-                  <USelect v-model="selectedPotTemplate" :items="potTemplateOptions" class="w-full" />
+                  <USelect
+                    v-model="selectedPotTemplate"
+                    :items="potTemplateOptions"
+                    class="w-full"
+                  />
                 </UFormField>
               </div>
 
@@ -431,11 +459,7 @@ function submit() {
                 </div>
 
                 <div class="flex flex-col gap-2 sm:flex-row">
-                  <UInput
-                    v-model="sideOptionDraft"
-                    class="w-full"
-                    placeholder="Add another side"
-                  />
+                  <UInput v-model="sideOptionDraft" class="w-full" placeholder="Add another side" />
                   <UButton color="neutral" variant="soft" @click="addSideOption">
                     Add side
                   </UButton>
@@ -517,12 +541,17 @@ function submit() {
             <UInput
               v-model="formState.paymentHandle"
               class="w-full"
-              :placeholder="formState.paymentService === 'Venmo' ? '@your-handle' : 'Where people should send it'"
+              :placeholder="
+                formState.paymentService === 'Venmo'
+                  ? '@your-handle'
+                  : 'Where people should send it'
+              "
             />
           </UFormField>
 
           <p class="text-sm leading-6 text-muted">
-            Napkinbets records who owes what and who confirmed proof. Money still moves in the payment app itself.
+            Napkinbets records who owes what and who confirmed proof. Money still moves in the
+            payment app itself.
           </p>
         </div>
 

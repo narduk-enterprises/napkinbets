@@ -54,10 +54,8 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       feedback.value = null
     },
     createWager(payload: CreateWagerInput) {
-      return runAction(
-        'create-wager',
-        'Napkin created and ready to share.',
-        () => api.createWager(payload),
+      return runAction('create-wager', 'Napkin created and ready to share.', () =>
+        api.createWager(payload),
       )
     },
     joinWager(wagerId: string, payload: JoinWagerInput) {

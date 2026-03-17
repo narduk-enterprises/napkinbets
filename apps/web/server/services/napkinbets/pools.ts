@@ -1089,15 +1089,17 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
   await ensureSeedData(event)
 
   const db = useAppDatabase(event)
-  const [wagers, groups, participants, pots, picks, notifications, settlements] = await Promise.all([
-    db.select().from(napkinbetsWagers).orderBy(asc(napkinbetsWagers.createdAt)),
-    db.select().from(napkinbetsGroups),
-    db.select().from(napkinbetsParticipants).orderBy(asc(napkinbetsParticipants.createdAt)),
-    db.select().from(napkinbetsPots).orderBy(asc(napkinbetsPots.sortOrder)),
-    db.select().from(napkinbetsPicks).orderBy(asc(napkinbetsPicks.sortOrder)),
-    db.select().from(napkinbetsNotifications).orderBy(asc(napkinbetsNotifications.createdAt)),
-    db.select().from(napkinbetsSettlements).orderBy(asc(napkinbetsSettlements.recordedAt)),
-  ])
+  const [wagers, groups, participants, pots, picks, notifications, settlements] = await Promise.all(
+    [
+      db.select().from(napkinbetsWagers).orderBy(asc(napkinbetsWagers.createdAt)),
+      db.select().from(napkinbetsGroups),
+      db.select().from(napkinbetsParticipants).orderBy(asc(napkinbetsParticipants.createdAt)),
+      db.select().from(napkinbetsPots).orderBy(asc(napkinbetsPots.sortOrder)),
+      db.select().from(napkinbetsPicks).orderBy(asc(napkinbetsPicks.sortOrder)),
+      db.select().from(napkinbetsNotifications).orderBy(asc(napkinbetsNotifications.createdAt)),
+      db.select().from(napkinbetsSettlements).orderBy(asc(napkinbetsSettlements.recordedAt)),
+    ],
+  )
   const groupNamesById = new Map(groups.map((group) => [group.id, group.name]))
 
   const weatherSnapshots = new Map<string, NapkinbetsWeatherSnapshot>()
@@ -1266,10 +1268,12 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   const sideOptions = parseSideOptions(input.sideOptions)
   const creatorName = input.creatorName.trim() || authUser.name || authUser.email
   const normalizedParticipantSeeds =
-    input.participantSeeds?.map((participant) => ({
-      displayName: participant.displayName.trim(),
-      userId: participant.userId?.trim() || null,
-    })).filter((participant) => participant.displayName) ?? []
+    input.participantSeeds
+      ?.map((participant) => ({
+        displayName: participant.displayName.trim(),
+        userId: participant.userId?.trim() || null,
+      }))
+      .filter((participant) => participant.displayName) ?? []
   const participantSeeds =
     normalizedParticipantSeeds.length > 0
       ? normalizedParticipantSeeds

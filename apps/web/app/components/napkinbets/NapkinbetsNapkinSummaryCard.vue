@@ -52,7 +52,9 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
         <div class="napkinbets-surface">
           <p class="napkinbets-surface-label">Participants</p>
           <p class="napkinbets-surface-value">{{ wager.participants.length }}</p>
-          <p class="napkinbets-support-copy">{{ wager.sideOptions.length }} side{{ wager.sideOptions.length === 1 ? '' : 's' }}</p>
+          <p class="napkinbets-support-copy">
+            {{ wager.sideOptions.length }} side{{ wager.sideOptions.length === 1 ? '' : 's' }}
+          </p>
         </div>
 
         <div class="napkinbets-surface">

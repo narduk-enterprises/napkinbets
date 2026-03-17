@@ -6,9 +6,13 @@ const friendsStore = useNapkinbetsFriendsStore()
 const searchQuery = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-await callOnce('napkinbets-friends-page', async () => {
-  await friendsStore.fetchBundle()
-}, { mode: 'navigation' })
+await callOnce(
+  'napkinbets-friends-page',
+  async () => {
+    await friendsStore.fetchBundle()
+  },
+  { mode: 'navigation' },
+)
 
 watch(searchQuery, (value) => {
   if (searchTimer) {
@@ -158,7 +162,9 @@ useWebPageSchema({
                 <p class="napkinbets-kicker">Your bench</p>
                 <h2 class="napkinbets-subsection-title">Friends ready for a simple bet</h2>
               </div>
-              <UBadge color="neutral" variant="subtle">{{ friendsStore.friends.value.length }}</UBadge>
+              <UBadge color="neutral" variant="subtle">{{
+                friendsStore.friends.value.length
+              }}</UBadge>
             </div>
 
             <div v-if="friendsStore.friends.value.length" class="space-y-3">

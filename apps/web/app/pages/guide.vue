@@ -2,19 +2,23 @@
 const termCards = [
   {
     term: 'Napkin',
-    summary: 'The shared bet page. It holds the people, the sides, the stake, the status, and the settle-up record.',
+    summary:
+      'The shared bet page. It holds the people, the sides, the stake, the status, and the settle-up record.',
   },
   {
     term: 'Simple bet',
-    summary: 'A two-person napkin. One stake, one opponent, and the cleanest path from idea to agreed bet.',
+    summary:
+      'A two-person napkin. One stake, one opponent, and the cleanest path from idea to agreed bet.',
   },
   {
     term: 'Pool',
-    summary: 'A group napkin. Use it when there are several people, multiple lanes, draft order, or split payouts.',
+    summary:
+      'A group napkin. Use it when there are several people, multiple lanes, draft order, or split payouts.',
   },
   {
     term: 'Event',
-    summary: 'The real-world thing the napkin can attach to: a game, a round, a race, or another scheduled result.',
+    summary:
+      'The real-world thing the napkin can attach to: a game, a round, a race, or another scheduled result.',
   },
   {
     term: 'Friend',
@@ -22,7 +26,8 @@ const termCards = [
   },
   {
     term: 'Group',
-    summary: 'A recurring room of people. It gives a napkin a home before anyone starts picking sides.',
+    summary:
+      'A recurring room of people. It gives a napkin a home before anyone starts picking sides.',
   },
   {
     term: 'Side',
@@ -30,7 +35,8 @@ const termCards = [
   },
   {
     term: 'Settle-up',
-    summary: 'The last step. Napkinbets records proof and reminders, but the actual transfer still happens in Venmo, PayPal, Cash App, or Zelle.',
+    summary:
+      'The last step. Napkinbets records proof and reminders, but the actual transfer still happens in Venmo, PayPal, Cash App, or Zelle.',
   },
 ] as const
 
@@ -45,7 +51,8 @@ const relationshipSteps = [
 
 useSeo({
   title: 'Guide',
-  description: 'A simple guide to what a napkin is, how simple bets and pools differ, and how the main objects fit together.',
+  description:
+    'A simple guide to what a napkin is, how simple bets and pools differ, and how the main objects fit together.',
   image: '/brand/og/home.webp',
 })
 
@@ -62,7 +69,8 @@ useWebPageSchema({
         <p class="napkinbets-kicker">Guide</p>
         <h1 class="napkinbets-section-title">How the product is organized in plain English.</h1>
         <p class="napkinbets-hero-lede">
-          The app got too abstract. This is the compact map of what each term means and how they fit together.
+          The app got too abstract. This is the compact map of what each term means and how they fit
+          together.
         </p>
       </div>
     </div>
@@ -81,7 +89,9 @@ useWebPageSchema({
               :key="step"
               class="napkinbets-surface flex items-start gap-3"
             >
-              <div class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              <div
+                class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
+              >
                 {{ index + 1 }}
               </div>
               <p class="text-sm leading-6 text-default">{{ step }}</p>
@@ -91,11 +101,7 @@ useWebPageSchema({
       </UCard>
 
       <div class="grid gap-4 sm:grid-cols-2">
-        <UCard
-          v-for="card in termCards"
-          :key="card.term"
-          class="napkinbets-panel"
-        >
+        <UCard v-for="card in termCards" :key="card.term" class="napkinbets-panel">
           <div class="space-y-2">
             <p class="napkinbets-kicker">{{ card.term }}</p>
             <p class="text-sm leading-6 text-default">{{ card.summary }}</p>

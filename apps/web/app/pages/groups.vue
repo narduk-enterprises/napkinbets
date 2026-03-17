@@ -10,9 +10,13 @@ const createState = reactive({
   joinPolicy: 'invite-only' as 'open' | 'invite-only' | 'closed',
 })
 
-await callOnce('napkinbets-groups-page', async () => {
-  await groupsStore.fetchBundle()
-}, { mode: 'navigation' })
+await callOnce(
+  'napkinbets-groups-page',
+  async () => {
+    await groupsStore.fetchBundle()
+  },
+  { mode: 'navigation' },
+)
 
 async function handleCreate() {
   try {
@@ -144,7 +148,9 @@ useWebPageSchema({
                 <p class="napkinbets-kicker">My groups</p>
                 <h2 class="napkinbets-subsection-title">Rooms you already belong to</h2>
               </div>
-              <UBadge color="neutral" variant="subtle">{{ groupsStore.myGroups.value.length }}</UBadge>
+              <UBadge color="neutral" variant="subtle">{{
+                groupsStore.myGroups.value.length
+              }}</UBadge>
             </div>
 
             <div v-if="groupsStore.myGroups.value.length" class="space-y-3">
@@ -156,7 +162,9 @@ useWebPageSchema({
                 <div class="min-w-0 space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
                     <p class="font-semibold text-default">{{ group.name }}</p>
-                    <UBadge color="neutral" variant="subtle">{{ group.userRole || 'member' }}</UBadge>
+                    <UBadge color="neutral" variant="subtle">{{
+                      group.userRole || 'member'
+                    }}</UBadge>
                   </div>
                   <p class="text-sm text-muted">{{ group.description || 'No group note yet.' }}</p>
                 </div>
@@ -200,7 +208,9 @@ useWebPageSchema({
                 <div class="min-w-0 space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
                     <p class="font-semibold text-default">{{ group.name }}</p>
-                    <UBadge color="neutral" variant="subtle">{{ group.memberCount }} members</UBadge>
+                    <UBadge color="neutral" variant="subtle"
+                      >{{ group.memberCount }} members</UBadge
+                    >
                   </div>
                   <p class="text-sm text-muted">{{ group.description || 'Public room' }}</p>
                 </div>

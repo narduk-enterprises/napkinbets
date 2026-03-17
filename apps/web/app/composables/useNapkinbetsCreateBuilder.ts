@@ -163,7 +163,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     () => options.taxonomy.value.sports.find((sport) => sport.value === formState.sport) ?? null,
   )
   const selectedLeague = computed(
-    () => options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
+    () =>
+      options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
   )
   const selectedGroup = computed(
     () => options.groups.value.find((group) => group.id === formState.groupId) ?? null,
@@ -260,24 +261,24 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   const showCustomContextName = computed(
     () =>
       options.mode.value === 'manual' &&
-      (leagueOptions.value.length === 0 || ['community', 'high-school'].includes(formState.contextKey)),
+      (leagueOptions.value.length === 0 ||
+        ['community', 'high-school'].includes(formState.contextKey)),
   )
 
   const showCustomVenue = computed(
     () => options.mode.value === 'manual' && selectedVenuePreset.value === '__custom__',
   )
 
-  const attachedEventSides = computed(() => parseLines(options.prefill.value.sideOptions).slice(0, 2))
+  const attachedEventSides = computed(() =>
+    parseLines(options.prefill.value.sideOptions).slice(0, 2),
+  )
 
   const resolvedSimpleSides = computed(() => {
     if (options.mode.value === 'event' && attachedEventSides.value.length >= 2) {
       return attachedEventSides.value
     }
 
-    return [
-      simpleSideA.value.trim() || 'Side A',
-      simpleSideB.value.trim() || 'Side B',
-    ]
+    return [simpleSideA.value.trim() || 'Side A', simpleSideB.value.trim() || 'Side B']
   })
 
   const simpleBetOpponentName = computed(
@@ -286,9 +287,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
   const selectedPotRules = computed(
     () =>
-      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)?.rules ?? [
-        'Winner: 100',
-      ],
+      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)
+        ?.rules ?? ['Winner: 100'],
   )
 
   const boardSummary = computed(() => {

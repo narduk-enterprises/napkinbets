@@ -53,10 +53,7 @@ function slugify(value: string) {
     .slice(0, 48)
 }
 
-async function ensureUser(
-  event: H3Event,
-  input: { email: string; name: string },
-) {
+async function ensureUser(event: H3Event, input: { email: string; name: string }) {
   const db = useAppDatabase(event)
   const normalizedEmail = input.email.trim().toLowerCase()
   const existing = await db.select().from(users).where(eq(users.email, normalizedEmail)).get()
@@ -294,7 +291,9 @@ export async function loadNapkinbetsFriendsBundle(event: H3Event) {
 
   const userIds = Array.from(
     new Set(
-      rows.flatMap((row) => [row.requesterUserId, row.addresseeUserId]).filter((id) => id !== authUser.id),
+      rows
+        .flatMap((row) => [row.requesterUserId, row.addresseeUserId])
+        .filter((id) => id !== authUser.id),
     ),
   )
 
@@ -497,9 +496,7 @@ export async function declineNapkinbetsFriendRequest(event: H3Event, requestId: 
     throw createError({ statusCode: 403, message: 'Not allowed to update this request.' })
   }
 
-  await db
-    .delete(napkinbetsFriendships)
-    .where(eq(napkinbetsFriendships.id, requestId))
+  await db.delete(napkinbetsFriendships).where(eq(napkinbetsFriendships.id, requestId))
 
   return { ok: true }
 }
@@ -632,7 +629,11 @@ export async function joinNapkinbetsGroup(event: H3Event, groupId: string) {
   const db = useAppDatabase(event)
   const timestamp = nowIso()
 
-  const group = await db.select().from(napkinbetsGroups).where(eq(napkinbetsGroups.id, groupId)).get()
+  const group = await db
+    .select()
+    .from(napkinbetsGroups)
+    .where(eq(napkinbetsGroups.id, groupId))
+    .get()
   if (!group) {
     throw createError({ statusCode: 404, message: 'Group not found.' })
   }

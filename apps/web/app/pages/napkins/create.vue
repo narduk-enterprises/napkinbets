@@ -100,7 +100,8 @@ useWebPageSchema({
             Start with a napkin, then decide if it is a simple bet or a pool.
           </h1>
           <p class="napkinbets-hero-lede">
-            The fast path is one-on-one from a real game. Use the pool path only when the room actually needs more structure.
+            The fast path is one-on-one from a real game. Use the pool path only when the room
+            actually needs more structure.
           </p>
         </div>
 
@@ -155,7 +156,9 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Napkin created' : 'Napkin creation failed'"
+      :title="
+        actions.feedback.value.type === 'success' ? 'Napkin created' : 'Napkin creation failed'
+      "
       :description="actions.feedback.value.text"
     />
 
