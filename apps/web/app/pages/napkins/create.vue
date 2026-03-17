@@ -119,9 +119,7 @@ useWebPageSchema({
                 <span class="font-semibold text-default">
                   {{ eventPreview ? eventPreview.title : 'Pick a game from Events first' }}
                 </span>
-                <span class="text-sm text-muted">
-                  This is the shortest path to a real bet.
-                </span>
+                <span class="text-sm text-muted"> This is the shortest path to a real bet. </span>
               </UButton>
 
               <UButton
@@ -132,7 +130,9 @@ useWebPageSchema({
                 @click="selectedMode = 'manual'"
               >
                 <span class="napkinbets-surface-label">Custom</span>
-                <span class="font-semibold text-default">Watch parties, drafts, or off-calendar bets</span>
+                <span class="font-semibold text-default"
+                  >Watch parties, drafts, or off-calendar bets</span
+                >
                 <span class="text-sm text-muted">
                   Use this only when the bet should not depend on a listed game.
                 </span>

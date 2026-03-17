@@ -166,34 +166,34 @@ useWebPageSchema({
       </template>
 
       <div class="napkinbets-section-stack">
-      <div class="flex items-end justify-between gap-3">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Open bets</p>
-          <h2 class="napkinbets-section-title">Bets already in motion</h2>
+        <div class="flex items-end justify-between gap-3">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Open bets</p>
+            <h2 class="napkinbets-section-title">Bets already in motion</h2>
+          </div>
+          <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
+            My bets
+          </UButton>
         </div>
-        <UButton to="/dashboard" color="primary" icon="i-lucide-layout-dashboard">
-          My bets
-        </UButton>
-      </div>
 
-      <div v-if="featuredWagers.length" class="grid gap-4 xl:grid-cols-2">
-        <NapkinbetsNapkinSummaryCard
-          v-for="wager in featuredWagers"
-          :key="wager.id"
-          title="Open bet"
-          description="People, picks, reminders, and payment follow-up stay in one place."
-          :wager="wager"
+        <div v-if="featuredWagers.length" class="grid gap-4 xl:grid-cols-2">
+          <NapkinbetsNapkinSummaryCard
+            v-for="wager in featuredWagers"
+            :key="wager.id"
+            title="Open bet"
+            description="People, picks, reminders, and payment follow-up stay in one place."
+            :wager="wager"
+          />
+        </div>
+
+        <UAlert
+          v-else
+          color="info"
+          variant="soft"
+          icon="i-lucide-ticket"
+          title="No bets yet"
+          description="Start from Events first, or make a quick custom bet when the game is not listed."
         />
-      </div>
-
-      <UAlert
-        v-else
-        color="info"
-        variant="soft"
-        icon="i-lucide-ticket"
-        title="No bets yet"
-        description="Start from Events first, or make a quick custom bet when the game is not listed."
-      />
       </div>
     </ClientOnly>
   </div>

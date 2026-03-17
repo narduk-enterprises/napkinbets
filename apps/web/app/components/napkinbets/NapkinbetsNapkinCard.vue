@@ -266,7 +266,9 @@ function submitSettlement() {
           <div class="napkinbets-surface">
             <p class="napkinbets-surface-label">Total payout</p>
             <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
-            <p class="napkinbets-support-copy">{{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}</p>
+            <p class="napkinbets-support-copy">
+              {{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}
+            </p>
           </div>
 
           <div class="napkinbets-surface">

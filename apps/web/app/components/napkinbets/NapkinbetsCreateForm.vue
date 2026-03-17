@@ -160,8 +160,12 @@ function submit() {
           @click="formState.napkinType = 'pool'"
         >
           <span class="napkinbets-surface-label">Group bet</span>
-          <span class="font-semibold text-default">Use this when there are several people or multiple outcomes.</span>
-          <span class="text-sm text-muted">Keep this for a room, draft, or shared watch party.</span>
+          <span class="font-semibold text-default"
+            >Use this when there are several people or multiple outcomes.</span
+          >
+          <span class="text-sm text-muted"
+            >Keep this for a room, draft, or shared watch party.</span
+          >
         </UButton>
       </div>
 

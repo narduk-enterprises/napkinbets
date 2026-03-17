@@ -278,7 +278,8 @@ export const NAPKINBETS_PROP_IDEAS = [
       'Most birdies by your drafted roster',
       'Closest-to-pin side pot during the watch session',
     ],
-    settlementHint: 'Use the leaderboard plus posted group-bet rules to settle everything manually.',
+    settlementHint:
+      'Use the leaderboard plus posted group-bet rules to settle everything manually.',
   },
   {
     id: 'entertainment-and-culture',

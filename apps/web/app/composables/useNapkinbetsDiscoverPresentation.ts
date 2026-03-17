@@ -30,9 +30,7 @@ export function useNapkinbetsDiscoverPresentation(
   const leagueOptions = computed(() =>
     withAllOption('All leagues', discovery.value.filters.leagues),
   )
-  const stateOptions = computed(() =>
-    withAllOption('All statuses', discovery.value.filters.states),
-  )
+  const stateOptions = computed(() => withAllOption('All statuses', discovery.value.filters.states))
 
   const filteredSections = computed<NapkinbetsDiscoverySection[]>(() =>
     discovery.value.sections

@@ -12,13 +12,11 @@ const termCards = [
   },
   {
     term: 'One-on-one bet',
-    summary:
-      'The default. One stake, one opponent, and one clear side.',
+    summary: 'The default. One stake, one opponent, and one clear side.',
   },
   {
     term: 'Group bet',
-    summary:
-      'Use this only when there are several people or several outcomes to track.',
+    summary: 'Use this only when there are several people or several outcomes to track.',
   },
   {
     term: 'Friend',

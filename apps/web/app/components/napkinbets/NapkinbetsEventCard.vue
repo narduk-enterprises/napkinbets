@@ -166,9 +166,7 @@ const primaryIdeaLink = computed(() =>
           <UButton v-if="primaryIdeaLink" :to="primaryIdeaLink" color="neutral" size="sm">
             Use this setup
           </UButton>
-          <UButton v-else :to="createLink" color="neutral" size="sm">
-            Quick start
-          </UButton>
+          <UButton v-else :to="createLink" color="neutral" size="sm"> Quick start </UButton>
         </div>
       </div>
     </div>

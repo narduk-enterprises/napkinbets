@@ -20,7 +20,9 @@ test.describe('web smoke', () => {
 
     await page.goto('/events')
     await waitForHydration(page)
-    await expect(page.getByRole('heading', { name: /Pick a game, then start a bet/i })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: /Pick a game, then start a bet/i }),
+    ).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Filter games' })).toBeVisible()
   })
 })

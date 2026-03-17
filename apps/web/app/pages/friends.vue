@@ -86,7 +86,8 @@ useWebPageSchema({
         <p class="napkinbets-kicker">Friends</p>
         <h1 class="napkinbets-section-title">Keep the people handy before you start the bet.</h1>
         <p class="napkinbets-hero-lede">
-          Add regular opponents once, then spin up a one-on-one bet without retyping names every time.
+          Add regular opponents once, then spin up a one-on-one bet without retyping names every
+          time.
         </p>
       </div>
     </div>

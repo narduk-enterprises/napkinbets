@@ -39,7 +39,9 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">My bets</p>
-        <h1 class="napkinbets-section-title">Everything you started, joined, or still need to settle.</h1>
+        <h1 class="napkinbets-section-title">
+          Everything you started, joined, or still need to settle.
+        </h1>
         <p class="napkinbets-hero-lede">
           Keep the active bets, player follow-up, and payment confirmation in one place instead of
           chasing it through messages.
@@ -62,9 +64,7 @@ useWebPageSchema({
       <template #fallback>
         <div class="napkinbets-aside-note">
           <p class="napkinbets-kicker">Loading</p>
-          <p class="napkinbets-support-copy">
-            Pulling your bets, reminders, and settle-up queue.
-          </p>
+          <p class="napkinbets-support-copy">Pulling your bets, reminders, and settle-up queue.</p>
         </div>
       </template>
 
