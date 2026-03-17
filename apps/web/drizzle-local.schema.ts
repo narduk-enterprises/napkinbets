@@ -11,6 +11,12 @@
  */
 
 // Re-export layer base tables (users, sessions, todos, kv_cache, api_keys)
+// Re-export all app-specific tables by reading from the original file is not
+// possible due to the #layer alias — so we use a barrel re-export trick:
+// simply re-export from the layer and then import users for FK references.
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { users } from '../../layers/narduk-nuxt-layer/server/database/schema'
+
 export {
   users,
   sessions,
@@ -18,12 +24,6 @@ export {
   kvCache,
   apiKeys,
 } from '../../layers/narduk-nuxt-layer/server/database/schema'
-
-// Re-export all app-specific tables by reading from the original file is not
-// possible due to the #layer alias — so we use a barrel re-export trick:
-// simply re-export from the layer and then import users for FK references.
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { users } from '../../layers/narduk-nuxt-layer/server/database/schema'
 
 // ─── Copy of app-specific tables from server/database/schema.ts ─────
 

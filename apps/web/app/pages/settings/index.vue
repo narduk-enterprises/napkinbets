@@ -196,6 +196,7 @@ useWebPageSchema({
                   </UButton>
                 </div>
                 <p class="text-xs text-dimmed">Square images work best. Max 2 MB.</p>
+                <!-- eslint-disable-next-line narduk/no-native-input -- hidden file picker; UInput does not support type="file" -->
                 <input
                   ref="fileInput"
                   type="file"

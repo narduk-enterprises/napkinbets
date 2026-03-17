@@ -94,6 +94,11 @@ async function removeFeaturedBet(id: string) {
   await loadFeaturedBets()
 }
 
+function openFeaturedForm() {
+  resetFeaturedForm()
+  showFeaturedForm.value = true
+}
+
 async function toggleAdmin(userId: string, isAdmin: boolean) {
   await actions.setAdminStatus(userId, !isAdmin)
 }
@@ -436,7 +441,7 @@ useWebPageSchema({
                 variant="soft"
                 size="sm"
                 icon="i-lucide-plus"
-                @click="resetFeaturedForm(); showFeaturedForm = true"
+                @click="openFeaturedForm"
               >
                 Add
               </UButton>
