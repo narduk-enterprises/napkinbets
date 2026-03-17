@@ -28,6 +28,17 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Force non-secure cookies + SameSite=Lax for Safari dev compatibility
+    ...(import.meta.dev
+      ? {
+          session: {
+            cookie: {
+              secure: false,
+              sameSite: 'lax' as const,
+            },
+          },
+        }
+      : {}),
     // Server-only (admin API routes)
     googleServiceAccountKey: process.env.GSC_SERVICE_ACCOUNT_JSON || '',
     posthogApiKey: process.env.POSTHOG_PERSONAL_API_KEY || '',

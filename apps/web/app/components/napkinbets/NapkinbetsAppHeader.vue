@@ -8,7 +8,7 @@ const { logout } = useAuth()
 const isMobileMenuOpen = ref(false)
 
 const headerLinks = computed(() =>
-  primaryLinks.value.filter((link) => ['/events', '/napkins/create'].includes(link.to)),
+  primaryLinks.value.filter((link) => ['/dashboard', '/events', '/napkins/create'].includes(link.to)),
 )
 
 const mobilePrimaryLinks = computed(() =>
@@ -60,7 +60,7 @@ async function signOut() {
   <div class="napkinbets-header-wrap">
     <div class="napkinbets-header">
       <div class="napkinbets-header-top">
-        <NuxtLink to="/" class="napkinbets-header-brand" @click="closeMobileMenu">
+        <NuxtLink to="/dashboard" class="napkinbets-header-brand" @click="closeMobileMenu">
           <NapkinbetsLogo compact />
         </NuxtLink>
 
@@ -88,17 +88,9 @@ async function signOut() {
             @click="toggleMobileMenu"
           />
 
-          <div v-if="isAuthenticated" class="hidden items-center gap-2 lg:flex">
-            <UButton to="/dashboard" color="neutral" variant="soft" size="sm"> My Bets </UButton>
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              icon="i-lucide-log-out"
-              @click="signOut"
-            >
-              Sign out
-            </UButton>
+          <div v-if="isAuthenticated" class="hidden items-center gap-1 lg:flex">
+            <NapkinbetsNotificationBell />
+            <NapkinbetsUserMenu />
           </div>
 
           <div v-else class="hidden items-center gap-3 lg:flex">

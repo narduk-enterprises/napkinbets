@@ -20,6 +20,26 @@ const canManage = computed(() =>
   ),
 )
 
+const myParticipant = computed(() =>
+  wager.value && user.value?.id
+    ? wager.value.participants.find((p) => p.userId === user.value!.id) ?? null
+    : null,
+)
+
+const isInvited = computed(
+  () =>
+    myParticipant.value !== null &&
+    (myParticipant.value.joinStatus === 'invited' || myParticipant.value.joinStatus === 'pending'),
+)
+
+function formatCurrency(cents: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(cents / 100)
+}
+
 useNapkinbetsAutoRefresh(wagerState.refresh)
 
 async function handleJoin(wagerId: string, payload: JoinWagerInput) {
@@ -74,6 +94,11 @@ async function handleClear(wagerId: string) {
   await navigateTo('/dashboard')
 }
 
+async function handleDecline(wagerId: string) {
+  await actions.declineWager(wagerId)
+  await navigateTo('/dashboard')
+}
+
 useSeo({
   title: wager.value?.title || 'Bet',
   description:
@@ -117,7 +142,59 @@ useWebPageSchema({
     />
 
     <template v-if="wager">
-      <div class="napkinbets-hero">
+      <!-- One-on-one: invitation banner with prominent card -->
+      <UCard v-if="isInvited" class="napkinbets-panel">
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <p class="napkinbets-kicker">Invitation</p>
+            <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
+            <p class="napkinbets-hero-lede">
+              {{ wager.creatorName }} challenged you as <strong>{{ myParticipant!.displayName }}</strong> on <strong>{{ myParticipant!.sideLabel || 'Open side' }}</strong>.
+            </p>
+          </div>
+
+          <div class="napkinbets-summary-grid">
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">Stake</p>
+              <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
+            </div>
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">Payment</p>
+              <p class="napkinbets-surface-value">{{ wager.paymentService }}</p>
+            </div>
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">Event</p>
+              <p class="napkinbets-surface-value text-base">{{ wager.eventTitle || 'Custom' }}</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <UButton
+              color="primary"
+              size="lg"
+              icon="i-lucide-check"
+              :loading="actions.activeAction.value === `join:${wager.id}`"
+              @click="handleJoin(wager.id, { displayName: myParticipant!.displayName, sideLabel: myParticipant!.sideLabel || wager.sideOptions[0] || 'Open side' })"
+            >
+              Accept bet
+            </UButton>
+            <UButton
+              color="error"
+              size="lg"
+              variant="soft"
+              icon="i-lucide-x"
+              :loading="actions.activeAction.value === `decline:${wager.id}`"
+              @click="handleDecline(wager.id)"
+            >
+              Decline
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+
+      <!-- One-on-one: skip the hero, go straight to the card -->
+      <!-- Pool bet: show the full hero -->
+      <div v-if="wager.napkinType !== 'simple-bet'" class="napkinbets-hero">
         <div class="napkinbets-hero-grid">
           <div class="space-y-4">
             <div class="flex flex-wrap items-center gap-2">
@@ -125,7 +202,7 @@ useWebPageSchema({
                 {{ wager.status }}
               </UBadge>
               <UBadge color="neutral" variant="subtle">
-                {{ wager.napkinType === 'simple-bet' ? 'simple bet' : wager.format }}
+                {{ wager.format }}
               </UBadge>
               <UBadge v-if="wager.league" color="warning" variant="soft">{{
                 wager.league.toUpperCase()
@@ -187,6 +264,7 @@ useWebPageSchema({
         :active-action="actions.activeAction.value"
         :can-manage="canManage"
         :is-authenticated="loggedIn"
+        :current-user-id="user?.id ?? null"
         @join="handleJoin"
         @add-pick="handlePick"
         @record-settlement="handleSettlement"
@@ -195,6 +273,7 @@ useWebPageSchema({
         @shuffle="handleShuffle"
         @remind="handleReminder"
         @clear="handleClear"
+        @decline="handleDecline"
       />
     </template>
   </div>

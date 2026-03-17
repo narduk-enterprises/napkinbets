@@ -10,6 +10,13 @@ interface NapkinbetsNavLink {
 const PRIMARY_NAV_LINKS: NapkinbetsNavLink[] = [
   { label: 'Home', to: '/', icon: 'i-lucide-house', mobileLabel: 'Home' },
   {
+    label: 'Dashboard',
+    to: '/dashboard',
+    icon: 'i-lucide-layout-dashboard',
+    mobileLabel: 'My',
+    requiresAuth: true,
+  },
+  {
     label: 'Events',
     to: '/events',
     icon: 'i-lucide-radar',
@@ -22,17 +29,10 @@ const PRIMARY_NAV_LINKS: NapkinbetsNavLink[] = [
     mobileLabel: 'Help',
   },
   {
-    label: 'Start Bet',
+    label: 'Create Napkin',
     to: '/napkins/create',
     icon: 'i-lucide-ticket-plus',
     mobileLabel: 'New',
-  },
-  {
-    label: 'My Bets',
-    to: '/dashboard',
-    icon: 'i-lucide-layout-dashboard',
-    mobileLabel: 'My',
-    requiresAuth: true,
   },
 ]
 

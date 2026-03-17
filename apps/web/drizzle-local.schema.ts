@@ -1,16 +1,45 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
-import { users } from '#layer/server/database/schema'
-
 /**
- * App-specific database schema.
+ * Combined schema for drizzle-kit studio (local dev).
  *
- * Re-exports the layer's base tables (users, sessions, todos) so that
- * drizzle-kit can discover them from this workspace. Add app-specific
- * tables below the re-export.
+ * drizzle-kit runs outside the Nuxt context, so it can't resolve the
+ * `#layer/...` alias used in the main schema.ts. This file re-exports
+ * the layer's base tables via a relative path, then re-declares the
+ * app-specific tables so drizzle-kit can discover every table.
+ *
+ * ⚠️  Keep this file in sync with server/database/schema.ts.
+ *     It is ONLY used by `pnpm db:studio:local`.
  */
-export * from '#layer/server/database/schema'
 
-// ─── Napkinbets Prototype Tables ────────────────────────────
+// Re-export layer base tables (users, sessions, todos, kv_cache, api_keys)
+export {
+  users,
+  sessions,
+  todos,
+  kvCache,
+  apiKeys,
+} from '../../layers/narduk-nuxt-layer/server/database/schema'
+
+// Re-export all app-specific tables by reading from the original file is not
+// possible due to the #layer alias — so we use a barrel re-export trick:
+// simply re-export from the layer and then import users for FK references.
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { users } from '../../layers/narduk-nuxt-layer/server/database/schema'
+
+// ─── Copy of app-specific tables from server/database/schema.ts ─────
+
+export const napkinbetsGroups = sqliteTable('napkinbets_groups', {
+  id: text('id').primaryKey(),
+  slug: text('slug').notNull().unique(),
+  ownerUserId: text('owner_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  visibility: text('visibility').notNull().default('private'),
+  joinPolicy: text('join_policy').notNull().default('invite-only'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
 
 export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   id: text('id').primaryKey(),
@@ -42,17 +71,10 @@ export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   eventTitle: text('event_title'),
   eventStartsAt: text('event_starts_at'),
   eventStatus: text('event_status'),
-  eventState: text('event_state').notNull().default(''),
   homeTeamName: text('home_team_name'),
   awayTeamName: text('away_team_name'),
-  homeScore: text('home_score').notNull().default(''),
-  awayScore: text('away_score').notNull().default(''),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsFriendships = sqliteTable('napkinbets_friendships', {
@@ -65,30 +87,8 @@ export const napkinbetsFriendships = sqliteTable('napkinbets_friendships', {
     .references(() => users.id, { onDelete: 'cascade' }),
   status: text('status').notNull().default('pending'),
   respondedAt: text('responded_at'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-})
-
-export const napkinbetsGroups = sqliteTable('napkinbets_groups', {
-  id: text('id').primaryKey(),
-  slug: text('slug').notNull().unique(),
-  ownerUserId: text('owner_user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  description: text('description'),
-  visibility: text('visibility').notNull().default('private'),
-  joinPolicy: text('join_policy').notNull().default('invite-only'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsGroupMembers = sqliteTable('napkinbets_group_members', {
@@ -100,12 +100,8 @@ export const napkinbetsGroupMembers = sqliteTable('napkinbets_group_members', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   role: text('role').notNull().default('member'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsParticipants = sqliteTable('napkinbets_participants', {
@@ -121,12 +117,8 @@ export const napkinbetsParticipants = sqliteTable('napkinbets_participants', {
   draftOrder: integer('draft_order'),
   paymentStatus: text('payment_status').notNull().default('pending'),
   paymentReference: text('payment_reference'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsPots = sqliteTable('napkinbets_pots', {
@@ -154,9 +146,7 @@ export const napkinbetsPicks = sqliteTable('napkinbets_picks', {
   liveScore: integer('live_score').notNull().default(0),
   outcome: text('outcome').notNull().default('pending'),
   sortOrder: integer('sort_order').notNull().default(0),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
 })
 
 export const napkinbetsNotifications = sqliteTable('napkinbets_notifications', {
@@ -172,9 +162,7 @@ export const napkinbetsNotifications = sqliteTable('napkinbets_notifications', {
   body: text('body').notNull(),
   deliveryStatus: text('delivery_status').notNull().default('queued'),
   scheduledFor: text('scheduled_for'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
   sentAt: text('sent_at'),
 })
 
@@ -201,9 +189,7 @@ export const napkinbetsSettlements = sqliteTable('napkinbets_settlements', {
   }),
   rejectedAt: text('rejected_at'),
   rejectionNote: text('rejection_note'),
-  recordedAt: text('recorded_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  recordedAt: text('recorded_at').notNull(),
 })
 
 export const napkinbetsUserPaymentProfiles = sqliteTable('napkinbets_user_payment_profiles', {
@@ -216,12 +202,8 @@ export const napkinbetsUserPaymentProfiles = sqliteTable('napkinbets_user_paymen
   displayLabel: text('display_label'),
   isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
   isPublicOnBoards: integer('is_public_on_boards', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
@@ -238,9 +220,7 @@ export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
   aiCloseoutAssistEnabled: integer('ai_closeout_assist_enabled', { mode: 'boolean' })
     .notNull()
     .default(false),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsTaxonomySports = sqliteTable('napkinbets_taxonomy_sports', {
@@ -252,12 +232,8 @@ export const napkinbetsTaxonomySports = sqliteTable('napkinbets_taxonomy_sports'
     .default(false),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsTaxonomyContexts = sqliteTable('napkinbets_taxonomy_contexts', {
@@ -266,12 +242,8 @@ export const napkinbetsTaxonomyContexts = sqliteTable('napkinbets_taxonomy_conte
   description: text('description').notNull(),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsTaxonomyLeagues = sqliteTable('napkinbets_taxonomy_leagues', {
@@ -295,12 +267,8 @@ export const napkinbetsTaxonomyLeagues = sqliteTable('napkinbets_taxonomy_league
     .default(false),
   sortOrder: integer('sort_order').notNull().default(0),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsEvents = sqliteTable('napkinbets_events', {
@@ -326,17 +294,11 @@ export const napkinbetsEvents = sqliteTable('napkinbets_events', {
   awayTeamJson: text('away_team_json').notNull(),
   leadersJson: text('leaders_json').notNull(),
   ideasJson: text('ideas_json').notNull(),
-  homeScore: text('home_score').notNull().default(''),
-  awayScore: text('away_score').notNull().default(''),
   rawPayloadJson: text('raw_payload_json'),
   sourceUpdatedAt: text('source_updated_at'),
   lastSyncedAt: text('last_synced_at').notNull(),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })
 
 export const napkinbetsEventSnapshots = sqliteTable('napkinbets_event_snapshots', {
@@ -351,9 +313,7 @@ export const napkinbetsEventSnapshots = sqliteTable('napkinbets_event_snapshots'
   homeScore: text('home_score').notNull(),
   awayScore: text('away_score').notNull(),
   leadersJson: text('leaders_json').notNull(),
-  capturedAt: text('captured_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  capturedAt: text('captured_at').notNull(),
 })
 
 export const napkinbetsIngestRuns = sqliteTable('napkinbets_ingest_runs', {
@@ -367,9 +327,7 @@ export const napkinbetsIngestRuns = sqliteTable('napkinbets_ingest_runs', {
   eventCount: integer('event_count').notNull().default(0),
   status: text('status').notNull(),
   errorMessage: text('error_message'),
-  startedAt: text('started_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  startedAt: text('started_at').notNull(),
   completedAt: text('completed_at'),
 })
 
@@ -390,33 +348,6 @@ export const napkinbetsEventOdds = sqliteTable('napkinbets_event_odds', {
   commentCount: integer('comment_count'),
   fetchedAt: text('fetched_at').notNull(),
   expiresAt: text('expires_at').notNull(),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-})
-
-// ─── Featured Bets ─────────────────────────────────────────
-
-export const napkinbetsFeaturedBets = sqliteTable('napkinbets_featured_bets', {
-  id: text('id').primaryKey(),
-  label: text('label').notNull(),
-  title: text('title').notNull(),
-  subtitle: text('subtitle').notNull().default(''),
-  summary: text('summary').notNull().default(''),
-  windowLabel: text('window_label').notNull().default(''),
-  venueLabel: text('venue_label').notNull().default(''),
-  accent: text('accent').notNull().default('tour'),
-  imageUrl: text('image_url').notNull().default(''),
-  sortOrder: integer('sort_order').notNull().default(0),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
-  prefillJson: text('prefill_json').notNull().default('{}'),
-  createdAt: text('created_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
-  updatedAt: text('updated_at')
-    .notNull()
-    .$defaultFn(() => new Date().toISOString()),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
 })

@@ -4,7 +4,6 @@ import type {
   NapkinbetsCreatePrefillQuery,
   NapkinbetsEventCard as NapkinbetsEvent,
   NapkinbetsEventIdea,
-  NapkinbetsEventOddsMarket,
 } from '../../../types/napkinbets'
 
 const props = defineProps<{
@@ -110,41 +109,20 @@ const statusColor = computed(() => {
 
   return 'warning'
 })
-const moneylineOdds = computed(() => props.event.odds?.moneyline ?? null)
-const secondaryOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
-  [props.event.odds?.spread, props.event.odds?.total]
-    .filter((market): market is NapkinbetsEventOddsMarket => Boolean(market))
-    .slice(0, 2),
-)
-const extraOdds = computed<NapkinbetsEventOddsMarket[]>(() => {
-  const extras = props.event.odds?.extraMarkets ?? []
-  return extras.slice(0, 3)
+const hasOdds = computed(() => Boolean(props.event.odds?.moneyline))
+const eventDetailLink = computed(() => `/events/${encodeURIComponent(props.event.id)}`)
+const showInsights = computed(() => !hasOdds.value && insightRows.value.length > 0)
+const lastUpdatedLabel = computed(() => {
+  if (props.event.state !== 'in' || !props.event.lastSyncedAt) return null
+  const syncMs = Date.parse(props.event.lastSyncedAt)
+  if (Number.isNaN(syncMs)) return null
+  const diffMs = Date.now() - syncMs
+  const diffMin = Math.floor(diffMs / 60_000)
+  if (diffMin < 1) return 'Updated just now'
+  if (diffMin < 60) return `Updated ${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  return `Updated ${diffHr}h ago`
 })
-const extraOddsOverflow = computed(() => {
-  const total = props.event.odds?.extraMarkets?.length ?? 0
-  return total > 3 ? total - 3 : 0
-})
-const volumeLabel = computed(() => {
-  const vol = props.event.odds?.volume
-  if (!vol || vol <= 0) return null
-  if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`
-  if (vol >= 1_000) return `$${(vol / 1_000).toFixed(0)}K`
-  return `$${vol}`
-})
-const priceChangeInfo = computed(() => {
-  const change = props.event.odds?.priceChange24h
-  if (change === null || change === undefined || Math.abs(change) < 2) return null
-  return {
-    label: `${change > 0 ? '+' : ''}${change}pp`,
-    icon: change > 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down',
-    color: change > 0 ? 'text-success' : 'text-error',
-  }
-})
-const showInsights = computed(() => !moneylineOdds.value && insightRows.value.length > 0)
-
-function formatProbability(value: number | null) {
-  return value === null ? '—' : `${value}%`
-}
 
 function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
   if (props.event.state === 'pre' && (!team.score || team.score === '0')) {
@@ -211,83 +189,16 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
         </div>
       </div>
 
-      <div v-if="moneylineOdds" class="napkinbets-event-odds-block">
-        <div class="napkinbets-event-odds-topline">
-          <span class="napkinbets-event-odds-label">{{ moneylineOdds.label }}</span>
-          <UButton
-            v-if="event.odds?.url"
-            :to="event.odds.url"
-            target="_blank"
-            external
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            icon="i-lucide-external-link"
-          >
-            Odds
-          </UButton>
-        </div>
-
-        <div class="napkinbets-event-odds-grid">
-          <div class="napkinbets-event-odds-pill">
-            <span>{{ moneylineOdds.left.label }}</span>
-            <strong>{{ formatProbability(moneylineOdds.left.probability) }}</strong>
-          </div>
-          <div class="napkinbets-event-odds-pill">
-            <span>{{ moneylineOdds.right.label }}</span>
-            <strong>{{ formatProbability(moneylineOdds.right.probability) }}</strong>
-          </div>
-        </div>
-
-        <div v-if="secondaryOdds.length" class="napkinbets-event-odds-secondary">
-          <div
-            v-for="market in secondaryOdds"
-            :key="`${market.label}-${market.detail ?? 'none'}`"
-            class="napkinbets-event-odds-chip"
-          >
-            <span>
-              {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
-            </span>
-            <strong>
-              {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
-              {{ market.right.label }} {{ formatProbability(market.right.probability) }}
-            </strong>
-          </div>
-        </div>
-
-        <div v-if="extraOdds.length" class="napkinbets-event-odds-secondary">
-          <div
-            v-for="market in extraOdds"
-            :key="`extra-${market.label}-${market.detail ?? 'none'}`"
-            class="napkinbets-event-odds-chip"
-          >
-            <span>
-              {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
-            </span>
-            <strong>
-              {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
-              {{ market.right.label }} {{ formatProbability(market.right.probability) }}
-            </strong>
-          </div>
-          <span v-if="extraOddsOverflow" class="napkinbets-event-odds-overflow">
-            +{{ extraOddsOverflow }} more
-          </span>
-        </div>
-
-        <div v-if="volumeLabel || priceChangeInfo" class="napkinbets-event-odds-meta">
-          <span v-if="volumeLabel" class="napkinbets-event-odds-volume">
-            <UIcon name="i-lucide-droplets" class="size-3" />
-            {{ volumeLabel }} traded
-          </span>
-          <span
-            v-if="priceChangeInfo"
-            class="napkinbets-event-odds-trend"
-            :class="priceChangeInfo.color"
-          >
-            <UIcon :name="priceChangeInfo.icon" class="size-3" />
-            {{ priceChangeInfo.label }} 24h
-          </span>
-        </div>
+      <div v-if="hasOdds" class="flex items-center gap-2">
+        <UButton
+          :to="eventDetailLink"
+          color="neutral"
+          variant="soft"
+          size="xs"
+          icon="i-lucide-bar-chart-3"
+        >
+          View odds
+        </UButton>
       </div>
 
       <div v-else-if="showInsights" class="napkinbets-event-insights">
@@ -307,6 +218,10 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
         </span>
 
         <div class="napkinbets-event-action-row">
+          <span v-if="lastUpdatedLabel" class="text-xs text-dimmed">
+            <UIcon name="i-lucide-refresh-cw" class="size-3" />
+            {{ lastUpdatedLabel }}
+          </span>
           <UButton
             v-if="primaryIdeaLink"
             :to="primaryIdeaLink"

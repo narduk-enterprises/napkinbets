@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { asc, eq, gte, inArray } from 'drizzle-orm'
+import { asc, eq, gte, inArray, sql } from 'drizzle-orm'
 import {
   napkinbetsEvents,
   napkinbetsGroups,
@@ -799,11 +799,14 @@ function computeLeaderboard(
     let score = 0
     for (const pick of participantPicks) {
       score += pick.liveScore
-      if (pick.outcome === 'winning') {
+      if (pick.outcome === 'won') {
+        score += 5
+      } else if (pick.outcome === 'winning') {
         score += 3
       } else if (pick.outcome === 'pending') {
         score += 1
       }
+      // 'lost' and 'push' add no bonus
     }
 
     totalScore += score
@@ -1106,18 +1109,41 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
   )
   const groupNamesById = new Map(groups.map((group) => [group.id, group.name]))
 
+  // Build userId → avatarUrl lookup from the users table
+  const participantUserIds = [
+    ...new Set(
+      participants.map((p) => p.userId).filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const userAvatars = new Map<string, string>()
+  if (participantUserIds.length) {
+    const userRows = await db
+      .select({
+        id: users.id,
+        avatarUrl: sql<string>`avatar_url`.as('avatar_url'),
+      })
+      .from(users)
+      .where(inArray(users.id, participantUserIds))
+    for (const row of userRows) {
+      if (row.avatarUrl) {
+        userAvatars.set(row.id, row.avatarUrl)
+      }
+    }
+  }
+
   const weatherSnapshots = new Map<string, NapkinbetsWeatherSnapshot>()
   const cachedEventIds = wagers
     .map((wager) => wager.eventId ?? '')
     .filter((eventId): eventId is string => Boolean(eventId))
 
-  const [cachedEventsById, featuredLiveGames] =
-    options.includeContext !== false
-      ? await Promise.all([
-          loadCachedEventsByIds(event, cachedEventIds),
-          loadFeaturedLiveGames(event),
-        ])
-      : [new Map(), []]
+  // Always load cached events (cheap DB query needed for logos and live scores)
+  const cachedEventsById = cachedEventIds.length > 0
+    ? await loadCachedEventsByIds(event, cachedEventIds)
+    : new Map()
+
+  const featuredLiveGames = options.includeContext !== false
+    ? await loadFeaturedLiveGames(event)
+    : []
 
   if (options.includeContext !== false) {
     const weatherRequests = new Map<
@@ -1205,10 +1231,18 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       eventId: wager.eventId ?? '',
       eventTitle: wager.eventTitle ?? '',
       eventStartsAt: wager.eventStartsAt ?? '',
-      eventStatus: wager.eventStatus ?? '',
+      eventStatus: eventContext?.status ?? wager.eventStatus ?? '',
+      eventState: eventContext?.state ?? wager.eventState ?? '',
+      homeScore: eventContext?.homeTeam.score ?? wager.homeScore ?? '',
+      awayScore: eventContext?.awayTeam.score ?? wager.awayScore ?? '',
       homeTeamName: wager.homeTeamName ?? '',
       awayTeamName: wager.awayTeamName ?? '',
-      participants: wagerParticipants,
+      homeTeamLogo: eventContext?.homeTeam.logo ?? '',
+      awayTeamLogo: eventContext?.awayTeam.logo ?? '',
+      participants: wagerParticipants.map((p) => ({
+        ...p,
+        avatarUrl: p.avatarUrl || (p.userId ? userAvatars.get(p.userId) ?? '' : ''),
+      })),
       pots: wagerPots,
       picks: wagerPicks,
       notifications: wagerNotifications,
@@ -1361,15 +1395,17 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   for (let index = 0; index < orderedParticipants.length; index++) {
     const participant = orderedParticipants[index]!
     const displayName = participant.displayName
+    const isCreator = participant.userId === authUser.id
+    const isSimpleBet = input.napkinType === 'simple-bet'
     participantsToInsert.push({
       id: crypto.randomUUID(),
       wagerId,
       userId: participant.userId,
       displayName,
       sideLabel: sideOptions[index % sideOptions.length] ?? sideOptions[0] ?? 'Open side',
-      joinStatus: 'accepted',
+      joinStatus: isCreator || !isSimpleBet ? 'accepted' : 'invited',
       draftOrder: index + 1,
-      paymentStatus: participant.userId === authUser.id ? 'confirmed' : 'pending',
+      paymentStatus: isCreator ? 'confirmed' : 'pending',
       paymentReference: null,
       avatarUrl: '',
       createdAt,
@@ -1394,16 +1430,19 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
     event,
     wagerId,
     'Wager created',
-    `${creatorName} set the bet and randomized the draft order.`,
+    `${creatorName} set the bet${input.napkinType === 'simple-bet' ? '' : ' and randomized the draft order'}.`,
     'system',
   )
-  await createNotification(
-    event,
-    wagerId,
-    'Reminder queue ready',
-    `Use ${input.paymentService} manually for settlement once results lock.`,
-    'reminder',
-  )
+
+  if (input.napkinType !== 'simple-bet') {
+    await createNotification(
+      event,
+      wagerId,
+      'Reminder queue ready',
+      `Use ${input.paymentService} manually for settlement once results lock.`,
+      'reminder',
+    )
+  }
 
   return {
     ok: true,
@@ -1450,6 +1489,33 @@ export async function joinPool(event: H3Event, wagerId: string, input: JoinPoolI
       existing.id,
     )
 
+    // Auto-transition: one-on-one bets lock when both seats are filled
+    if (wager.napkinType === 'simple-bet' && wager.status === 'open') {
+      const updatedRows = await db
+        .select()
+        .from(napkinbetsParticipants)
+        .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+      const acceptedCount = updatedRows.filter(
+        (p) => p.joinStatus === 'accepted',
+      ).length
+
+      if (acceptedCount >= 2) {
+        await db
+          .update(napkinbetsWagers)
+          .set({ status: 'locked', updatedAt: createdAt })
+          .where(eq(napkinbetsWagers.id, wagerId))
+
+        await createNotification(
+          event,
+          wagerId,
+          'Bet locked',
+          'Both players are in — add picks and confirm payment.',
+          'system',
+        )
+      }
+    }
+
     return { ok: true, participantId: existing.id }
   }
 
@@ -1481,6 +1547,33 @@ export async function joinPool(event: H3Event, wagerId: string, input: JoinPoolI
     'acceptance',
     participantId,
   )
+
+  // Auto-transition: one-on-one bets lock when both seats are filled
+  if (wager.napkinType === 'simple-bet' && wager.status === 'open') {
+    const updatedParticipants = await db
+      .select()
+      .from(napkinbetsParticipants)
+      .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+    const acceptedCount = updatedParticipants.filter(
+      (p) => p.joinStatus === 'accepted',
+    ).length
+
+    if (acceptedCount >= 2) {
+      await db
+        .update(napkinbetsWagers)
+        .set({ status: 'locked', updatedAt: createdAt })
+        .where(eq(napkinbetsWagers.id, wagerId))
+
+      await createNotification(
+        event,
+        wagerId,
+        'Bet locked',
+        'Both players are in — add picks and confirm payment.',
+        'system',
+      )
+    }
+  }
 
   return { ok: true, participantId }
 }
@@ -1771,6 +1864,50 @@ export async function queueReminder(event: H3Event, wagerId: string, input?: Rem
       `Results are nearly in. Ask everyone to confirm transfers through ${wager.paymentService}.`,
     'reminder',
   )
+
+  return { ok: true }
+}
+
+export async function declineWager(event: H3Event, wagerId: string) {
+  const authUser = await requireAuth(event)
+  const db = useAppDatabase(event)
+  const wager = await getWagerOrThrow(event, wagerId)
+
+  const participants = await db
+    .select()
+    .from(napkinbetsParticipants)
+    .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+  const myParticipant = participants.find((p) => p.userId === authUser.id)
+
+  if (!myParticipant) {
+    throw createError({ statusCode: 404, message: 'You are not a participant in this bet.' })
+  }
+
+  if (myParticipant.joinStatus === 'accepted') {
+    throw createError({
+      statusCode: 400,
+      message: 'You have already accepted this bet. Contact the host to leave.',
+    })
+  }
+
+  await db.delete(napkinbetsParticipants).where(eq(napkinbetsParticipants.id, myParticipant.id))
+
+  await createNotification(
+    event,
+    wagerId,
+    'Invitation declined',
+    `${myParticipant.displayName} declined the bet.`,
+    'acceptance',
+  )
+
+  // Ensure wager stays open if a one-on-one loses a participant
+  if (wager.napkinType === 'simple-bet' && wager.status === 'locked') {
+    await db
+      .update(napkinbetsWagers)
+      .set({ status: 'open', updatedAt: nowIso() })
+      .where(eq(napkinbetsWagers.id, wagerId))
+  }
 
   return { ok: true }
 }

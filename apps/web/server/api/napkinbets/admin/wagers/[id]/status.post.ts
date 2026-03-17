@@ -6,7 +6,7 @@ import { napkinbetsWagers } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 
 const bodySchema = z.object({
-  status: z.enum(['open', 'live', 'settling', 'closed', 'archived']),
+  status: z.enum(['open', 'locked', 'live', 'settling', 'settled', 'closed', 'archived']),
 })
 
 export default defineEventHandler(async (event) => {

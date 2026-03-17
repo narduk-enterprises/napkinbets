@@ -10,6 +10,7 @@ const EMPTY_WORKSPACE: NapkinbetsWorkspaceResponse = {
   metrics: [],
   ownedWagers: [],
   joinedWagers: [],
+  invitedWagers: [],
   reminders: [],
   refreshedAt: '',
 }

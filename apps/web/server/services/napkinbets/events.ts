@@ -1,10 +1,12 @@
 import type { H3Event } from 'h3'
-import { and, asc, desc, eq, inArray, lt, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, lt, notInArray, or } from 'drizzle-orm'
 import {
   napkinbetsEvents,
   napkinbetsEventOdds,
   napkinbetsEventSnapshots,
   napkinbetsIngestRuns,
+  napkinbetsFeaturedBets,
+  napkinbetsWagers,
 } from '#server/database/schema'
 import {
   getNapkinbetsContextLabel,
@@ -1208,6 +1210,8 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
       awayTeamJson: JSON.stringify(item.awayTeam),
       leadersJson: JSON.stringify(item.leaders),
       ideasJson: JSON.stringify(item.ideas),
+      homeScore: item.homeTeam.score,
+      awayScore: item.awayTeam.score,
       rawPayloadJson: null,
       sourceUpdatedAt: syncedAt,
       lastSyncedAt: syncedAt,
@@ -1242,6 +1246,8 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
           awayTeamJson: rowValues.awayTeamJson,
           leadersJson: rowValues.leadersJson,
           ideasJson: rowValues.ideasJson,
+          homeScore: rowValues.homeScore,
+          awayScore: rowValues.awayScore,
           rawPayloadJson: rowValues.rawPayloadJson,
           sourceUpdatedAt: rowValues.sourceUpdatedAt,
           lastSyncedAt: rowValues.lastSyncedAt,
@@ -1277,15 +1283,79 @@ async function pruneExpiredEvents(event: H3Event) {
   const db = useAppDatabase(event)
   const cutoff = addDays(new Date(), -3).toISOString()
 
-  await db
-    .delete(napkinbetsEvents)
-    .where(
-      or(
-        and(eq(napkinbetsEvents.state, 'post'), lt(napkinbetsEvents.startTime, cutoff)),
-        lt(napkinbetsEvents.updatedAt, cutoff),
-      ),
-    )
-    .run()
+  // Find event IDs that are referenced by wagers — these must be preserved
+  const linkedEventRows = await db
+    .select({ eventId: napkinbetsWagers.eventId })
+    .from(napkinbetsWagers)
+    .where(and(
+      eq(napkinbetsWagers.eventSource, 'espn'),
+    ))
+
+  const linkedEventIds = linkedEventRows
+    .map((row) => row.eventId)
+    .filter((id): id is string => Boolean(id))
+
+  const baseCondition = or(
+    and(eq(napkinbetsEvents.state, 'post'), lt(napkinbetsEvents.startTime, cutoff)),
+    lt(napkinbetsEvents.updatedAt, cutoff),
+  )
+
+  if (linkedEventIds.length > 0) {
+    await db
+      .delete(napkinbetsEvents)
+      .where(
+        and(
+          baseCondition,
+          notInArray(napkinbetsEvents.id, linkedEventIds),
+        ),
+      )
+      .run()
+  } else {
+    await db
+      .delete(napkinbetsEvents)
+      .where(baseCondition)
+      .run()
+  }
+}
+
+async function syncWagerScoresFromEvents(event: H3Event, events: NapkinbetsCachedEvent[]) {
+  if (events.length === 0) {
+    return
+  }
+
+  const db = useAppDatabase(event)
+  const eventIds = events.map((item) => item.id)
+
+  // Find wagers that reference any of the ingested events
+  const linkedWagers = await db
+    .select({ id: napkinbetsWagers.id, eventId: napkinbetsWagers.eventId })
+    .from(napkinbetsWagers)
+    .where(inArray(napkinbetsWagers.eventId, eventIds))
+
+  if (linkedWagers.length === 0) {
+    return
+  }
+
+  const eventsById = new Map(events.map((item) => [item.id, item]))
+
+  for (const wager of linkedWagers) {
+    const cachedEvent = wager.eventId ? eventsById.get(wager.eventId) : null
+    if (!cachedEvent) {
+      continue
+    }
+
+    await db
+      .update(napkinbetsWagers)
+      .set({
+        eventStatus: cachedEvent.status,
+        eventState: cachedEvent.state,
+        homeScore: cachedEvent.homeTeam.score,
+        awayScore: cachedEvent.awayTeam.score,
+        updatedAt: nowIso(),
+      })
+      .where(eq(napkinbetsWagers.id, wager.id))
+      .run()
+  }
 }
 
 function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCachedEvent {
@@ -1684,6 +1754,7 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
     try {
       const result = await fetchLeagueEvents(config, tier, syncedAt)
       await upsertLeagueEvents(event, result.events)
+      await syncWagerScoresFromEvents(event, result.events)
       await finishIngestRun(event, runId, 'success', result.events.length)
 
       summaries.push({
@@ -1904,9 +1975,59 @@ export async function loadCachedDiscoverData(event: H3Event) {
 
   const spotlights = buildDiscoverSpotlights(snapshot.events)
 
+  const featuredBetRows = await db
+    .select()
+    .from(napkinbetsFeaturedBets)
+    .where(eq(napkinbetsFeaturedBets.isActive, true))
+    .orderBy(asc(napkinbetsFeaturedBets.sortOrder))
+
+  const dbSpotlights: NapkinbetsDiscoverySpotlight[] = featuredBetRows.map((row) => {
+    let prefill: NapkinbetsCreatePrefillQuery
+    try {
+      prefill = JSON.parse(row.prefillJson) as NapkinbetsCreatePrefillQuery
+    } catch {
+      prefill = {
+        source: 'curated',
+        eventId: row.id,
+        eventTitle: row.title,
+        eventStartsAt: '',
+        eventStatus: 'Upcoming',
+        sport: '',
+        contextKey: 'community',
+        league: '',
+        venueName: row.venueLabel,
+        homeTeamName: '',
+        awayTeamName: '',
+        format: 'sports-prop',
+        sideOptions: [],
+      }
+    }
+
+    return {
+      id: `featured:${row.id}`,
+      label: row.label,
+      title: row.title,
+      subtitle: row.subtitle,
+      summary: row.summary,
+      windowLabel: row.windowLabel,
+      venueLabel: row.venueLabel,
+      accent: (row.accent as 'major' | 'tour' | 'watch') || 'tour',
+      assets: row.imageUrl
+        ? [{ kind: 'editorial' as const, src: row.imageUrl, alt: row.title }]
+        : [],
+      prefill,
+    }
+  })
+
+  const existingIds = new Set(dbSpotlights.map((s) => s.id))
+  const mergedSpotlights = [
+    ...dbSpotlights,
+    ...spotlights.filter((s) => !existingIds.has(s.id)),
+  ].slice(0, 6)
+
   return {
     sections,
-    spotlights,
+    spotlights: mergedSpotlights,
     filters: buildDiscoverFilters(snapshot.events),
     propIdeas: [...NAPKINBETS_PROP_IDEAS],
     refreshedAt: freshestSync || nowIso(),
@@ -1986,12 +2107,44 @@ export async function loadFeaturedLiveGames(event: H3Event, limit = 6) {
 export async function loadEventIngestHealth(event: H3Event) {
   const db = useAppDatabase(event)
   const [latestRuns, totalEvents] = await Promise.all([
-    db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(12),
+    db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(20),
     db.select().from(napkinbetsEvents),
   ])
 
+  const tiers = ['live-window', 'next-48h', 'next-7d', 'next-8w', 'manual'] as const
+  const now = Date.now()
+  const oneDayAgo = now - 24 * 60 * 60 * 1000
+
+  const tierSummaries: Record<
+    string,
+    {
+      tier: string
+      lastRunAt: string | null
+      lastStatus: string | null
+      lastEventCount: number
+      totalRunsLast24h: number
+    }
+  > = {}
+
+  for (const tier of tiers) {
+    const runsForTier = latestRuns.filter((run) => run.tier === tier)
+    const latest = runsForTier[0]
+    const runsLast24h = runsForTier.filter(
+      (run) => run.startedAt && new Date(run.startedAt).getTime() > oneDayAgo,
+    )
+
+    tierSummaries[tier] = {
+      tier,
+      lastRunAt: latest?.startedAt ?? null,
+      lastStatus: latest?.status ?? null,
+      lastEventCount: latest?.eventCount ?? 0,
+      totalRunsLast24h: runsLast24h.length,
+    }
+  }
+
   return {
     totalCachedEvents: totalEvents.length,
+    tierSummaries,
     latestRuns: latestRuns.map((run) => ({
       id: run.id,
       source: run.source,

@@ -7,6 +7,11 @@ export interface NapkinbetsMetric {
 
 export type NapkinbetsBoardType = 'event-backed' | 'manual-curated' | 'community-created'
 export type NapkinbetsNapkinType = 'simple-bet' | 'pool'
+export type NapkinbetsWagerStatus = 'open' | 'locked' | 'live' | 'settling' | 'settled' | 'closed' | 'archived'
+export type NapkinbetsJoinStatus = 'invited' | 'accepted'
+export type NapkinbetsPaymentStatus = 'pending' | 'submitted' | 'confirmed'
+export type NapkinbetsPickOutcome = 'pending' | 'winning' | 'won' | 'lost' | 'push'
+export type NapkinbetsSettlementVerification = 'submitted' | 'confirmed' | 'rejected'
 
 export interface NapkinbetsConcept {
   summary: string
@@ -147,8 +152,13 @@ export interface NapkinbetsWager {
   eventTitle: string
   eventStartsAt: string
   eventStatus: string
+  eventState: string
+  homeScore: string
+  awayScore: string
   homeTeamName: string
   awayTeamName: string
+  homeTeamLogo: string
+  awayTeamLogo: string
   participants: NapkinbetsParticipant[]
   pots: NapkinbetsPot[]
   picks: NapkinbetsPick[]
@@ -313,8 +323,38 @@ export interface NapkinbetsWorkspaceResponse {
   metrics: NapkinbetsMetric[]
   ownedWagers: NapkinbetsWager[]
   joinedWagers: NapkinbetsWager[]
+  invitedWagers: NapkinbetsWager[]
   reminders: NapkinbetsNotification[]
   refreshedAt: string
+}
+
+export interface NapkinbetsUserNotification {
+  id: string
+  wagerId: string
+  wagerTitle: string
+  wagerSlug: string
+  title: string
+  body: string
+  kind: string
+  deliveryStatus: string
+  createdAt: string
+}
+
+export interface NapkinbetsNotificationsResponse {
+  notifications: NapkinbetsUserNotification[]
+  unreadCount: number
+}
+
+export interface NapkinbetsProfileResponse {
+  id: string
+  email: string
+  name: string
+  avatarUrl: string
+}
+
+export interface UpdateProfileInput {
+  name?: string
+  avatarUrl?: string
 }
 
 export interface NapkinbetsWagerResponse {
@@ -352,7 +392,9 @@ export interface NapkinbetsAdminResponse {
   users: NapkinbetsAdminUser[]
   wagers: NapkinbetsAdminWager[]
   totalCachedEvents: number
+  featuredBetCount: number
   ingestRuns: NapkinbetsIngestRun[]
+  tierSummaries: Record<string, NapkinbetsIngestTierSummary>
   aiSettings: NapkinbetsAiSettings
   refreshedAt: string
 }
@@ -376,6 +418,14 @@ export interface NapkinbetsIngestRun {
   errorMessage: string | null
   startedAt: string
   completedAt: string | null
+}
+
+export interface NapkinbetsIngestTierSummary {
+  tier: string
+  lastRunAt: string | null
+  lastStatus: string | null
+  lastEventCount: number
+  totalRunsLast24h: number
 }
 
 export interface NapkinbetsPaymentProfilesResponse {
@@ -574,4 +624,40 @@ export interface UpdateNapkinbetsAiSettingsInput {
   aiPropSuggestionsEnabled: boolean
   aiTermsAssistEnabled: boolean
   aiCloseoutAssistEnabled: boolean
+}
+
+export interface NapkinbetsAdminFeaturedBet {
+  id: string
+  label: string
+  title: string
+  subtitle: string
+  summary: string
+  windowLabel: string
+  venueLabel: string
+  accent: string
+  imageUrl: string
+  sortOrder: number
+  isActive: boolean
+  prefillJson: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface NapkinbetsAdminFeaturedBetsResponse {
+  featuredBets: NapkinbetsAdminFeaturedBet[]
+}
+
+export interface SaveFeaturedBetInput {
+  id?: string
+  label: string
+  title: string
+  subtitle?: string
+  summary?: string
+  windowLabel?: string
+  venueLabel?: string
+  accent?: 'major' | 'tour' | 'watch'
+  imageUrl?: string
+  sortOrder?: number
+  isActive?: boolean
+  prefillJson?: string
 }

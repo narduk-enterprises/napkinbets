@@ -6,7 +6,9 @@ const EMPTY_ADMIN: NapkinbetsAdminResponse = {
   users: [],
   wagers: [],
   totalCachedEvents: 0,
+  featuredBetCount: 0,
   ingestRuns: [],
+  tierSummaries: {},
   aiSettings: {
     aiRecommendationsEnabled: false,
     aiPropSuggestionsEnabled: false,

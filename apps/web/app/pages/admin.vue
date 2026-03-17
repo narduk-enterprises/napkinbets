@@ -1,16 +1,97 @@
 <script setup lang="ts">
+import type { NapkinbetsAdminFeaturedBet, SaveFeaturedBetInput } from '../../types/napkinbets'
+
 definePageMeta({ middleware: ['admin'] })
 
 const adminState = await useNapkinbetsAdmin()
 const actions = useNapkinbetsActions(adminState.refresh)
 const admin = computed(() => adminState.data.value)
+const api = useNapkinbetsApi()
 
-function formatTimestamp(value: string | null) {
-  if (!value) {
-    return 'Pending'
+const featuredBets = ref<NapkinbetsAdminFeaturedBet[]>([])
+const showFeaturedForm = ref(false)
+const editingFeaturedBet = ref<NapkinbetsAdminFeaturedBet | null>(null)
+const featuredForm = ref<SaveFeaturedBetInput>({
+  label: '',
+  title: '',
+  subtitle: '',
+  summary: '',
+  windowLabel: '',
+  venueLabel: '',
+  accent: 'tour',
+  imageUrl: '',
+  sortOrder: 0,
+  isActive: true,
+  prefillJson: '{}',
+})
+
+async function loadFeaturedBets() {
+  try {
+    const response = await api.getAdminFeaturedBets()
+    featuredBets.value = response.featuredBets
+  } catch {
+    featuredBets.value = []
   }
+}
 
-  return value.replace('T', ' ').replace('Z', ' UTC')
+await loadFeaturedBets()
+
+function resetFeaturedForm() {
+  editingFeaturedBet.value = null
+  featuredForm.value = {
+    label: '',
+    title: '',
+    subtitle: '',
+    summary: '',
+    windowLabel: '',
+    venueLabel: '',
+    accent: 'tour',
+    imageUrl: '',
+    sortOrder: 0,
+    isActive: true,
+    prefillJson: '{}',
+  }
+  showFeaturedForm.value = false
+}
+
+function editFeaturedBet(bet: NapkinbetsAdminFeaturedBet) {
+  editingFeaturedBet.value = bet
+  featuredForm.value = {
+    id: bet.id,
+    label: bet.label,
+    title: bet.title,
+    subtitle: bet.subtitle,
+    summary: bet.summary,
+    windowLabel: bet.windowLabel,
+    venueLabel: bet.venueLabel,
+    accent: bet.accent as 'major' | 'tour' | 'watch',
+    imageUrl: bet.imageUrl,
+    sortOrder: bet.sortOrder,
+    isActive: bet.isActive,
+    prefillJson: bet.prefillJson,
+  }
+  showFeaturedForm.value = true
+}
+
+async function saveFeaturedBet() {
+  await actions.saveFeaturedBet(featuredForm.value)
+  resetFeaturedForm()
+  await loadFeaturedBets()
+}
+
+async function toggleFeaturedActive(bet: NapkinbetsAdminFeaturedBet) {
+  await actions.saveFeaturedBet({
+    id: bet.id,
+    label: bet.label,
+    title: bet.title,
+    isActive: !bet.isActive,
+  })
+  await loadFeaturedBets()
+}
+
+async function removeFeaturedBet(id: string) {
+  await actions.deleteFeaturedBet(id)
+  await loadFeaturedBets()
 }
 
 async function toggleAdmin(userId: string, isAdmin: boolean) {
@@ -24,6 +105,81 @@ async function setStatus(wagerId: string, status: string) {
 async function runIngest(tier: 'live-window' | 'next-48h' | 'next-7d' | 'next-8w') {
   await actions.runAdminIngest(tier)
 }
+
+const TIER_META = [
+  {
+    key: 'live-window' as const,
+    label: 'Live Window',
+    description: 'Games from yesterday through tomorrow',
+    schedule: 'Every 1m',
+  },
+  {
+    key: 'next-48h' as const,
+    label: 'Next 48 Hours',
+    description: 'Events starting within the next two days',
+    schedule: 'Every 10m',
+  },
+  {
+    key: 'next-7d' as const,
+    label: 'Next 7 Days',
+    description: 'Events across the next full week',
+    schedule: 'Every 6h',
+  },
+  {
+    key: 'next-8w' as const,
+    label: '8 Weeks Out',
+    description: 'All events across the next eight weeks',
+    schedule: 'Every 12h',
+  },
+] as const
+
+const tierCards = computed(() =>
+  TIER_META.map((meta) => ({
+    ...meta,
+    summary: admin.value.tierSummaries[meta.key] ?? null,
+  })),
+)
+
+function timeAgo(value: string | null) {
+  if (!value) return 'never'
+  const seconds = Math.floor((Date.now() - new Date(value).getTime()) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
+
+function runDuration(startedAt: string, completedAt: string | null) {
+  if (!completedAt) return '—'
+  const ms = new Date(completedAt).getTime() - new Date(startedAt).getTime()
+  if (ms < 1000) return `${ms}ms`
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
+
+
+const ingestRunColumns = [
+  { accessorKey: 'tier', header: 'Tier' },
+  { accessorKey: 'league', header: 'League' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'eventCount', header: 'Events' },
+  { accessorKey: 'duration', header: 'Duration' },
+  { accessorKey: 'startedAt', header: 'Started' },
+  { accessorKey: 'errorMessage', header: 'Error' },
+]
+
+const ingestRunRows = computed(() =>
+  admin.value.ingestRuns.map((run) => ({
+    ...run,
+    league: run.league.toUpperCase(),
+    duration: runDuration(run.startedAt, run.completedAt),
+    startedAt: timeAgo(run.startedAt),
+    errorMessage: run.errorMessage || '',
+  })),
+)
 
 async function updateAiSettings(
   key:
@@ -140,63 +296,85 @@ useWebPageSchema({
               <h2 class="napkinbets-subsection-title">Event coverage and ingest health</h2>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <UButton
-                color="primary"
-                variant="soft"
-                :loading="actions.activeAction.value === 'admin-ingest:live-window'"
-                @click="runIngest('live-window')"
+            <div class="grid gap-3 sm:grid-cols-2">
+              <UCard
+                v-for="tier in tierCards"
+                :key="tier.key"
+                class="napkinbets-panel"
               >
-                Refresh live window
-              </UButton>
-              <UButton
-                color="neutral"
-                variant="soft"
-                :loading="actions.activeAction.value === 'admin-ingest:next-48h'"
-                @click="runIngest('next-48h')"
-              >
-                Refresh next 48h
-              </UButton>
-              <UButton
-                color="neutral"
-                variant="soft"
-                :loading="actions.activeAction.value === 'admin-ingest:next-7d'"
-                @click="runIngest('next-7d')"
-              >
-                Refresh next 7d
-              </UButton>
-              <UButton
-                color="neutral"
-                variant="soft"
-                :loading="actions.activeAction.value === 'admin-ingest:next-8w'"
-                @click="runIngest('next-8w')"
-              >
-                Refresh 8 weeks
-              </UButton>
+                <div class="space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="space-y-1">
+                      <p class="font-semibold text-default">{{ tier.label }}</p>
+                      <p class="text-sm text-muted">{{ tier.description }}</p>
+                    </div>
+                    <UBadge color="neutral" variant="subtle" class="shrink-0">
+                      {{ tier.schedule }}
+                    </UBadge>
+                  </div>
+
+                  <div v-if="tier.summary?.lastRunAt" class="flex flex-wrap items-center gap-2">
+                    <UBadge
+                      :color="tier.summary.lastStatus === 'success' ? 'success' : tier.summary.lastStatus === 'error' ? 'error' : 'warning'"
+                      variant="soft"
+                      size="sm"
+                    >
+                      {{ tier.summary.lastStatus }}
+                    </UBadge>
+                    <span class="text-xs text-muted">
+                      {{ tier.summary.lastEventCount }} events •
+                      {{ timeAgo(tier.summary.lastRunAt) }}
+                    </span>
+                    <span v-if="tier.summary.totalRunsLast24h > 0" class="text-xs text-dimmed">
+                      ({{ tier.summary.totalRunsLast24h }} runs in 24h)
+                    </span>
+                  </div>
+                  <p v-else class="text-xs text-dimmed">No runs recorded yet</p>
+
+                  <UPopover>
+                    <UButton
+                      color="primary"
+                      variant="soft"
+                      size="sm"
+                      icon="i-lucide-play"
+                      :loading="actions.activeAction.value === `admin-ingest:${tier.key}`"
+                      block
+                    >
+                      Run now
+                    </UButton>
+                    <template #content>
+                      <div class="p-3 space-y-2 max-w-xs">
+                        <p class="text-sm font-semibold text-default">Trigger {{ tier.label }}?</p>
+                        <p class="text-xs text-muted">
+                          This will fetch {{ tier.description.toLowerCase() }} from ESPN and update
+                          the event cache.
+                        </p>
+                        <div class="flex gap-2 justify-end">
+                          <UButton
+                            color="primary"
+                            size="xs"
+                            :loading="actions.activeAction.value === `admin-ingest:${tier.key}`"
+                            @click="runIngest(tier.key)"
+                          >
+                            Confirm
+                          </UButton>
+                        </div>
+                      </div>
+                    </template>
+                  </UPopover>
+                </div>
+              </UCard>
             </div>
 
-            <div class="space-y-3">
-              <div v-for="run in admin.ingestRuns" :key="run.id" class="napkinbets-note-row">
-                <div class="space-y-1">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <UBadge
-                      :color="run.status === 'success' ? 'success' : 'warning'"
-                      variant="soft"
-                    >
-                      {{ run.status }}
-                    </UBadge>
-                    <UBadge color="neutral" variant="subtle">{{ run.tier }}</UBadge>
-                    <UBadge color="warning" variant="soft">{{ run.league.toUpperCase() }}</UBadge>
-                  </div>
-                  <p class="text-sm text-muted">
-                    {{ run.eventCount }} events • started {{ formatTimestamp(run.startedAt) }}
-                  </p>
-                  <p v-if="run.errorMessage" class="text-sm text-error">
-                    {{ run.errorMessage }}
-                  </p>
-                </div>
+            <USeparator />
 
-                <p class="text-sm text-muted">{{ formatTimestamp(run.completedAt) }}</p>
+            <div class="space-y-2">
+              <p class="font-semibold text-default">Recent runs</p>
+              <div class="overflow-x-auto">
+                <UTable
+                  :data="ingestRunRows"
+                  :columns="ingestRunColumns"
+                />
               </div>
             </div>
           </div>
@@ -240,6 +418,122 @@ useWebPageSchema({
                 >
                   {{ control.enabled ? 'Enabled' : 'Disabled' }}
                 </UButton>
+              </div>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard class="napkinbets-panel">
+          <div class="space-y-4">
+            <div class="flex items-end justify-between gap-3">
+              <div class="space-y-2">
+                <p class="napkinbets-kicker">Featured bets</p>
+                <h2 class="napkinbets-subsection-title">Manage events page featured cards</h2>
+              </div>
+
+              <UButton
+                color="primary"
+                variant="soft"
+                size="sm"
+                icon="i-lucide-plus"
+                @click="resetFeaturedForm(); showFeaturedForm = true"
+              >
+                Add
+              </UButton>
+            </div>
+
+            <div v-if="showFeaturedForm" class="space-y-3 rounded-lg bg-elevated p-4">
+              <p class="font-semibold text-default">
+                {{ editingFeaturedBet ? 'Edit featured bet' : 'New featured bet' }}
+              </p>
+
+              <div class="grid gap-3 sm:grid-cols-2">
+                <UInput v-model="featuredForm.label" placeholder="Label (e.g. Major watch)" class="w-full" />
+                <UInput v-model="featuredForm.title" placeholder="Title" class="w-full" />
+                <UInput v-model="featuredForm.subtitle" placeholder="Subtitle" class="w-full" />
+                <UInput v-model="featuredForm.windowLabel" placeholder="Window label (e.g. Apr 6-12)" class="w-full" />
+                <UInput v-model="featuredForm.venueLabel" placeholder="Venue label" class="w-full" />
+                <UInput v-model="featuredForm.imageUrl" placeholder="Image URL" class="w-full" />
+                <USelect
+                  v-model="featuredForm.accent"
+                  :items="[{ label: 'Major', value: 'major' }, { label: 'Tour', value: 'tour' }, { label: 'Watch', value: 'watch' }]"
+                  class="w-full"
+                />
+                <UInput v-model.number="featuredForm.sortOrder" type="number" placeholder="Sort order" class="w-full" />
+              </div>
+
+              <UTextarea v-model="featuredForm.summary" placeholder="Summary" class="w-full" :rows="2" />
+              <UTextarea v-model="featuredForm.prefillJson" placeholder="Prefill JSON" class="w-full" :rows="3" />
+
+              <div class="flex gap-2">
+                <UButton
+                  color="primary"
+                  size="sm"
+                  :loading="actions.activeAction.value === 'featured-bet:save'"
+                  @click="saveFeaturedBet"
+                >
+                  {{ editingFeaturedBet ? 'Update' : 'Create' }}
+                </UButton>
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  @click="resetFeaturedForm"
+                >
+                  Cancel
+                </UButton>
+              </div>
+            </div>
+
+            <div v-if="featuredBets.length === 0 && !showFeaturedForm" class="text-sm text-muted">
+              No featured bets configured. Auto-generated spotlights will be used.
+            </div>
+
+            <div class="space-y-3">
+              <div v-for="bet in featuredBets" :key="bet.id" class="napkinbets-note-row">
+                <div class="space-y-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <UBadge :color="bet.isActive ? 'success' : 'neutral'" variant="soft" size="sm">
+                      {{ bet.isActive ? 'Active' : 'Inactive' }}
+                    </UBadge>
+                    <UBadge color="warning" variant="soft" size="sm">
+                      {{ bet.accent }}
+                    </UBadge>
+                    <span v-if="bet.windowLabel" class="text-xs text-muted">{{ bet.windowLabel }}</span>
+                  </div>
+                  <p class="font-semibold text-default">{{ bet.title }}</p>
+                  <p class="text-sm text-muted">{{ bet.subtitle || bet.summary || 'No description' }}</p>
+                </div>
+
+                <div class="flex gap-2 shrink-0">
+                  <UButton
+                    :color="bet.isActive ? 'neutral' : 'success'"
+                    variant="soft"
+                    size="sm"
+                    :icon="bet.isActive ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                    @click="toggleFeaturedActive(bet)"
+                  >
+                    {{ bet.isActive ? 'Deactivate' : 'Activate' }}
+                  </UButton>
+                  <UButton
+                    color="neutral"
+                    variant="soft"
+                    size="sm"
+                    icon="i-lucide-pencil"
+                    @click="editFeaturedBet(bet)"
+                  >
+                    Edit
+                  </UButton>
+                  <UButton
+                    color="error"
+                    variant="soft"
+                    size="sm"
+                    icon="i-lucide-trash-2"
+                    @click="removeFeaturedBet(bet.id)"
+                  >
+                    Delete
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>

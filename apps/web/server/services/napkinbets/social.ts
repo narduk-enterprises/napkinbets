@@ -193,8 +193,9 @@ async function ensureGroup(
     })
   }
 
+  const uniqueMemberIds = [...new Set(input.memberUserIds)]
   await db.insert(napkinbetsGroupMembers).values(
-    input.memberUserIds.map((userId) => ({
+    uniqueMemberIds.map((userId) => ({
       id: crypto.randomUUID(),
       groupId,
       userId,

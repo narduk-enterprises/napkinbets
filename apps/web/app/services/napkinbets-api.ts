@@ -6,15 +6,20 @@ import type {
   NapkinbetsAiCloseoutSummaryInput,
   NapkinbetsAiTermsInput,
   NapkinbetsAdminResponse,
+  NapkinbetsAdminFeaturedBetsResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
   NapkinbetsFriendSearchResponse,
   NapkinbetsFriendsResponse,
   NapkinbetsGroupsResponse,
+  NapkinbetsNotificationsResponse,
   NapkinbetsPaymentProfilesResponse,
+  NapkinbetsProfileResponse,
   NapkinbetsTaxonomyResponse,
   NapkinbetsWorkspaceResponse,
+  SaveFeaturedBetInput,
   UpdateNapkinbetsAiSettingsInput,
+  UpdateProfileInput,
   WagerPickInput,
   NapkinbetsWagerResponse,
   WagerSettlementInput,
@@ -31,11 +36,17 @@ export function useNapkinbetsApi() {
     getDiscover() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
     },
+    getEventDetail(id: string) {
+      return fetch<{ event: NapkinbetsDiscoveryResponse['spotlights'][0] | null }>(`/api/napkinbets/events/${encodeURIComponent(id)}`)
+    },
     getTaxonomy() {
       return fetch<NapkinbetsTaxonomyResponse>('/api/napkinbets/taxonomy')
     },
     getWorkspace() {
       return fetch<NapkinbetsWorkspaceResponse>('/api/napkinbets/workspace')
+    },
+    getNotifications() {
+      return fetch<NapkinbetsNotificationsResponse>('/api/napkinbets/notifications')
     },
     getFriends() {
       return fetch<NapkinbetsFriendsResponse>('/api/napkinbets/friends')
@@ -98,11 +109,34 @@ export function useNapkinbetsApi() {
         body: { tier },
       })
     },
+    getAdminFeaturedBets() {
+      return fetch<NapkinbetsAdminFeaturedBetsResponse>('/api/napkinbets/admin/featured-bets')
+    },
+    saveAdminFeaturedBet(payload: SaveFeaturedBetInput) {
+      return fetch<{ ok: true; id: string }>('/api/napkinbets/admin/featured-bets', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    deleteAdminFeaturedBet(id: string) {
+      return fetch('/api/napkinbets/admin/featured-bets/' + id, {
+        method: 'DELETE',
+      })
+    },
     getWager(slug: string) {
       return fetch<NapkinbetsWagerResponse>(`/api/napkinbets/wagers/slug/${slug}`)
     },
     getPaymentProfiles() {
       return fetch<NapkinbetsPaymentProfilesResponse>('/api/napkinbets/me/payment-profiles')
+    },
+    getProfile() {
+      return fetch<NapkinbetsProfileResponse>('/api/napkinbets/me/profile')
+    },
+    updateProfile(payload: UpdateProfileInput) {
+      return fetch<{ ok: true }>('/api/napkinbets/me/profile', {
+        method: 'POST',
+        body: payload,
+      })
     },
     rewriteTermsWithAi(payload: NapkinbetsAiTermsInput) {
       return fetch<{ terms: string }>('/api/napkinbets/ai/terms', {
@@ -126,6 +160,11 @@ export function useNapkinbetsApi() {
       return fetch('/api/napkinbets/wagers/' + wagerId + '/join', {
         method: 'POST',
         body: payload,
+      })
+    },
+    declineWager(wagerId: string) {
+      return fetch('/api/napkinbets/wagers/' + wagerId + '/decline', {
+        method: 'POST',
       })
     },
     addPick(wagerId: string, payload: WagerPickInput) {

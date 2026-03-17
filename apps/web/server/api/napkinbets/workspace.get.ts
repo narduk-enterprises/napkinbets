@@ -9,7 +9,18 @@ export default defineEventHandler(async (event) => {
   const joinedWagers = dashboard.wagers.filter(
     (wager) =>
       wager.ownerUserId !== user.id &&
-      wager.participants.some((participant) => participant.userId === user.id),
+      wager.participants.some(
+        (participant) => participant.userId === user.id && participant.joinStatus === 'accepted',
+      ),
+  )
+  const invitedWagers = dashboard.wagers.filter(
+    (wager) =>
+      wager.ownerUserId !== user.id &&
+      wager.participants.some(
+        (participant) =>
+          participant.userId === user.id &&
+          (participant.joinStatus === 'pending' || participant.joinStatus === 'invited'),
+      ),
   )
 
   const reminders = [...ownedWagers, ...joinedWagers]
@@ -44,6 +55,12 @@ export default defineEventHandler(async (event) => {
         icon: 'i-lucide-users',
       },
       {
+        label: 'Pending invites',
+        value: String(invitedWagers.length),
+        hint: 'bets waiting for your response',
+        icon: 'i-lucide-mail',
+      },
+      {
         label: 'Queued reminders',
         value: String(reminders.length),
         hint: 'manual follow-up items',
@@ -58,6 +75,7 @@ export default defineEventHandler(async (event) => {
     ],
     ownedWagers,
     joinedWagers,
+    invitedWagers,
     reminders,
     refreshedAt: dashboard.refreshedAt,
   }

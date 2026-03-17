@@ -2,6 +2,7 @@ import type {
   CreatePaymentProfileInput,
   CreateWagerInput,
   JoinWagerInput,
+  SaveFeaturedBetInput,
   UpdateNapkinbetsAiSettingsInput,
   WagerPickInput,
   WagerSettlementInput,
@@ -61,6 +62,11 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
     joinWager(wagerId: string, payload: JoinWagerInput) {
       return runAction(`join:${wagerId}`, 'Participant added to the bet.', () =>
         api.joinWager(wagerId, payload),
+      )
+    },
+    declineWager(wagerId: string) {
+      return runAction(`decline:${wagerId}`, 'Invitation declined.', () =>
+        api.declineWager(wagerId),
       )
     },
     addPick(wagerId: string, payload: WagerPickInput) {
@@ -135,6 +141,16 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         `payment-profile:default:${profileId}`,
         'Default payment profile updated.',
         () => api.setDefaultPaymentProfile(profileId),
+      )
+    },
+    saveFeaturedBet(payload: SaveFeaturedBetInput) {
+      return runAction('featured-bet:save', 'Featured bet saved.', () =>
+        api.saveAdminFeaturedBet(payload),
+      )
+    },
+    deleteFeaturedBet(id: string) {
+      return runAction(`featured-bet:delete:${id}`, 'Featured bet removed.', () =>
+        api.deleteAdminFeaturedBet(id),
       )
     },
   }

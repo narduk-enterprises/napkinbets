@@ -12,6 +12,7 @@
     "db:seed": "wrangler d1 execute napkinbets-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
     "db:reset": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir drizzle --reset && pnpm run db:seed",
     "db:studio": "drizzle-kit studio",
+    "db:studio:local": "drizzle-kit studio --config=drizzle-local.config.ts",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
