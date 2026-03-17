@@ -14,6 +14,7 @@ import { useAppDatabase } from '#server/utils/database'
 const DEMO_PASSWORD = 'DemoBoard123!'
 
 const DEMO_SOCIAL_USERS = [
+  { email: 'pat@napkinbets.app', name: 'Pat Donnelly' },
   { email: 'olivia@napkinbets.app', name: 'Olivia Ramos' },
   { email: 'marcus@napkinbets.app', name: 'Marcus Lee' },
   { email: 'mara@napkinbets.app', name: 'Mara Kim' },
@@ -28,7 +29,12 @@ const DEMO_GROUP_DEFINITIONS = [
     description: 'Quick one-on-one bets and small game-night pools.',
     visibility: 'public',
     joinPolicy: 'open',
-    memberEmails: ['demo@napkinbets.app', 'olivia@napkinbets.app', 'marcus@napkinbets.app'],
+    memberEmails: [
+      'demo@napkinbets.app',
+      'pat@napkinbets.app',
+      'olivia@napkinbets.app',
+      'marcus@napkinbets.app',
+    ],
   },
   {
     slug: 'augusta-text-chain',
@@ -210,9 +216,18 @@ export async function ensureDemoSocialGraph(event: H3Event, demoUserId: string) 
   }
 
   const oliviaId = socialUsers.get('olivia@napkinbets.app')
+  const patId = socialUsers.get('pat@napkinbets.app')
   const marcusId = socialUsers.get('marcus@napkinbets.app')
   const maraId = socialUsers.get('mara@napkinbets.app')
   const noraId = socialUsers.get('nora@napkinbets.app')
+
+  if (patId) {
+    await ensureFriendship(event, {
+      requesterUserId: patId,
+      addresseeUserId: demoUserId,
+      status: 'accepted',
+    })
+  }
 
   if (oliviaId) {
     await ensureFriendship(event, {

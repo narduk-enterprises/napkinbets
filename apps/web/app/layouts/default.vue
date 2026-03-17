@@ -1,28 +1,10 @@
 <template>
   <div class="napkinbets-layout">
-    <ClientOnly>
-      <NapkinbetsAppHeader />
-
-      <template #fallback>
-        <div class="napkinbets-header-wrap">
-          <div class="napkinbets-header">
-            <div class="napkinbets-header-top">
-              <NuxtLink to="/" class="napkinbets-header-brand">
-                <NapkinbetsLogo compact />
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-      </template>
-    </ClientOnly>
+    <NapkinbetsAppHeader />
 
     <div class="napkinbets-layout-body">
       <slot />
     </div>
-
-    <ClientOnly>
-      <NapkinbetsMobileNav />
-    </ClientOnly>
 
     <div class="napkinbets-footer">
       <div class="napkinbets-footer-inner">

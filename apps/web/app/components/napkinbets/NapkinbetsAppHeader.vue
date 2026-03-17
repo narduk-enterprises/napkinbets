@@ -1,45 +1,56 @@
 <script setup lang="ts">
-const { primaryLinks, accountLinks, isAuthenticated, user } = useNapkinbetsNavLinks()
+import { ref, watch } from 'vue'
+
+const route = useRoute()
+const { primaryLinks, publicLinks, accountLinks, isAuthenticated } = useNapkinbetsNavLinks()
 const { logout } = useAuth()
 
-const accountLabel = computed(() => {
-  const name = user.value?.name
-  if (typeof name === 'string' && name.trim()) {
-    return name.trim().split(' ')[0]
-  }
-
-  return user.value?.email || 'Account'
-})
+const isMobileMenuOpen = ref(false)
 
 const headerLinks = computed(() =>
   primaryLinks.value.filter((link) => ['/events', '/napkins/create'].includes(link.to)),
 )
 
-const accountMenuItems = computed(() => {
-  const navigationItems = [
-    ...primaryLinks.value.filter((link) => link.to === '/dashboard'),
-    ...accountLinks.value,
-  ].map((link) => ({
-    label: link.label,
-    icon: link.icon,
-    to: link.to,
-  }))
+const mobilePrimaryLinks = computed(() =>
+  (isAuthenticated.value ? primaryLinks.value : publicLinks.value).filter((link) =>
+    ['/events', '/napkins/create', '/dashboard', '/guide'].includes(link.to),
+  ),
+)
 
-  return [
-    navigationItems,
-    [
-      {
-        label: 'Sign out',
-        icon: 'i-lucide-log-out',
-        onSelect: async () => {
-          await signOut()
+const mobileSecondaryLinks = computed(() =>
+  isAuthenticated.value
+    ? accountLinks.value.filter((link) => ['/friends', '/settings/payments'].includes(link.to))
+    : [
+        {
+          label: 'Join',
+          to: '/register',
+          icon: 'i-lucide-user-plus',
         },
-      },
-    ],
-  ]
-})
+        {
+          label: 'Log in',
+          to: '/login',
+          icon: 'i-lucide-log-in',
+        },
+      ],
+)
+
+watch(
+  () => route.fullPath,
+  () => {
+    isMobileMenuOpen.value = false
+  },
+)
+
+function toggleMobileMenu() {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+function closeMobileMenu() {
+  isMobileMenuOpen.value = false
+}
 
 async function signOut() {
+  closeMobileMenu()
   await logout()
   await navigateTo('/login', { replace: true })
 }
@@ -49,7 +60,7 @@ async function signOut() {
   <div class="napkinbets-header-wrap">
     <div class="napkinbets-header">
       <div class="napkinbets-header-top">
-        <NuxtLink to="/" class="napkinbets-header-brand">
+        <NuxtLink to="/" class="napkinbets-header-brand" @click="closeMobileMenu">
           <NapkinbetsLogo compact />
         </NuxtLink>
 
@@ -67,15 +78,32 @@ async function signOut() {
         </div>
 
         <div class="napkinbets-header-actions">
-          <div v-if="isAuthenticated" class="flex items-center gap-2">
-            <UDropdownMenu :items="accountMenuItems" :popper="{ placement: 'bottom-end' }">
-              <UButton color="neutral" variant="soft" size="sm" icon="i-lucide-user-round">
-                {{ accountLabel }}
-              </UButton>
-            </UDropdownMenu>
+          <UButton
+            color="neutral"
+            variant="soft"
+            size="sm"
+            icon="i-lucide-menu"
+            aria-label="Open navigation"
+            class="lg:hidden"
+            @click="toggleMobileMenu"
+          />
+
+          <div v-if="isAuthenticated" class="hidden items-center gap-2 lg:flex">
+            <UButton to="/dashboard" color="neutral" variant="soft" size="sm">
+              My Bets
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              icon="i-lucide-log-out"
+              @click="signOut"
+            >
+              Sign out
+            </UButton>
           </div>
 
-          <div v-else class="flex items-center gap-3">
+          <div v-else class="hidden items-center gap-3 lg:flex">
             <UButton
               to="/login"
               color="neutral"
@@ -91,6 +119,53 @@ async function signOut() {
             </UButton>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div v-if="isMobileMenuOpen" class="napkinbets-mobile-menu-panel lg:hidden">
+      <div class="napkinbets-mobile-menu-section">
+        <UButton
+          v-for="link in mobilePrimaryLinks"
+          :key="link.to"
+          :to="link.to"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="w-full justify-start"
+          :icon="link.icon"
+          @click="closeMobileMenu"
+        >
+          {{ link.label }}
+        </UButton>
+      </div>
+
+      <div class="napkinbets-mobile-menu-section">
+        <UButton
+          v-for="link in mobileSecondaryLinks"
+          :key="link.to"
+          :to="link.to"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          class="w-full justify-start"
+          :icon="link.icon"
+          @click="closeMobileMenu"
+        >
+          {{ link.label }}
+        </UButton>
+      </div>
+
+      <div v-if="isAuthenticated" class="napkinbets-mobile-menu-section">
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-log-out"
+          class="w-full justify-start"
+          @click="signOut"
+        >
+          Sign out
+        </UButton>
       </div>
     </div>
   </div>

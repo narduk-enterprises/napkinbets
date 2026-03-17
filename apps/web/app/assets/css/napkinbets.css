@@ -52,7 +52,7 @@ body {
 .napkinbets-layout-body {
   flex: 1 1 auto;
   overflow-x: clip;
-  padding-bottom: 4.6rem;
+  padding-bottom: 0;
 }
 
 .napkinbets-header-wrap {
@@ -158,6 +158,28 @@ body {
   border-radius: 9999px;
   height: 0.5rem;
   width: 0.5rem;
+}
+
+.napkinbets-mobile-menu-panel {
+  backdrop-filter: blur(18px);
+  background: rgb(255 252 245 / 0.96);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 1rem;
+  box-shadow: var(--napkinbets-panel-shadow);
+  margin: 0.45rem auto 0;
+  max-width: 80rem;
+  padding: 0.4rem;
+}
+
+.napkinbets-mobile-menu-section {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.napkinbets-mobile-menu-section + .napkinbets-mobile-menu-section {
+  border-top: 1px solid var(--napkinbets-border);
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
 }
 
 .napkinbets-mobile-nav {

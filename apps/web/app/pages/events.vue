@@ -78,28 +78,53 @@ useWebPageSchema({
       :description="discoverState.error.value.message"
     />
 
-    <UCard class="napkinbets-panel napkinbets-filter-panel">
-      <div class="space-y-4">
-        <div class="space-y-1">
+    <ClientOnly>
+      <UCard class="napkinbets-panel napkinbets-filter-panel">
+        <div class="space-y-4">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Filters</p>
+            <h2 class="napkinbets-subsection-title">Filter games</h2>
+          </div>
+
+          <div class="napkinbets-form-grid">
+            <UFormField name="sportFilter" label="Sport" for="events-filter-sport">
+              <USelect
+                id="events-filter-sport"
+                v-model="selectedSport"
+                :items="sportOptions"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField name="leagueFilter" label="League" for="events-filter-league">
+              <USelect
+                id="events-filter-league"
+                v-model="selectedLeague"
+                :items="leagueOptions"
+                class="w-full"
+              />
+            </UFormField>
+
+            <UFormField name="stateFilter" label="Status" for="events-filter-status">
+              <USelect
+                id="events-filter-status"
+                v-model="selectedState"
+                :items="stateOptions"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+        </div>
+      </UCard>
+
+      <template #fallback>
+        <div class="napkinbets-panel napkinbets-filter-panel space-y-2 p-4">
           <p class="napkinbets-kicker">Filters</p>
           <h2 class="napkinbets-subsection-title">Filter games</h2>
+          <p class="text-sm text-muted">Filters load with the interactive schedule.</p>
         </div>
-
-        <div class="napkinbets-form-grid">
-          <UFormField name="sportFilter" label="Sport">
-            <USelect v-model="selectedSport" :items="sportOptions" class="w-full" />
-          </UFormField>
-
-          <UFormField name="leagueFilter" label="League">
-            <USelect v-model="selectedLeague" :items="leagueOptions" class="w-full" />
-          </UFormField>
-
-          <UFormField name="stateFilter" label="Status">
-            <USelect v-model="selectedState" :items="stateOptions" class="w-full" />
-          </UFormField>
-        </div>
-      </div>
-    </UCard>
+      </template>
+    </ClientOnly>
 
     <div class="space-y-6">
       <div v-if="discover.spotlights.length" class="napkinbets-section-stack">
