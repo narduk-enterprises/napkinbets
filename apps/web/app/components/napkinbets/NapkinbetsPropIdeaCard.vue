@@ -9,7 +9,9 @@ function tidySentence(value: string) {
   return value.trim().replace(/[.!?]+$/u, '')
 }
 
-const note = computed(() => `${tidySentence(props.idea.context)}. ${tidySentence(props.idea.settlementHint)}.`)
+const note = computed(
+  () => `${tidySentence(props.idea.context)}. ${tidySentence(props.idea.settlementHint)}.`,
+)
 </script>
 
 <template>

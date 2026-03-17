@@ -37,8 +37,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Events</p>
           <h1 class="napkinbets-section-title">Start from tonight&apos;s games.</h1>
           <p class="napkinbets-hero-lede">
-            Pick a real game, keep the terms short, and start a pool without typing the whole
-            setup from scratch.
+            Pick a real game, keep the terms short, and start a pool without typing the whole setup
+            from scratch.
           </p>
           <div class="napkinbets-card-actions">
             <UButton
@@ -48,11 +48,7 @@ useWebPageSchema({
             >
               Start a custom pool
             </UButton>
-            <UButton
-              to="/settings/payments"
-              color="neutral"
-              icon="i-lucide-wallet-cards"
-            >
+            <UButton to="/settings/payments" color="neutral" icon="i-lucide-wallet-cards">
               Payment setup
             </UButton>
           </div>

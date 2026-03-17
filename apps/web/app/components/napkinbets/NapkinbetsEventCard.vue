@@ -168,9 +168,7 @@ const primaryIdeaLink = computed(() =>
           >
             {{ primaryIdea.title }}
           </UButton>
-          <UButton v-else :to="createLink" color="neutral" size="sm">
-            Open picks
-          </UButton>
+          <UButton v-else :to="createLink" color="neutral" size="sm"> Open picks </UButton>
         </div>
       </div>
     </div>
