@@ -88,6 +88,11 @@ export function useNapkinbetsApi() {
     getNotifications() {
       return fetch<NapkinbetsNotificationsResponse>('/api/napkinbets/notifications')
     },
+    markNotificationRead(notificationId: string) {
+      return fetch<{ ok: true }>(`/api/napkinbets/notifications/${notificationId}/read`, {
+        method: 'POST',
+      })
+    },
     getFriends() {
       return fetch<NapkinbetsFriendsResponse>('/api/napkinbets/friends')
     },
@@ -158,6 +163,11 @@ export function useNapkinbetsApi() {
           method: 'POST',
         },
       )
+    },
+    syncPgaPlayers() {
+      return fetch<{ ok: true; count: number }>('/api/admin/napkinbets/sync-pga-players', {
+        method: 'POST',
+      })
     },
     saveAdminAiSettings(payload: UpdateNapkinbetsAiSettingsInput) {
       return fetch('/api/napkinbets/admin/ai-settings', {

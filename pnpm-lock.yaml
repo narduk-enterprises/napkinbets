@@ -52,6 +52,9 @@ importers:
       "@narduk-enterprises/narduk-nuxt-template-layer":
         specifier: workspace:*
         version: link:../../layers/narduk-nuxt-layer
+      "@vueuse/core":
+        specifier: ^14.2.1
+        version: 14.2.1(vue@3.5.29(typescript@5.9.3))
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@cloudflare/workers-types@4.20260307.1)(@opentelemetry/api@1.9.0)(better-sqlite3@12.6.2)

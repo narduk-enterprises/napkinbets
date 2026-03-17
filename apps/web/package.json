@@ -9,7 +9,7 @@
     "dev": "pnpm run db:ready && (doppler run -- nuxt dev || nuxt dev)",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "db:migrate": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir drizzle",
-    "db:seed": "wrangler d1 execute napkinbets-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
+    "db:seed": "wrangler d1 execute napkinbets-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql && wrangler r2 object put napkinbets-uploads/seed/venmo-1.png --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed/venmo-1.png && wrangler r2 object put napkinbets-uploads/seed/venmo-2.png --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed/venmo-2.png",
     "db:reset": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir drizzle --reset && pnpm run db:seed",
     "db:studio": "drizzle-kit studio",
     "db:studio:local": "drizzle-kit studio --config=drizzle-local.config.ts",
@@ -24,14 +24,17 @@
     "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
   },
   "dependencies": {
-    "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@narduk-enterprises/eslint-config": "^1.0.12",
+    "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
+    "@vueuse/core": "^14.2.1",
     "drizzle-orm": "^0.45.1",
     "h3": "^1.15.5",
     "nuxt": "^4.3.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250303.0",
+    "@iconify-json/lucide": "^1.2.94",
     "@tailwindcss/vite": "^4.0.0",
     "drizzle-kit": "^0.31.9",
     "eslint": "^9.39.4",
@@ -40,9 +43,7 @@
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.5",
-    "wrangler": "^4.20.0",
-    "@cloudflare/workers-types": "^4.20250303.0",
-    "@iconify-json/lucide": "^1.2.94"
+    "wrangler": "^4.20.0"
   },
   "overrides": {
     "@cloudflare/unenv-preset": "2.12.1",

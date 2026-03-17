@@ -9,6 +9,11 @@ const latestNotifications = computed(() =>
 
 const isOpen = ref(false)
 
+function handleNotificationClick(id: string) {
+  isOpen.value = false
+  notificationsState?.markAsRead(id)
+}
+
 function kindIcon(kind: string) {
   switch (kind) {
     case 'acceptance':
@@ -75,7 +80,7 @@ function timeAgo(value: string) {
                     : '/notifications'
               "
               class="napkinbets-notification-dropdown-item"
-              @click="isOpen = false"
+              @click="handleNotificationClick(notification.id)"
             >
               <div class="napkinbets-notification-dropdown-icon">
                 <UIcon :name="kindIcon(notification.kind)" class="size-3.5" />

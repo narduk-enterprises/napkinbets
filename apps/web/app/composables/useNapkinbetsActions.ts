@@ -161,6 +161,14 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         { refreshOnError: true },
       )
     },
+    syncPgaPlayers() {
+      return runAction(
+        'admin-taxonomy-league:sync-pga',
+        'PGA players synced successfully.',
+        () => api.syncPgaPlayers(),
+        { refreshOnError: true },
+      )
+    },
     runAdminIngest(tier: string) {
       return runAction(`admin-ingest:${tier}`, 'Event refresh started.', () =>
         api.runAdminIngest(tier),

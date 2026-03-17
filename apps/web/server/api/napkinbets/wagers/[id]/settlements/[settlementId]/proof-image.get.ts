@@ -48,11 +48,18 @@ export default defineEventHandler(async (event) => {
   const object = await r2.get(settlement.proofImageUrl)
 
   if (!object) {
+    if (settlement.proofImageUrl.startsWith('seed/')) {
+      return sendRedirect(
+        event,
+        'https://placehold.co/600x1200/2563eb/ffffff?text=Venmo+Sample',
+        302,
+      )
+    }
     throw createError({ statusCode: 404, message: 'Proof image not found in storage.' })
   }
 
   const headers = new Headers()
-  object.writeHttpMetadata(headers)
+  headers.set('Content-Type', object.httpMetadata?.contentType || 'image/png')
   headers.set('etag', object.httpEtag)
 
   // Cache strictly — images are immutable (when updated, they get a new UUID key)

@@ -1,4 +1,4 @@
-import { eq, desc, inArray, or } from 'drizzle-orm'
+import { eq, desc, inArray, or, and, isNull } from 'drizzle-orm'
 import { requireAuth } from '#layer/server/utils/auth'
 import {
   napkinbetsNotifications,
@@ -35,7 +35,13 @@ export default defineEventHandler(async (event) => {
 
   const conditions = [eq(napkinbetsNotifications.targetUserId, user.id)]
   if (wagerIds.length > 0) {
-    conditions.push(inArray(napkinbetsNotifications.wagerId, wagerIds))
+    const wagerCondition = and(
+      isNull(napkinbetsNotifications.targetUserId),
+      inArray(napkinbetsNotifications.wagerId, wagerIds),
+    )
+    if (wagerCondition) {
+      conditions.push(wagerCondition)
+    }
   }
 
   // Fetch all notifications for wagers and direct notifications

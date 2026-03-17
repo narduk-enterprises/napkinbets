@@ -15,6 +15,14 @@ const props = defineProps<{
   currentUserId: string | null
 }>()
 
+const isLightboxOpen = ref(false)
+const lightboxImageUrl = ref('')
+
+function openLightbox(url: string) {
+  lightboxImageUrl.value = url
+  isLightboxOpen.value = true
+}
+
 const emit = defineEmits<{
   join: [wagerId: string, payload: JoinWagerInput]
   addPick: [wagerId: string, payload: WagerPickInput]
@@ -263,594 +271,636 @@ async function copyPaymentToClipboard() {
 </script>
 
 <template>
-  <UCard class="napkinbets-panel napkinbets-wager-card">
-    <template #header>
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div class="space-y-3">
-          <div class="flex flex-wrap items-center gap-2">
-            <UBadge :color="statusBadgeColor(wager.status)" variant="soft">
-              {{ wager.status }}
-            </UBadge>
-            <UBadge color="neutral" variant="subtle">
-              {{ wager.format }}
-            </UBadge>
-            <UBadge v-if="wager.league" color="info" variant="soft">
-              {{ wager.league.toUpperCase() }}
-            </UBadge>
-          </div>
-
-          <div class="space-y-2">
-            <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
-            <p class="napkinbets-support-copy">
-              {{ wager.description }}
-            </p>
-            <div class="napkinbets-meta-row">
-              <span>{{ wager.eventTitle || 'Custom bet' }}</span>
-              <span v-if="wager.groupName">{{ wager.groupName }}</span>
-              <span>{{ wager.venueName || 'Remote group' }}</span>
-              <span>Host: {{ wager.creatorName }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="canManage" class="flex flex-wrap gap-2">
-          <UButton
-            v-if="!isOneOnOne"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-shuffle"
-            :loading="isBusy(`shuffle:${wager.id}`)"
-            @click="emit('shuffle', wager.id)"
-          >
-            Reroll order
-          </UButton>
-          <UButton
-            v-if="!isOneOnOne"
-            color="info"
-            variant="soft"
-            icon="i-lucide-bell-ring"
-            :loading="isBusy(`reminder:${wager.id}`)"
-            @click="emit('remind', wager.id)"
-          >
-            Queue reminder
-          </UButton>
-          <UButton
-            color="error"
-            variant="soft"
-            icon="i-lucide-trash-2"
-            :loading="isBusy(`clear:${wager.id}`)"
-            @click="emit('clear', wager.id)"
-          >
-            Clear
-          </UButton>
-        </div>
-      </div>
-    </template>
-
-    <div class="napkinbets-card-grid">
-      <div class="space-y-6">
-        <div class="napkinbets-summary-grid">
-          <div class="napkinbets-surface">
-            <p class="napkinbets-surface-label">Stake</p>
-            <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
-            <p class="napkinbets-support-copy">
-              {{ wager.paymentService }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
-            </p>
-          </div>
-
-          <div class="napkinbets-surface">
-            <p class="napkinbets-surface-label">Total payout</p>
-            <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
-            <p class="napkinbets-support-copy">
-              {{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}
-            </p>
-          </div>
-
-          <div class="napkinbets-surface">
-            <p class="napkinbets-surface-label">At a glance</p>
-            <p class="napkinbets-surface-value">{{ wager.participants.length }} players</p>
-            <p class="napkinbets-support-copy">{{ wager.notifications.length }} recent reminders</p>
-          </div>
-        </div>
-
-        <div class="space-y-3">
-          <h3 class="napkinbets-subsection-title">Payout breakdown</h3>
-          <div class="napkinbets-chip-grid">
-            <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
-              <span class="font-semibold text-default">{{ pot.label }}</span>
-              <span class="text-sm text-muted">{{ formatCurrency(pot.amountCents) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <USeparator />
-        <div :class="isOneOnOne ? '' : 'napkinbets-two-column'">
+  <div>
+    <UCard class="napkinbets-panel napkinbets-wager-card">
+      <template #header>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div class="space-y-3">
-            <h3 class="napkinbets-subsection-title">
-              {{ isOneOnOne ? 'Players' : 'Draft order' }}
-            </h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <UBadge :color="statusBadgeColor(wager.status)" variant="soft">
+                {{ wager.status }}
+              </UBadge>
+              <UBadge color="neutral" variant="subtle">
+                {{ wager.format }}
+              </UBadge>
+              <UBadge v-if="wager.league" color="info" variant="soft">
+                {{ wager.league.toUpperCase() }}
+              </UBadge>
+            </div>
+
             <div class="space-y-2">
-              <div
-                v-for="participant in wager.participants"
-                :key="participant.id"
-                class="napkinbets-list-row"
-              >
-                <div class="flex items-center gap-3">
-                  <span v-if="!isOneOnOne" class="napkinbets-order-pill"
-                    >#{{ participant.draftOrder ?? '—' }}</span
+              <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
+              <p class="napkinbets-support-copy">
+                {{ wager.description }}
+              </p>
+              <div class="napkinbets-meta-row">
+                <span>{{ wager.eventTitle || 'Custom bet' }}</span>
+                <span v-if="wager.groupName">{{ wager.groupName }}</span>
+                <span>{{ wager.venueName || 'Remote group' }}</span>
+                <span>Host: {{ wager.creatorName }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="canManage" class="flex flex-wrap gap-2">
+            <UButton
+              v-if="!isOneOnOne"
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-shuffle"
+              :loading="isBusy(`shuffle:${wager.id}`)"
+              @click="emit('shuffle', wager.id)"
+            >
+              Reroll order
+            </UButton>
+            <UButton
+              v-if="!isOneOnOne"
+              color="info"
+              variant="soft"
+              icon="i-lucide-bell-ring"
+              :loading="isBusy(`reminder:${wager.id}`)"
+              @click="emit('remind', wager.id)"
+            >
+              Queue reminder
+            </UButton>
+            <UButton
+              color="error"
+              variant="soft"
+              icon="i-lucide-trash-2"
+              :loading="isBusy(`clear:${wager.id}`)"
+              @click="emit('clear', wager.id)"
+            >
+              Clear
+            </UButton>
+          </div>
+        </div>
+      </template>
+
+      <div class="napkinbets-card-grid">
+        <div class="space-y-6">
+          <div class="napkinbets-summary-grid">
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">Stake</p>
+              <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
+              <p class="napkinbets-support-copy">
+                {{ wager.paymentService
+                }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
+              </p>
+            </div>
+
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">Total payout</p>
+              <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
+              <p class="napkinbets-support-copy">
+                {{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}
+              </p>
+            </div>
+
+            <div class="napkinbets-surface">
+              <p class="napkinbets-surface-label">At a glance</p>
+              <p class="napkinbets-surface-value">{{ wager.participants.length }} players</p>
+              <p class="napkinbets-support-copy">
+                {{ wager.notifications.length }} recent reminders
+              </p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="napkinbets-subsection-title">Payout breakdown</h3>
+            <div class="napkinbets-chip-grid">
+              <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
+                <span class="font-semibold text-default">{{ pot.label }}</span>
+                <span class="text-sm text-muted">{{ formatCurrency(pot.amountCents) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <USeparator />
+          <div :class="isOneOnOne ? '' : 'napkinbets-two-column'">
+            <div class="space-y-3">
+              <h3 class="napkinbets-subsection-title">
+                {{ isOneOnOne ? 'Players' : 'Draft order' }}
+              </h3>
+              <div class="space-y-2">
+                <div
+                  v-for="participant in wager.participants"
+                  :key="participant.id"
+                  class="napkinbets-list-row"
+                >
+                  <div class="flex items-center gap-3">
+                    <span v-if="!isOneOnOne" class="napkinbets-order-pill"
+                      >#{{ participant.draftOrder ?? '—' }}</span
+                    >
+                    <span class="napkinbets-event-avatar">
+                      <img
+                        v-if="participant.avatarUrl"
+                        :src="participant.avatarUrl"
+                        :alt="participant.displayName"
+                        class="napkinbets-event-avatar-image"
+                      />
+                      <span v-else>{{ participant.displayName.slice(0, 2).toUpperCase() }}</span>
+                    </span>
+                    <div>
+                      <p class="font-semibold text-default">{{ participant.displayName }}</p>
+                      <p class="text-sm text-muted">
+                        {{ participant.sideLabel || 'Open side' }}
+                      </p>
+                    </div>
+                  </div>
+                  <UBadge
+                    v-if="isOneOnOne"
+                    :color="participant.joinStatus === 'accepted' ? 'success' : 'warning'"
+                    variant="soft"
                   >
-                  <span class="napkinbets-event-avatar">
-                    <img
-                      v-if="participant.avatarUrl"
-                      :src="participant.avatarUrl"
-                      :alt="participant.displayName"
-                      class="napkinbets-event-avatar-image"
-                    />
-                    <span v-else>{{ participant.displayName.slice(0, 2).toUpperCase() }}</span>
-                  </span>
+                    {{ participant.joinStatus === 'accepted' ? 'Accepted' : 'Waiting' }}
+                  </UBadge>
+                  <UBadge
+                    v-else
+                    :color="
+                      participant.paymentStatus === 'confirmed'
+                        ? 'success'
+                        : participant.paymentStatus === 'submitted'
+                          ? 'info'
+                          : 'warning'
+                    "
+                    variant="soft"
+                  >
+                    {{ participant.paymentStatus }}
+                  </UBadge>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="!isOneOnOne" class="space-y-3">
+              <h3 class="napkinbets-subsection-title">Leaderboard</h3>
+              <div class="space-y-2">
+                <div
+                  v-for="row in wager.leaderboard"
+                  :key="row.participantId"
+                  class="napkinbets-list-row"
+                >
                   <div>
-                    <p class="font-semibold text-default">{{ participant.displayName }}</p>
+                    <p class="font-semibold text-default">{{ row.displayName }}</p>
                     <p class="text-sm text-muted">
-                      {{ participant.sideLabel || 'Open side' }}
+                      {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{
+                        row.pickCount === 1 ? '' : 's'
+                      }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-semibold text-default">{{ row.score }} pts</p>
+                    <p class="text-sm text-muted">
+                      {{ formatCurrency(row.projectedPayoutCents) }} projected
                     </p>
                   </div>
                 </div>
-                <UBadge
-                  v-if="isOneOnOne"
-                  :color="participant.joinStatus === 'accepted' ? 'success' : 'warning'"
-                  variant="soft"
-                >
-                  {{ participant.joinStatus === 'accepted' ? 'Accepted' : 'Waiting' }}
-                </UBadge>
-                <UBadge
-                  v-else
-                  :color="
-                    participant.paymentStatus === 'confirmed'
-                      ? 'success'
-                      : participant.paymentStatus === 'submitted'
-                        ? 'info'
-                        : 'warning'
-                  "
-                  variant="soft"
-                >
-                  {{ participant.paymentStatus }}
-                </UBadge>
               </div>
             </div>
           </div>
 
-          <div v-if="!isOneOnOne" class="space-y-3">
-            <h3 class="napkinbets-subsection-title">Leaderboard</h3>
+          <USeparator />
+
+          <div class="napkinbets-two-column">
+            <div v-if="wager.picks.length" class="space-y-3">
+              <h3 class="napkinbets-subsection-title">Picks</h3>
+              <div class="space-y-2">
+                <div v-for="pick in wager.picks" :key="pick.id" class="napkinbets-list-row">
+                  <div>
+                    <p class="font-semibold text-default">{{ pick.pickLabel }}</p>
+                    <p class="text-sm text-muted">
+                      {{ pick.pickType }}{{ pick.pickValue ? ` • ${pick.pickValue}` : '' }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-semibold text-default">{{ pick.liveScore }} live</p>
+                    <p class="text-sm text-muted">{{ pick.outcome }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="!isOneOnOne && wager.notifications.length" class="space-y-3">
+              <h3 class="napkinbets-subsection-title">Activity</h3>
+              <div class="space-y-2">
+                <div
+                  v-for="notification in wager.notifications"
+                  :key="notification.id"
+                  class="napkinbets-note-row"
+                >
+                  <div>
+                    <p class="font-semibold text-default">{{ notification.title }}</p>
+                    <p class="text-sm text-muted">
+                      {{ notification.body }}
+                    </p>
+                  </div>
+                  <UBadge color="neutral" variant="subtle">
+                    {{ notification.deliveryStatus }}
+                  </UBadge>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <USeparator />
+
+          <div v-if="isAuthenticated" class="napkinbets-form-section">
+            <!-- Invited: show ONLY accept/decline banner -->
+            <div v-if="isInvited" class="space-y-4">
+              <UAlert
+                color="warning"
+                variant="soft"
+                icon="i-lucide-ticket-check"
+                title="You've been challenged"
+                :description="`${wager.creatorName} invited you to this bet as ${myParticipant!.displayName}. Accept to lock in your side, or decline to pass.`"
+              />
+              <div class="flex flex-wrap gap-3">
+                <UButton
+                  color="primary"
+                  icon="i-lucide-check"
+                  :loading="isBusy(`join:${wager.id}`)"
+                  @click="acceptInvite"
+                >
+                  Accept bet
+                </UButton>
+                <UButton
+                  color="error"
+                  variant="soft"
+                  icon="i-lucide-x"
+                  :loading="isBusy(`decline:${wager.id}`)"
+                  @click="emit('decline', wager.id)"
+                >
+                  Decline
+                </UButton>
+              </div>
+            </div>
+
+            <!-- Accepted participant -->
+            <template v-else-if="isAlreadyAccepted">
+              <UAlert
+                color="success"
+                variant="soft"
+                icon="i-lucide-check-circle-2"
+                title="You're in this bet"
+                :description="`Locked in as ${myParticipant!.displayName} on ${myParticipant!.sideLabel || 'Open side'}.`"
+              />
+
+              <!-- Pool bet only: pick + settlement forms -->
+              <div v-if="!isOneOnOne" class="space-y-4 pt-4">
+                <h3 class="napkinbets-subsection-title">Log a pick</h3>
+                <UForm :state="pickState" class="space-y-3" @submit.prevent="submitPick">
+                  <UFormField name="participantName" label="Participant">
+                    <USelect
+                      v-model="pickState.participantName"
+                      :items="participantNameOptions"
+                      class="w-full"
+                    />
+                  </UFormField>
+                  <UFormField name="pickLabel" label="Pick label">
+                    <UInput v-model="pickState.pickLabel" class="w-full" />
+                  </UFormField>
+                  <UFormField name="pickValue" label="Pick detail">
+                    <UInput v-model="pickState.pickValue" class="w-full" />
+                  </UFormField>
+                  <UFormField name="confidence" label="Confidence">
+                    <UInput v-model="pickState.confidence" type="number" class="w-full" />
+                  </UFormField>
+                  <UButton
+                    type="submit"
+                    color="neutral"
+                    variant="soft"
+                    icon="i-lucide-pencil-line"
+                    :loading="isBusy(`pick:${wager.id}`)"
+                  >
+                    Save pick
+                  </UButton>
+                </UForm>
+              </div>
+
+              <div v-if="!isOneOnOne" class="space-y-4 pt-4">
+                <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
+                <UForm
+                  :state="settlementState"
+                  class="space-y-3"
+                  @submit.prevent="submitSettlement"
+                >
+                  <UFormField name="participantId" label="Participant">
+                    <USelect
+                      v-model="settlementState.participantId"
+                      :items="participantOptions"
+                      class="w-full"
+                    />
+                  </UFormField>
+                  <UFormField name="amountDollars" label="Amount ($)">
+                    <UInput v-model="settlementState.amountDollars" type="number" class="w-full" />
+                  </UFormField>
+                  <UFormField name="confirmationCode" label="Confirmation code">
+                    <UInput v-model="settlementState.confirmationCode" class="w-full" />
+                  </UFormField>
+                  <UFormField name="proofImage" label="Screenshot proof (optional)">
+                    <UInput
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/heic"
+                      class="w-full"
+                      @change="handleFileSelected"
+                    />
+                  </UFormField>
+                  <UFormField name="note" label="Note">
+                    <UInput
+                      v-model="settlementState.note"
+                      class="w-full"
+                      placeholder="Paid after final whistle"
+                    />
+                  </UFormField>
+                  <UButton
+                    type="submit"
+                    color="info"
+                    variant="soft"
+                    icon="i-lucide-wallet-cards"
+                    :loading="isBusy(`wager:settle:${wager.id}`)"
+                  >
+                    Save proof
+                  </UButton>
+                </UForm>
+              </div>
+            </template>
+
+            <!-- Not a participant yet: show generic join form (pool bets only) -->
+            <template v-else-if="!isOneOnOne">
+              <div class="space-y-4">
+                <h3 class="napkinbets-subsection-title">Join the bet</h3>
+                <div class="napkinbets-chip-grid">
+                  <span
+                    v-for="option in wager.sideOptions"
+                    :key="option"
+                    class="napkinbets-choice-chip"
+                  >
+                    {{ option }}
+                  </span>
+                </div>
+                <UForm :state="joinState" class="space-y-3" @submit.prevent="submitJoin">
+                  <UFormField name="displayName" label="Participant name">
+                    <UInput v-model="joinState.displayName" class="w-full" />
+                  </UFormField>
+                  <UFormField name="sideLabel" label="Chosen side">
+                    <USelect
+                      v-model="joinState.sideLabel"
+                      :items="wager.sideOptions.map((option) => ({ label: option, value: option }))"
+                      class="w-full"
+                    />
+                  </UFormField>
+                  <UButton
+                    type="submit"
+                    color="primary"
+                    icon="i-lucide-user-plus"
+                    :loading="isBusy(`join:${wager.id}`)"
+                  >
+                    Join bet
+                  </UButton>
+                </UForm>
+              </div>
+            </template>
+          </div>
+
+          <UAlert
+            v-else
+            color="warning"
+            variant="soft"
+            icon="i-lucide-log-in"
+            title="Sign in to join, pick, or settle"
+            description="Bet detail is shareable, but player actions and payment proof require an account."
+          >
+            <template #actions>
+              <div class="napkinbets-card-actions">
+                <UButton to="/login" color="neutral" variant="soft">Sign in</UButton>
+                <UButton to="/register" color="primary">Create account</UButton>
+              </div>
+            </template>
+          </UAlert>
+        </div>
+
+        <div class="space-y-6">
+          <div class="napkinbets-surface space-y-3">
+            <h3 class="napkinbets-subsection-title">Pay with</h3>
+            <div class="space-y-2">
+              <div class="napkinbets-list-row">
+                <div>
+                  <p class="font-semibold text-default">Pay to</p>
+                  <p class="text-sm text-muted">
+                    {{ wager.paymentService
+                    }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
+                  </p>
+                </div>
+                <p class="font-semibold text-default">
+                  {{ formatCurrency(Math.round(settlementState.amountDollars * 100)) }}
+                </p>
+              </div>
+              <div class="napkinbets-note-row">
+                <div>
+                  <p class="font-semibold text-default">Suggested note</p>
+                  <p class="text-sm text-muted">{{ paymentNote }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="napkinbets-card-actions flex-wrap">
+              <UButton
+                v-for="link in paymentLinks"
+                :key="link.href"
+                :to="link.href"
+                :color="link.isMobileApp ? 'primary' : 'neutral'"
+                :variant="link.isMobileApp ? 'solid' : 'soft'"
+                :size="link.isMobileApp ? 'lg' : 'md'"
+                target="_blank"
+                :icon="link.icon"
+                class="min-h-[44px]"
+              >
+                {{ link.label }}
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                icon="i-lucide-copy"
+                class="min-h-[44px]"
+                @click="copyPaymentToClipboard"
+              >
+                Copy details
+              </UButton>
+            </div>
+
+            <p class="napkinbets-support-copy">
+              Tap the app button to launch your payment app directly, or copy the details to paste
+              manually.
+            </p>
+          </div>
+
+          <div class="napkinbets-surface space-y-4">
+            <h3 class="napkinbets-subsection-title">Context feed</h3>
+
+            <NapkinbetsWagerScoreboard v-if="wager.eventId" :wager="wager" />
+
+            <div
+              v-if="wager.liveGames.length"
+              class="space-y-3"
+              :class="wager.eventId ? 'pt-2 border-t border-dashed border-default mt-4' : ''"
+            >
+              <h4 v-if="wager.eventId" class="text-sm font-semibold text-default">
+                Other Live Games
+              </h4>
+              <div
+                v-for="game in wager.liveGames.slice(0, 3)"
+                :key="game.id"
+                class="napkinbets-live-game"
+              >
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <p class="font-semibold text-default">{{ game.shortName }}</p>
+                    <p class="text-sm text-muted">{{ game.status }}</p>
+                  </div>
+                  <UBadge color="primary" variant="soft">
+                    {{ game.league.toUpperCase() }}
+                  </UBadge>
+                </div>
+              </div>
+            </div>
+
+            <p v-else-if="!wager.eventId" class="napkinbets-support-copy">
+              Add a sport, league and event to this bet to see live scoreboard context here.
+            </p>
+          </div>
+
+          <div class="napkinbets-surface space-y-3">
+            <h3 class="napkinbets-subsection-title">Manual settlement ledger</h3>
             <div class="space-y-2">
               <div
-                v-for="row in wager.leaderboard"
-                :key="row.participantId"
+                v-for="settlement in wager.settlements"
+                :key="settlement.id"
                 class="napkinbets-list-row"
               >
-                <div>
-                  <p class="font-semibold text-default">{{ row.displayName }}</p>
-                  <p class="text-sm text-muted">
-                    {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{
-                      row.pickCount === 1 ? '' : 's'
-                    }}
-                  </p>
+                <div class="flex gap-4">
+                  <div v-if="settlement.proofImageUrl" class="shrink-0 -my-1">
+                    <ULink
+                      @click="
+                        openLightbox(
+                          `/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`,
+                        )
+                      "
+                      class="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded cursor-pointer"
+                      title="View full payment proof"
+                    >
+                      <img
+                        :src="`/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`"
+                        alt="Payment proof"
+                        class="h-16 w-16 hover:opacity-80 transition-opacity rounded object-cover shadow-sm bg-muted border border-default"
+                      />
+                    </ULink>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-default truncate">
+                      {{ participantNames.get(settlement.participantId) || settlement.method }}
+                    </p>
+                    <p class="text-sm text-muted">
+                      {{ settlement.method }} •
+                      {{
+                        settlement.confirmationCode ||
+                        settlement.handle ||
+                        'Manual confirmation pending'
+                      }}
+                    </p>
+                    <p v-if="settlement.rejectionNote" class="text-sm text-error mt-1">
+                      {{ settlement.rejectionNote }}
+                    </p>
+                  </div>
                 </div>
-                <div class="text-right">
-                  <p class="font-semibold text-default">{{ row.score }} pts</p>
-                  <p class="text-sm text-muted">
-                    {{ formatCurrency(row.projectedPayoutCents) }} projected
+                <div class="text-right space-y-2 shrink-0">
+                  <UBadge
+                    :color="settlementBadgeColor(settlement.verificationStatus)"
+                    variant="soft"
+                  >
+                    {{ settlement.verificationStatus }}
+                  </UBadge>
+                  <UBadge
+                    v-if="settlement.recipientAcknowledged"
+                    color="success"
+                    variant="soft"
+                    icon="i-lucide-check-check"
+                  >
+                    Recipient received
+                  </UBadge>
+                  <p class="font-semibold text-default">
+                    {{ formatCurrency(settlement.amountCents) }}
                   </p>
+                  <div class="flex justify-end gap-2">
+                    <UButton
+                      v-if="
+                        !canManage &&
+                        myParticipant &&
+                        myParticipant.id !== settlement.participantId &&
+                        !settlement.recipientAcknowledged
+                      "
+                      color="success"
+                      variant="soft"
+                      size="sm"
+                      :loading="isBusy(`wager:acknowledge:${settlement.id}`)"
+                      @click="emitAcknowledge(wager.id, settlement.id)"
+                    >
+                      Acknowledge receipt
+                    </UButton>
+                    <UButton
+                      v-if="canManage && settlement.verificationStatus !== 'confirmed'"
+                      color="success"
+                      variant="soft"
+                      size="sm"
+                      :loading="isBusy(`settlement-confirm:${settlement.id}`)"
+                      @click="emit('confirmSettlement', wager.id, settlement.id)"
+                    >
+                      Confirm host
+                    </UButton>
+                    <UButton
+                      v-if="canManage && settlement.verificationStatus !== 'confirmed'"
+                      color="error"
+                      variant="soft"
+                      size="sm"
+                      :loading="isBusy(`settlement-reject:${settlement.id}`)"
+                      @click="emit('rejectSettlement', wager.id, settlement.id)"
+                    >
+                      Send back
+                    </UButton>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <UAlert
+            color="warning"
+            variant="soft"
+            icon="i-lucide-badge-alert"
+            title="Compliance rail"
+            :description="wager.terms"
+          />
         </div>
+      </div>
+    </UCard>
 
-        <USeparator />
-
-        <div class="napkinbets-two-column">
-          <div v-if="wager.picks.length" class="space-y-3">
-            <h3 class="napkinbets-subsection-title">Picks</h3>
-            <div class="space-y-2">
-              <div v-for="pick in wager.picks" :key="pick.id" class="napkinbets-list-row">
-                <div>
-                  <p class="font-semibold text-default">{{ pick.pickLabel }}</p>
-                  <p class="text-sm text-muted">
-                    {{ pick.pickType }}{{ pick.pickValue ? ` • ${pick.pickValue}` : '' }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p class="font-semibold text-default">{{ pick.liveScore }} live</p>
-                  <p class="text-sm text-muted">{{ pick.outcome }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="!isOneOnOne && wager.notifications.length" class="space-y-3">
-            <h3 class="napkinbets-subsection-title">Activity</h3>
-            <div class="space-y-2">
-              <div
-                v-for="notification in wager.notifications"
-                :key="notification.id"
-                class="napkinbets-note-row"
-              >
-                <div>
-                  <p class="font-semibold text-default">{{ notification.title }}</p>
-                  <p class="text-sm text-muted">
-                    {{ notification.body }}
-                  </p>
-                </div>
-                <UBadge color="neutral" variant="subtle">
-                  {{ notification.deliveryStatus }}
-                </UBadge>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <USeparator />
-
-        <div v-if="isAuthenticated" class="napkinbets-form-section">
-          <!-- Invited: show ONLY accept/decline banner -->
-          <div v-if="isInvited" class="space-y-4">
-            <UAlert
-              color="warning"
-              variant="soft"
-              icon="i-lucide-ticket-check"
-              title="You've been challenged"
-              :description="`${wager.creatorName} invited you to this bet as ${myParticipant!.displayName}. Accept to lock in your side, or decline to pass.`"
-            />
-            <div class="flex flex-wrap gap-3">
-              <UButton
-                color="primary"
-                icon="i-lucide-check"
-                :loading="isBusy(`join:${wager.id}`)"
-                @click="acceptInvite"
-              >
-                Accept bet
-              </UButton>
-              <UButton
-                color="error"
-                variant="soft"
-                icon="i-lucide-x"
-                :loading="isBusy(`decline:${wager.id}`)"
-                @click="emit('decline', wager.id)"
-              >
-                Decline
-              </UButton>
-            </div>
-          </div>
-
-          <!-- Accepted participant -->
-          <template v-else-if="isAlreadyAccepted">
-            <UAlert
-              color="success"
-              variant="soft"
-              icon="i-lucide-check-circle-2"
-              title="You're in this bet"
-              :description="`Locked in as ${myParticipant!.displayName} on ${myParticipant!.sideLabel || 'Open side'}.`"
-            />
-
-            <!-- Pool bet only: pick + settlement forms -->
-            <div v-if="!isOneOnOne" class="space-y-4 pt-4">
-              <h3 class="napkinbets-subsection-title">Log a pick</h3>
-              <UForm :state="pickState" class="space-y-3" @submit.prevent="submitPick">
-                <UFormField name="participantName" label="Participant">
-                  <USelect
-                    v-model="pickState.participantName"
-                    :items="participantNameOptions"
-                    class="w-full"
-                  />
-                </UFormField>
-                <UFormField name="pickLabel" label="Pick label">
-                  <UInput v-model="pickState.pickLabel" class="w-full" />
-                </UFormField>
-                <UFormField name="pickValue" label="Pick detail">
-                  <UInput v-model="pickState.pickValue" class="w-full" />
-                </UFormField>
-                <UFormField name="confidence" label="Confidence">
-                  <UInput v-model="pickState.confidence" type="number" class="w-full" />
-                </UFormField>
-                <UButton
-                  type="submit"
-                  color="neutral"
-                  variant="soft"
-                  icon="i-lucide-pencil-line"
-                  :loading="isBusy(`pick:${wager.id}`)"
-                >
-                  Save pick
-                </UButton>
-              </UForm>
-            </div>
-
-            <div v-if="!isOneOnOne" class="space-y-4 pt-4">
-              <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
-              <UForm :state="settlementState" class="space-y-3" @submit.prevent="submitSettlement">
-                <UFormField name="participantId" label="Participant">
-                  <USelect
-                    v-model="settlementState.participantId"
-                    :items="participantOptions"
-                    class="w-full"
-                  />
-                </UFormField>
-                <UFormField name="amountDollars" label="Amount ($)">
-                  <UInput v-model="settlementState.amountDollars" type="number" class="w-full" />
-                </UFormField>
-                <UFormField name="confirmationCode" label="Confirmation code">
-                  <UInput v-model="settlementState.confirmationCode" class="w-full" />
-                </UFormField>
-                <UFormField name="proofImage" label="Screenshot proof (optional)">
-                  <UInput
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/heic"
-                    class="w-full"
-                    @change="handleFileSelected"
-                  />
-                </UFormField>
-                <UFormField name="note" label="Note">
-                  <UInput
-                    v-model="settlementState.note"
-                    class="w-full"
-                    placeholder="Paid after final whistle"
-                  />
-                </UFormField>
-                <UButton
-                  type="submit"
-                  color="info"
-                  variant="soft"
-                  icon="i-lucide-wallet-cards"
-                  :loading="isBusy(`wager:settle:${wager.id}`)"
-                >
-                  Save proof
-                </UButton>
-              </UForm>
-            </div>
-          </template>
-
-          <!-- Not a participant yet: show generic join form (pool bets only) -->
-          <template v-else-if="!isOneOnOne">
-            <div class="space-y-4">
-              <h3 class="napkinbets-subsection-title">Join the bet</h3>
-              <div class="napkinbets-chip-grid">
-                <span
-                  v-for="option in wager.sideOptions"
-                  :key="option"
-                  class="napkinbets-choice-chip"
-                >
-                  {{ option }}
-                </span>
-              </div>
-              <UForm :state="joinState" class="space-y-3" @submit.prevent="submitJoin">
-                <UFormField name="displayName" label="Participant name">
-                  <UInput v-model="joinState.displayName" class="w-full" />
-                </UFormField>
-                <UFormField name="sideLabel" label="Chosen side">
-                  <USelect
-                    v-model="joinState.sideLabel"
-                    :items="wager.sideOptions.map((option) => ({ label: option, value: option }))"
-                    class="w-full"
-                  />
-                </UFormField>
-                <UButton
-                  type="submit"
-                  color="primary"
-                  icon="i-lucide-user-plus"
-                  :loading="isBusy(`join:${wager.id}`)"
-                >
-                  Join bet
-                </UButton>
-              </UForm>
-            </div>
-          </template>
-        </div>
-
-        <UAlert
-          v-else
-          color="warning"
-          variant="soft"
-          icon="i-lucide-log-in"
-          title="Sign in to join, pick, or settle"
-          description="Bet detail is shareable, but player actions and payment proof require an account."
+    <UModal v-model:open="isLightboxOpen">
+      <template #content>
+        <div
+          class="relative flex flex-col items-center justify-center p-2 bg-transparent overflow-hidden"
         >
-          <template #actions>
-            <div class="napkinbets-card-actions">
-              <UButton to="/login" color="neutral" variant="soft">Sign in</UButton>
-              <UButton to="/register" color="primary">Create account</UButton>
-            </div>
-          </template>
-        </UAlert>
-      </div>
-
-      <div class="space-y-6">
-        <div class="napkinbets-surface space-y-3">
-          <h3 class="napkinbets-subsection-title">Pay with</h3>
-          <div class="space-y-2">
-            <div class="napkinbets-list-row">
-              <div>
-                <p class="font-semibold text-default">Pay to</p>
-                <p class="text-sm text-muted">
-                  {{ wager.paymentService
-                  }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
-                </p>
-              </div>
-              <p class="font-semibold text-default">
-                {{ formatCurrency(Math.round(settlementState.amountDollars * 100)) }}
-              </p>
-            </div>
-            <div class="napkinbets-note-row">
-              <div>
-                <p class="font-semibold text-default">Suggested note</p>
-                <p class="text-sm text-muted">{{ paymentNote }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="napkinbets-card-actions flex-wrap">
-            <UButton
-              v-for="link in paymentLinks"
-              :key="link.href"
-              :to="link.href"
-              :color="link.isMobileApp ? 'primary' : 'neutral'"
-              :variant="link.isMobileApp ? 'solid' : 'soft'"
-              :size="link.isMobileApp ? 'lg' : 'md'"
-              target="_blank"
-              :icon="link.icon"
-              class="min-h-[44px]"
-            >
-              {{ link.label }}
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              icon="i-lucide-copy"
-              class="min-h-[44px]"
-              @click="copyPaymentToClipboard"
-            >
-              Copy details
-            </UButton>
-          </div>
-
-          <p class="napkinbets-support-copy">
-            Tap the app button to launch your payment app directly, or copy the details to paste
-            manually.
-          </p>
+          <img
+            :src="lightboxImageUrl"
+            alt="Full payment proof"
+            class="max-w-full max-h-[85vh] rounded-lg object-contain"
+          />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-lucide-x"
+            class="absolute top-4 right-4 rounded-full bg-black/50 text-white hover:bg-black/70 backdrop-blur"
+            @click="isLightboxOpen = false"
+          />
         </div>
-
-        <div class="napkinbets-surface space-y-3">
-          <h3 class="napkinbets-subsection-title">Context feed</h3>
-
-          <div v-if="wager.liveGames.length" class="space-y-3">
-            <div
-              v-for="game in wager.liveGames.slice(0, 3)"
-              :key="game.id"
-              class="napkinbets-live-game"
-            >
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <p class="font-semibold text-default">{{ game.shortName }}</p>
-                  <p class="text-sm text-muted">{{ game.status }}</p>
-                </div>
-                <UBadge color="primary" variant="soft">
-                  {{ game.league.toUpperCase() }}
-                </UBadge>
-              </div>
-            </div>
-          </div>
-
-          <p v-else class="napkinbets-support-copy">
-            Add a sport and league to this bet to see live scoreboard context here.
-          </p>
-
-          <div v-if="wager.weather" class="napkinbets-weather-card">
-            <div class="flex items-start justify-between gap-4">
-              <div>
-                <p class="font-semibold text-default">{{ wager.weather.location }}</p>
-                <p class="text-sm text-muted">{{ wager.weather.conditions }}</p>
-              </div>
-              <p class="text-2xl font-display text-default">{{ wager.weather.temperatureF }}°</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="napkinbets-surface space-y-3">
-          <h3 class="napkinbets-subsection-title">Manual settlement ledger</h3>
-          <div class="space-y-2">
-            <div
-              v-for="settlement in wager.settlements"
-              :key="settlement.id"
-              class="napkinbets-list-row"
-            >
-              <div class="flex gap-4">
-                <div v-if="settlement.proofImageUrl" class="shrink-0">
-                  <img
-                    :src="`/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`"
-                    alt="Payment proof"
-                    class="h-16 w-16 rounded object-cover shadow-sm bg-muted border border-default"
-                  />
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-default truncate">
-                    {{ participantNames.get(settlement.participantId) || settlement.method }}
-                  </p>
-                  <p class="text-sm text-muted">
-                    {{ settlement.method }} •
-                    {{
-                      settlement.confirmationCode ||
-                      settlement.handle ||
-                      'Manual confirmation pending'
-                    }}
-                  </p>
-                  <p v-if="settlement.rejectionNote" class="text-sm text-error mt-1">
-                    {{ settlement.rejectionNote }}
-                  </p>
-                </div>
-              </div>
-              <div class="text-right space-y-2 shrink-0">
-                <UBadge :color="settlementBadgeColor(settlement.verificationStatus)" variant="soft">
-                  {{ settlement.verificationStatus }}
-                </UBadge>
-                <UBadge
-                  v-if="settlement.recipientAcknowledged"
-                  color="success"
-                  variant="soft"
-                  icon="i-lucide-check-check"
-                >
-                  Recipient received
-                </UBadge>
-                <p class="font-semibold text-default">
-                  {{ formatCurrency(settlement.amountCents) }}
-                </p>
-                <div class="flex justify-end gap-2">
-                  <UButton
-                    v-if="
-                      !canManage &&
-                      myParticipant &&
-                      myParticipant.id !== settlement.participantId &&
-                      !settlement.recipientAcknowledged
-                    "
-                    color="success"
-                    variant="soft"
-                    size="sm"
-                    :loading="isBusy(`wager:acknowledge:${settlement.id}`)"
-                    @click="emitAcknowledge(wager.id, settlement.id)"
-                  >
-                    Acknowledge receipt
-                  </UButton>
-                  <UButton
-                    v-if="canManage && settlement.verificationStatus !== 'confirmed'"
-                    color="success"
-                    variant="soft"
-                    size="sm"
-                    :loading="isBusy(`settlement-confirm:${settlement.id}`)"
-                    @click="emit('confirmSettlement', wager.id, settlement.id)"
-                  >
-                    Confirm host
-                  </UButton>
-                  <UButton
-                    v-if="canManage && settlement.verificationStatus !== 'confirmed'"
-                    color="error"
-                    variant="soft"
-                    size="sm"
-                    :loading="isBusy(`settlement-reject:${settlement.id}`)"
-                    @click="emit('rejectSettlement', wager.id, settlement.id)"
-                  >
-                    Send back
-                  </UButton>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <UAlert
-          color="warning"
-          variant="soft"
-          icon="i-lucide-badge-alert"
-          title="Compliance rail"
-          :description="wager.terms"
-        />
-      </div>
-    </div>
-  </UCard>
+      </template>
+    </UModal>
+  </div>
 </template>

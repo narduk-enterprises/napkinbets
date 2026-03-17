@@ -107,6 +107,7 @@ useWebPageSchema({
                   : '/notifications'
             "
             class="napkinbets-notification-row"
+            @click="notificationsState.markAsRead(notification.id)"
           >
             <div class="napkinbets-notification-row-icon">
               <UIcon :name="kindIcon(notification.kind)" class="size-4" />

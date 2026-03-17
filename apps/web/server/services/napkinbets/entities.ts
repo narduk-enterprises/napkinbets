@@ -88,21 +88,26 @@ function buildFallbackVenueExternalId(leagueKey: string, venue: NapkinbetsApiSpo
 }
 
 function buildVenueSlug(
+  sportKey: string,
   venue: Pick<typeof napkinbetsVenues.$inferInsert, 'name' | 'city' | 'stateRegion' | 'id'>,
 ) {
   const base = slugify([venue.name, venue.city, venue.stateRegion].filter(Boolean).join(' '))
   const suffix = venue.id.split(':').at(-1) ?? venue.id.slice(-8)
-  return `${base || 'venue'}-${suffix}`
+  return `${slugify(sportKey)}-${base || 'venue'}-${suffix}`
 }
 
-function buildTeamSlug(team: Pick<typeof napkinbetsTeams.$inferInsert, 'name' | 'externalTeamId'>) {
-  return `${slugify(team.name) || 'team'}-${team.externalTeamId}`
+function buildTeamSlug(
+  sportKey: string,
+  team: Pick<typeof napkinbetsTeams.$inferInsert, 'name' | 'externalTeamId'>,
+) {
+  return `${slugify(sportKey)}-${slugify(team.name) || 'team'}-${team.externalTeamId}`
 }
 
 function buildPlayerSlug(
+  sportKey: string,
   player: Pick<typeof napkinbetsPlayers.$inferInsert, 'displayName' | 'externalPlayerId'>,
 ) {
-  return `${slugify(player.displayName) || 'player'}-${player.externalPlayerId}`
+  return `${slugify(sportKey)}-${slugify(player.displayName) || 'player'}-${player.externalPlayerId}`
 }
 
 function buildSeasonCandidates(
@@ -145,7 +150,7 @@ async function upsertVenue(
   const id = buildProviderEntityId(product, 'venue', externalVenueId)
   const values: typeof napkinbetsVenues.$inferInsert = {
     id,
-    slug: buildVenueSlug({
+    slug: buildVenueSlug(sportKey, {
       id,
       name: venue.name,
       city: venue.city,
@@ -482,7 +487,10 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
         const teamId = buildProviderEntityId(league.entityProviderSportKey, 'team', team.externalId)
         const teamValues: typeof napkinbetsTeams.$inferInsert = {
           id: teamId,
-          slug: buildTeamSlug({ name: team.name, externalTeamId: team.externalId }),
+          slug: buildTeamSlug(league.sportKey, {
+            name: team.name,
+            externalTeamId: team.externalId,
+          }),
           source: 'api-sports',
           externalTeamId: team.externalId,
           sportKey: league.sportKey,
@@ -588,7 +596,7 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
           const names = splitDisplayName(player.displayName)
           const playerValues: typeof napkinbetsPlayers.$inferInsert = {
             id: playerId,
-            slug: buildPlayerSlug({
+            slug: buildPlayerSlug(league.sportKey, {
               displayName: player.displayName,
               externalPlayerId: player.externalId,
             }),

@@ -41,8 +41,8 @@ VALUES
 INSERT OR IGNORE INTO napkinbets_pots (id, wager_id, label, amount_cents, sort_order)
 VALUES ('seed-pot-0001', 'seed-bet-0001', 'Winner', 1000, 0);
 
-INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, verified_by_user_id, verified_at, recorded_at)
-VALUES ('seed-settle-0001', 'seed-bet-0001', 'seed-part-0001', 1000, 'Venmo', '@logan-v', 'VNM-8842', 'GG easy money', 'confirmed', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:30:00.000Z', '2026-03-17T20:15:00.000Z');
+INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, verified_by_user_id, verified_at, recorded_at, proof_image_url)
+VALUES ('seed-settle-0001', 'seed-bet-0001', 'seed-part-0001', 1000, 'Venmo', '@logan-v', 'VNM-8842', 'GG easy money', 'confirmed', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:30:00.000Z', '2026-03-17T20:15:00.000Z', 'seed/venmo-1.png');
 
 
 -- ▸ BET 2 — Finished & Unpaid (Astros 10, Pirates 2 — Pat picked HOU, won, hasn't been paid)
@@ -64,11 +64,14 @@ VALUES
 INSERT OR IGNORE INTO napkinbets_pots (id, wager_id, label, amount_cents, sort_order)
 VALUES ('seed-pot-0002', 'seed-bet-0002', 'Winner', 2000, 0);
 
+INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, recorded_at, proof_image_url)
+VALUES ('seed-settle-0002', 'seed-bet-0002', 'seed-part-0004', 2000, 'Venmo', '@pat-nb', 'VNM-9999', 'Sent, check your venmo brother', 'submitted', '2026-03-17T19:45:00.000Z', 'seed/venmo-2.png');
+
 
 -- ▸ BET 3 — Finished, Settlement Submitted but Pending Verification (Red Sox 4, Braves 3 — Logan picked BOS, won)
 INSERT OR IGNORE INTO napkinbets_wagers (id, owner_user_id, slug, title, description, napkin_type, board_type, category, format, sport, league, context_key, status, creator_name, side_options_json, entry_fee_cents, payment_service, payment_handle, terms, venue_name, event_source, event_id, event_title, event_starts_at, event_status, event_state, home_team_name, away_team_name, home_score, away_score, created_at, updated_at)
 VALUES (
-  'seed-bet-0003', '00000000-0000-0000-0000-000000000004', 'redsox-braves-spring-1', 'Red Sox vs Braves', 'One-on-one bet for ATL @ BOS spring training.', 'simple-bet', 'event-backed', 'sports', 'head-to-head', 'baseball', 'mlb', 'pro', 'settled', 'Logan', '["Red Sox","Braves"]', 500, 'Cash App', '$logan-cash', 'Friendly bets only. Cash App settlement happens manually after the official result posts.', 'Watch party', 'espn', 'espn:mlb:401833234', 'ATL @ BOS', '2026-03-17T17:05Z', 'Final', 'post', 'Boston Red Sox', 'Atlanta Braves', '4', '3', '2026-03-17T11:00:00.000Z', '2026-03-17T19:45:00.000Z'
+  'seed-bet-0003', '00000000-0000-0000-0000-000000000004', 'redsox-braves-spring-1', 'Red Sox vs Braves', 'One-on-one bet for ATL @ BOS spring training.', 'simple-bet', 'event-backed', 'sports', 'head-to-head', 'baseball', 'mlb', 'pro', 'settled', 'Logan', '["Red Sox","Braves"]', 500, 'Venmo', '@logan-v', 'Friendly bets only. Venmo settlement happens manually after the official result posts.', 'Watch party', 'espn', 'espn:mlb:401833234', 'ATL @ BOS', '2026-03-17T17:05Z', 'Final', 'post', 'Boston Red Sox', 'Atlanta Braves', '4', '3', '2026-03-17T11:00:00.000Z', '2026-03-17T19:45:00.000Z'
 );
 
 INSERT OR IGNORE INTO napkinbets_participants (id, wager_id, user_id, display_name, avatar_url, side_label, join_status, payment_status, created_at, updated_at)
@@ -84,8 +87,7 @@ VALUES
 INSERT OR IGNORE INTO napkinbets_pots (id, wager_id, label, amount_cents, sort_order)
 VALUES ('seed-pot-0003', 'seed-bet-0003', 'Winner', 500, 0);
 
-INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, recorded_at)
-VALUES ('seed-settle-0003', 'seed-bet-0003', 'seed-part-0005', 500, 'Cash App', '$logan-cash', 'CA-9921', 'Pat sent it, waiting for confirm', 'submitted', '2026-03-17T19:50:00.000Z');
+-- Unsent (No settlement row inserted for Bet 3)
 
 
 -- ▸ BET 4 — About to Start, Both Picked (Thunder @ Magic tonight — Pat picked OKC, Logan picked ORL)
@@ -166,8 +168,8 @@ VALUES
 INSERT OR IGNORE INTO napkinbets_pots (id, wager_id, label, amount_cents, sort_order)
 VALUES ('seed-pot-0007', 'seed-bet-0007', 'Winner', 1500, 0);
 
-INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, rejected_by_user_id, rejected_at, rejection_note, recorded_at)
-VALUES ('seed-settle-0007', 'seed-bet-0007', 'seed-part-0014', 1500, 'Zelle', 'logan@email.com', 'ZEL-3301', 'Sent via Zelle', 'rejected', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:00:00.000Z', 'Wrong amount — sent $10 instead of $15. Please resend the correct amount.', '2026-03-17T19:40:00.000Z');
+INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, rejected_by_user_id, rejected_at, rejection_note, recorded_at, proof_image_url)
+VALUES ('seed-settle-0007', 'seed-bet-0007', 'seed-part-0014', 1500, 'Zelle', 'logan@email.com', 'ZEL-3301', 'Sent via Zelle', 'rejected', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:00:00.000Z', 'Wrong amount — sent $10 instead of $15. Please resend the correct amount.', '2026-03-17T19:40:00.000Z', 'seed/venmo-1.png');
 
 
 -- ▸ BET 8 — Invitation Declined (Hurricanes @ Blue Jackets — Logan created, Pat declined, wager back to open)

@@ -105,6 +105,7 @@ const actions = useNapkinbetsActions(async () => {
 
         <div class="flex gap-2">
           <UButton
+            v-if="data.league.key !== 'pga'"
             color="primary"
             variant="soft"
             icon="i-lucide-refresh-cw"
@@ -114,6 +115,16 @@ const actions = useNapkinbetsActions(async () => {
             @click="actions.syncAdminTaxonomyLeague(data.league.key)"
           >
             Run Sync
+          </UButton>
+          <UButton
+            v-else
+            color="primary"
+            variant="soft"
+            icon="i-lucide-refresh-cw"
+            :loading="actions.activeAction.value === 'admin-taxonomy-league:sync-pga'"
+            @click="actions.syncPgaPlayers()"
+          >
+            Sync PGA Players (ESPN)
           </UButton>
         </div>
       </div>
