@@ -145,9 +145,7 @@ useWebPageSchema({
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <UButton to="/events" color="neutral" variant="ghost" size="sm">
-              Change game
-            </UButton>
+            <UButton to="/events" color="neutral" variant="ghost" size="sm"> Change game </UButton>
             <UButton color="neutral" variant="ghost" size="sm" @click="selectedMode = 'manual'">
               Custom bet
             </UButton>

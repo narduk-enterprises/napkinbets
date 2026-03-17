@@ -89,9 +89,7 @@ async function signOut() {
           />
 
           <div v-if="isAuthenticated" class="hidden items-center gap-2 lg:flex">
-            <UButton to="/dashboard" color="neutral" variant="soft" size="sm">
-              My Bets
-            </UButton>
+            <UButton to="/dashboard" color="neutral" variant="soft" size="sm"> My Bets </UButton>
             <UButton
               color="neutral"
               variant="ghost"

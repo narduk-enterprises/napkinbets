@@ -194,7 +194,7 @@ function submit() {
 
     <UForm :state="formState" class="space-y-6" @submit.prevent="submit">
       <template v-if="showEventQuickFlow">
-      <div class="space-y-4">
+        <div class="space-y-4">
           <div class="napkinbets-surface space-y-4">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="space-y-1">
@@ -238,11 +238,7 @@ function submit() {
             </div>
 
             <UFormField v-if="!selectedOpponent" name="manualOpponentName" label="Friend name">
-              <UInput
-                v-model="manualOpponentName"
-                class="w-full"
-                placeholder="Pat Donnelly"
-              />
+              <UInput v-model="manualOpponentName" class="w-full" placeholder="Pat Donnelly" />
             </UFormField>
 
             <UAlert
@@ -440,8 +436,12 @@ function submit() {
           </div>
 
           <div class="napkinbets-chip-grid">
-            <span class="napkinbets-choice-chip">{{ selectedSport?.label || 'Attached sport' }}</span>
-            <span class="napkinbets-choice-chip">{{ selectedLeague?.label || 'Attached league' }}</span>
+            <span class="napkinbets-choice-chip">{{
+              selectedSport?.label || 'Attached sport'
+            }}</span>
+            <span class="napkinbets-choice-chip">{{
+              selectedLeague?.label || 'Attached league'
+            }}</span>
             <span class="napkinbets-choice-chip">
               {{ formState.napkinType === 'simple-bet' ? 'One-on-one' : 'Group bet' }}
             </span>
@@ -700,7 +700,11 @@ function submit() {
                   </div>
 
                   <div class="flex flex-col gap-2 sm:flex-row">
-                    <UInput v-model="sideOptionDraft" class="w-full" placeholder="Add another side" />
+                    <UInput
+                      v-model="sideOptionDraft"
+                      class="w-full"
+                      placeholder="Add another side"
+                    />
                     <UButton color="neutral" variant="soft" @click="addSideOption">
                       Add side
                     </UButton>
@@ -727,15 +731,15 @@ function submit() {
                   <div v-if="friendOptions.length" class="space-y-2">
                     <p class="napkinbets-surface-label">Quick add from friends</p>
                     <div class="napkinbets-chip-grid">
-                    <UButton
-                      v-for="friend in friendOptions"
-                      :key="friend.value"
-                      color="neutral"
-                      variant="ghost"
-                      size="sm"
-                      @click="addFriendToPool(friend.value)"
-                    >
-                      {{ friend.label }}
+                      <UButton
+                        v-for="friend in friendOptions"
+                        :key="friend.value"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        @click="addFriendToPool(friend.value)"
+                      >
+                        {{ friend.label }}
                       </UButton>
                     </div>
                   </div>
