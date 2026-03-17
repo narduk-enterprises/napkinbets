@@ -97,8 +97,7 @@ function inferPotTemplate(format: string, rules: string) {
       }
 
       return normalizedRules.join('|') === template.rules.join('|')
-    })?.value ||
-    (format === 'golf-draft' ? 'golf-weekend' : 'main-plus-sweat')
+    })?.value || (format === 'golf-draft' ? 'golf-weekend' : 'main-plus-sweat')
   )
 }
 
@@ -113,7 +112,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   const participantDraft = ref('')
   const selectedPotTemplate = ref(inferPotTemplate(formState.format, formState.potRules))
   const selectedVenuePreset = ref<VenuePresetValue>(
-    VENUE_PRESET_OPTIONS.find((option) => option.value === formState.venueName)?.value || 'Group chat',
+    VENUE_PRESET_OPTIONS.find((option) => option.value === formState.venueName)?.value ||
+      'Group chat',
   )
 
   const selectedSport = computed(
@@ -125,7 +125,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
       null,
   )
   const selectedLeague = computed(
-    () => options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
+    () =>
+      options.taxonomy.value.leagues.find((league) => league.value === formState.league) ?? null,
   )
 
   const sportOptions = computed(() =>
@@ -140,7 +141,9 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
     switch (formState.sport) {
       case 'entertainment':
-        return allContexts.filter((context) => ['entertainment', 'community'].includes(context.value))
+        return allContexts.filter((context) =>
+          ['entertainment', 'community'].includes(context.value),
+        )
       case 'track-field':
         return allContexts.filter((context) =>
           ['high-school', 'college', 'community', 'tournament'].includes(context.value),
@@ -214,8 +217,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
   const selectedPotRules = computed(
     () =>
-      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)?.rules ??
-      DEFAULT_POT_RULES,
+      POT_TEMPLATE_OPTIONS.find((template) => template.value === selectedPotTemplate.value)
+        ?.rules ?? DEFAULT_POT_RULES,
   )
 
   const boardSummary = computed(() => {
@@ -257,7 +260,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     participantList.value = parseLines(prefill.participantNames)
     selectedPotTemplate.value = inferPotTemplate(prefill.format, prefill.potRules)
     selectedVenuePreset.value =
-      VENUE_PRESET_OPTIONS.find((option) => option.value === prefill.venueName)?.value || '__custom__'
+      VENUE_PRESET_OPTIONS.find((option) => option.value === prefill.venueName)?.value ||
+      '__custom__'
   }
 
   function addParticipant() {

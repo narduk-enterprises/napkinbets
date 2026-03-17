@@ -97,7 +97,9 @@ const primaryIdeaLink = computed(() =>
   primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
 )
 const secondaryIdeaLink = computed(() =>
-  secondaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, secondaryIdea.value)) : null,
+  secondaryIdea.value
+    ? buildCreateLink(buildCreatePrefill(props.event, secondaryIdea.value))
+    : null,
 )
 </script>
 

@@ -903,8 +903,7 @@ body {
 
 .napkinbets-spotlight-card-major {
   background:
-    linear-gradient(145deg, rgb(20 83 45 / 0.06), rgb(217 119 6 / 0.08)),
-    var(--napkinbets-surface);
+    linear-gradient(145deg, rgb(20 83 45 / 0.06), rgb(217 119 6 / 0.08)), var(--napkinbets-surface);
 }
 
 .napkinbets-spotlight-card-tour,

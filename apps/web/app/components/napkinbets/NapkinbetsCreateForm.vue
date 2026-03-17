@@ -163,7 +163,9 @@ function submit() {
 
         <div class="napkinbets-chip-grid">
           <span class="napkinbets-choice-chip">{{ selectedSport?.label || 'Attached sport' }}</span>
-          <span class="napkinbets-choice-chip">{{ selectedLeague?.label || 'Attached league' }}</span>
+          <span class="napkinbets-choice-chip">{{
+            selectedLeague?.label || 'Attached league'
+          }}</span>
           <span class="napkinbets-choice-chip">{{ formatLabel }}</span>
         </div>
       </div>
@@ -212,19 +214,11 @@ function submit() {
               </UFormField>
 
               <UFormField name="contextKey" label="Context">
-                <USelect
-                  v-model="formState.contextKey"
-                  :items="contextOptions"
-                  class="w-full"
-                />
+                <USelect v-model="formState.contextKey" :items="contextOptions" class="w-full" />
               </UFormField>
 
               <UFormField v-if="leagueOptions.length" name="league" label="League">
-                <USelect
-                  v-model="formState.league"
-                  :items="leagueOptions"
-                  class="w-full"
-                />
+                <USelect v-model="formState.league" :items="leagueOptions" class="w-full" />
               </UFormField>
 
               <UFormField
@@ -335,7 +329,11 @@ function submit() {
             </div>
 
             <div class="napkinbets-chip-grid">
-              <span v-for="participant in participantList" :key="participant" class="napkinbets-choice-chip">
+              <span
+                v-for="participant in participantList"
+                :key="participant"
+                class="napkinbets-choice-chip"
+              >
                 {{ participant }}
                 <UButton
                   color="neutral"

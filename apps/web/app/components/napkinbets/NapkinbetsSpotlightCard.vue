@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { NapkinbetsCreatePrefillQuery, NapkinbetsDiscoverySpotlight } from '../../../types/napkinbets'
+import type {
+  NapkinbetsCreatePrefillQuery,
+  NapkinbetsDiscoverySpotlight,
+} from '../../../types/napkinbets'
 
 const props = defineProps<{
   spotlight: NapkinbetsDiscoverySpotlight
@@ -59,14 +62,17 @@ const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
         <div v-else class="napkinbets-spotlight-media-fallback" aria-hidden="true" />
         <div class="napkinbets-spotlight-media-wash" aria-hidden="true" />
 
-        <div v-if="badgeAssets.length" class="napkinbets-spotlight-assets napkinbets-spotlight-assets-overlay">
-        <span
-          v-for="asset in badgeAssets"
-          :key="`${asset.kind}-${asset.src}`"
-          class="napkinbets-spotlight-asset"
+        <div
+          v-if="badgeAssets.length"
+          class="napkinbets-spotlight-assets napkinbets-spotlight-assets-overlay"
         >
-          <img :src="asset.src" :alt="asset.alt" class="napkinbets-spotlight-asset-image" />
-        </span>
+          <span
+            v-for="asset in badgeAssets"
+            :key="`${asset.kind}-${asset.src}`"
+            class="napkinbets-spotlight-asset"
+          >
+            <img :src="asset.src" :alt="asset.alt" class="napkinbets-spotlight-asset-image" />
+          </span>
         </div>
       </div>
 

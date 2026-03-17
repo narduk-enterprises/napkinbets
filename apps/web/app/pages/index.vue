@@ -40,7 +40,8 @@ useWebPageSchema({
             <p class="napkinbets-kicker">Napkin-first wagering</p>
             <h1 class="napkinbets-hero-title">Welcome to the back of the napkin.</h1>
             <p class="napkinbets-hero-lede">
-              Take the side bet out of the group chat, put it on a board, and settle it after the final.
+              Take the side bet out of the group chat, put it on a board, and settle it after the
+              final.
             </p>
           </div>
 

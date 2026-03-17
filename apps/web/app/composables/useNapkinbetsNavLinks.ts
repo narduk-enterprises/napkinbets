@@ -50,7 +50,9 @@ function withActiveState(routePath: string, links: NapkinbetsNavLink[]) {
   return links.map((link) => ({
     ...link,
     active:
-      link.to === '/' ? routePath === '/' : routePath === link.to || routePath.startsWith(`${link.to}/`),
+      link.to === '/'
+        ? routePath === '/'
+        : routePath === link.to || routePath.startsWith(`${link.to}/`),
   }))
 }
 

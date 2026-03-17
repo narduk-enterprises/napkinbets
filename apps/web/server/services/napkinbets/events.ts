@@ -330,7 +330,8 @@ const NAPKINBETS_GOLF_EDITORIAL = [
     id: 'masters-weekend-2026',
     label: 'Sunday sweat',
     title: 'Masters weekend closeout',
-    subtitle: 'Once the cut is set, shrink the board and turn the leaderboard into one clean finish lane.',
+    subtitle:
+      'Once the cut is set, shrink the board and turn the leaderboard into one clean finish lane.',
     summary:
       'Use a smaller Augusta board for best weekend score, final pairing winner, or the biggest Sunday charge once the field is trimmed.',
     windowLabel: 'Apr 11-12, 2026',
@@ -486,7 +487,8 @@ function getLeagueIdeas(
         },
         {
           title: 'Round and cut sweat',
-          description: 'Use one quick tournament pulse instead of asking the room to track the full field.',
+          description:
+            'Use one quick tournament pulse instead of asking the room to track the full field.',
           sideOptions: [
             'Leader after round one',
             'Cut made by both featured golfers',
@@ -1433,10 +1435,7 @@ function dedupeSpotlightAssets(assets: NapkinbetsDiscoverySpotlightAsset[]) {
   return [...unique.values()]
 }
 
-function buildEditorialSpotlightAsset(
-  src: string,
-  alt: string,
-): NapkinbetsDiscoverySpotlightAsset {
+function buildEditorialSpotlightAsset(src: string, alt: string): NapkinbetsDiscoverySpotlightAsset {
   return {
     kind: 'editorial',
     src,
