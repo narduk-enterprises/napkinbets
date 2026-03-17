@@ -56,6 +56,8 @@ export interface NapkinbetsLeagueDefinition {
   contextKeys: NapkinbetsContextKey[]
   provider: 'espn' | 'manual'
   providerLeagueKey?: string
+  scoreboardQueryParams?: Readonly<Record<string, string>>
+  eventShape?: 'head-to-head' | 'tournament'
   activeMonths: number[]
   supportsDateWindow?: boolean
   supportsEventDiscovery: boolean
@@ -201,9 +203,9 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     sportKey: 'basketball',
     primaryContextKey: 'pro',
     contextKeys: ['pro'],
-    provider: 'manual',
+    provider: 'espn',
     activeMonths: [5, 6, 7, 8, 9, 10],
-    supportsEventDiscovery: false,
+    supportsEventDiscovery: true,
   },
   {
     key: 'ncaamb',
@@ -213,8 +215,24 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     contextKeys: ['college', 'tournament'],
     provider: 'espn',
     providerLeagueKey: 'mens-college-basketball',
+    scoreboardQueryParams: {
+      groups: '50',
+    },
     activeMonths: [1, 2, 3, 4, 11, 12],
-    supportsDateWindow: false,
+    supportsEventDiscovery: true,
+  },
+  {
+    key: 'ncaaw',
+    label: "Women's College Basketball",
+    sportKey: 'basketball',
+    primaryContextKey: 'college',
+    contextKeys: ['college', 'tournament'],
+    provider: 'espn',
+    providerLeagueKey: 'womens-college-basketball',
+    scoreboardQueryParams: {
+      groups: '50',
+    },
+    activeMonths: [1, 2, 3, 4, 11, 12],
     supportsEventDiscovery: true,
   },
   {
@@ -223,9 +241,9 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     sportKey: 'football',
     primaryContextKey: 'pro',
     contextKeys: ['pro'],
-    provider: 'manual',
+    provider: 'espn',
     activeMonths: [1, 8, 9, 10, 11, 12],
-    supportsEventDiscovery: false,
+    supportsEventDiscovery: true,
   },
   {
     key: 'ncaaf',
@@ -262,9 +280,10 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     key: 'pga',
     label: 'PGA Tour',
     sportKey: 'golf',
-    primaryContextKey: 'pro',
+    primaryContextKey: 'tournament',
     contextKeys: ['pro', 'tournament'],
     provider: 'espn',
+    eventShape: 'tournament',
     activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     supportsEventDiscovery: true,
   },
@@ -272,11 +291,12 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     key: 'lpga',
     label: 'LPGA Tour',
     sportKey: 'golf',
-    primaryContextKey: 'pro',
+    primaryContextKey: 'tournament',
     contextKeys: ['pro', 'tournament'],
-    provider: 'manual',
+    provider: 'espn',
+    eventShape: 'tournament',
     activeMonths: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    supportsEventDiscovery: false,
+    supportsEventDiscovery: true,
   },
   {
     key: 'mls',

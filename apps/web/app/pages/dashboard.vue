@@ -1,7 +1,10 @@
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
 
-const workspaceState = await useNapkinbetsWorkspace()
+const workspaceState = useNapkinbetsWorkspace({
+  server: false,
+  lazy: true,
+})
 const workspace = computed(() => workspaceState.data.value)
 
 useNapkinbetsAutoRefresh(workspaceState.refresh)

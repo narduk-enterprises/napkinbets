@@ -27,6 +27,18 @@ function weatherHigh(value: NapkinbetsWeatherSnapshot) {
 function weatherLow(value: NapkinbetsWeatherSnapshot) {
   return Math.round(value.lowF ?? value.temperatureF)
 }
+
+function competitorLabel(value: string) {
+  if (value === 'home') {
+    return 'HOME'
+  }
+
+  if (value === 'away') {
+    return 'AWAY'
+  }
+
+  return value.toUpperCase()
+}
 </script>
 
 <template>
@@ -75,7 +87,7 @@ function weatherLow(value: NapkinbetsWeatherSnapshot) {
               >
                 <div class="flex items-center gap-2">
                   <span class="napkinbets-score-side">
-                    {{ team.homeAway === 'home' ? 'HOME' : 'AWAY' }}
+                    {{ competitorLabel(team.homeAway) }}
                   </span>
                   <span>{{ team.name }}</span>
                 </div>

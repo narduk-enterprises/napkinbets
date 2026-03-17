@@ -4,7 +4,10 @@ import type { CreatePaymentProfileInput } from '../../../types/napkinbets'
 
 definePageMeta({ middleware: ['auth'] })
 
-const paymentProfilesState = await useNapkinbetsPaymentProfiles()
+const paymentProfilesState = useNapkinbetsPaymentProfiles({
+  server: false,
+  lazy: true,
+})
 const actions = useNapkinbetsActions(paymentProfilesState.refresh)
 
 const providerOptions = [

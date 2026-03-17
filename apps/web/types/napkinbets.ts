@@ -161,7 +161,7 @@ export interface NapkinbetsEventTeam {
   shortName: string
   abbreviation: string
   logo: string
-  homeAway: 'home' | 'away'
+  homeAway: string
   score: string
   record: string
   winner: boolean

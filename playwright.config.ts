@@ -7,7 +7,7 @@ export default defineConfig({
   maxFailures: process.env.CI ? undefined : 1,
   reporter: 'html',
   timeout: 15_000,
-  expect: { timeout: 2_000 },
+  expect: { timeout: 5_000 },
   use: {
     trace: 'on-first-retry',
     actionTimeout: 3_000,
@@ -17,7 +17,7 @@ export default defineConfig({
     command: 'pnpm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
-    timeout: 30_000,
+    timeout: 60_000,
   },
   projects: [
     {

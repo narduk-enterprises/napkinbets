@@ -93,10 +93,15 @@ function toLiveGame(
     ? T
     : never,
 ) {
+  const isMatchup =
+    cachedEvent.awayTeam.homeAway === 'away' && cachedEvent.homeTeam.homeAway === 'home'
+
   return {
     id: cachedEvent.id,
     name: cachedEvent.eventTitle,
-    shortName: `${cachedEvent.awayTeam.abbreviation || cachedEvent.awayTeam.shortName} @ ${cachedEvent.homeTeam.abbreviation || cachedEvent.homeTeam.shortName}`,
+    shortName: isMatchup
+      ? `${cachedEvent.awayTeam.abbreviation || cachedEvent.awayTeam.shortName} @ ${cachedEvent.homeTeam.abbreviation || cachedEvent.homeTeam.shortName}`
+      : cachedEvent.eventTitle,
     status: cachedEvent.shortStatus,
     sport: cachedEvent.sport,
     league: cachedEvent.league,
@@ -105,13 +110,13 @@ function toLiveGame(
         name: cachedEvent.awayTeam.name,
         abbreviation: cachedEvent.awayTeam.abbreviation,
         score: cachedEvent.awayTeam.score,
-        homeAway: 'away',
+        homeAway: cachedEvent.awayTeam.homeAway,
       },
       {
         name: cachedEvent.homeTeam.name,
         abbreviation: cachedEvent.homeTeam.abbreviation,
         score: cachedEvent.homeTeam.score,
-        homeAway: 'home',
+        homeAway: cachedEvent.homeTeam.homeAway,
       },
     ],
   }

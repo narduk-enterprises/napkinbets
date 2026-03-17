@@ -1,6 +1,11 @@
 import type { NapkinbetsWorkspaceResponse } from '../../types/napkinbets'
 import { useNapkinbetsApi } from '../services/napkinbets-api'
 
+type NapkinbetsAsyncOptions = {
+  server?: boolean
+  lazy?: boolean
+}
+
 const EMPTY_WORKSPACE: NapkinbetsWorkspaceResponse = {
   metrics: [],
   ownedWagers: [],
@@ -9,7 +14,7 @@ const EMPTY_WORKSPACE: NapkinbetsWorkspaceResponse = {
   refreshedAt: '',
 }
 
-export function useNapkinbetsWorkspace() {
+export function useNapkinbetsWorkspace(options?: NapkinbetsAsyncOptions) {
   const api = useNapkinbetsApi()
 
   return useAsyncData<NapkinbetsWorkspaceResponse>(
@@ -17,6 +22,7 @@ export function useNapkinbetsWorkspace() {
     () => api.getWorkspace(),
     {
       default: () => EMPTY_WORKSPACE,
+      ...options,
     },
   )
 }

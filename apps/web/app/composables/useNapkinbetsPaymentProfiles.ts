@@ -5,7 +5,12 @@ const EMPTY_PAYMENT_PROFILES: NapkinbetsPaymentProfilesResponse = {
   profiles: [],
 }
 
-export function useNapkinbetsPaymentProfiles() {
+type NapkinbetsAsyncOptions = {
+  server?: boolean
+  lazy?: boolean
+}
+
+export function useNapkinbetsPaymentProfiles(options?: NapkinbetsAsyncOptions) {
   const api = useNapkinbetsApi()
 
   return useAsyncData<NapkinbetsPaymentProfilesResponse>(
@@ -13,6 +18,7 @@ export function useNapkinbetsPaymentProfiles() {
     () => api.getPaymentProfiles(),
     {
       default: () => EMPTY_PAYMENT_PROFILES,
+      ...options,
     },
   )
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type {
   NapkinbetsEventCard as NapkinbetsEvent,
   NapkinbetsEventIdea,
@@ -7,6 +8,10 @@ import type {
 const props = defineProps<{
   event: NapkinbetsEvent
 }>()
+
+const isMatchupEvent = computed(
+  () => props.event.awayTeam.homeAway === 'away' && props.event.homeTeam.homeAway === 'home',
+)
 
 function buildCreateLink(idea?: NapkinbetsEventIdea) {
   return {
@@ -22,9 +27,9 @@ function buildCreateLink(idea?: NapkinbetsEventIdea) {
       contextKey: props.event.contextKey,
       league: props.event.league,
       venueName: props.event.venueName,
-      homeTeamName: props.event.homeTeam.name,
-      awayTeamName: props.event.awayTeam.name,
-      format: idea?.format || 'sports-game',
+      homeTeamName: isMatchupEvent.value ? props.event.homeTeam.name : '',
+      awayTeamName: isMatchupEvent.value ? props.event.awayTeam.name : '',
+      format: idea?.format || (props.event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
       sideOptions: idea?.sideOptions.join('\n') || '',
     },
   }
