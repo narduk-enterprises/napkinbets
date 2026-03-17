@@ -17,11 +17,7 @@ useSeo({
   title: 'Friendly wager boards for sports nights, drafts, and prop bets',
   description:
     'Napkinbets turns live games, drafts, and prop ideas into clear friendly wager boards with manual payment closeout.',
-  ogImage: {
-    title: 'Napkinbets',
-    description: 'Friendly boards for live games, drafts, and side bets.',
-    icon: '🧾',
-  },
+  image: '/brand/og/home.webp',
 })
 
 useWebPageSchema({

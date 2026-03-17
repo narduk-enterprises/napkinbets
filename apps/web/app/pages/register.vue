@@ -7,11 +7,7 @@ definePageMeta({
 useSeo({
   title: 'Create your Napkinbets account',
   description: 'Register to create wager boards, manage participants, and use admin tools.',
-  ogImage: {
-    title: 'Create your Napkinbets account',
-    description: 'Register to build and manage friendly wager boards.',
-    icon: '🪪',
-  },
+  image: '/brand/og/auth.webp',
 })
 
 useWebPageSchema({

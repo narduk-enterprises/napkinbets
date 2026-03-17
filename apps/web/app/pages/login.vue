@@ -7,11 +7,7 @@ definePageMeta({
 useSeo({
   title: 'Sign in to Napkinbets',
   description: 'Sign in to manage your friendly wager boards and payment reminders.',
-  ogImage: {
-    title: 'Sign in to Napkinbets',
-    description: 'Access your wager workspace.',
-    icon: '🔐',
-  },
+  image: '/brand/og/auth.webp',
 })
 
 useWebPageSchema({

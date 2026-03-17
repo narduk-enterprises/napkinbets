@@ -24,11 +24,7 @@ useSeo({
   title: 'Discover current and upcoming events',
   description:
     'Browse live and upcoming events from ESPN-backed feeds, then spin them into friendly Napkinbets boards.',
-  ogImage: {
-    title: 'Napkinbets Discovery',
-    description: 'Live and upcoming sports events ready for friendly wager boards.',
-    icon: '📡',
-  },
+  image: '/brand/og/discover.webp',
 })
 
 useWebPageSchema({

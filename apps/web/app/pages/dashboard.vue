@@ -13,11 +13,7 @@ useSeo({
   title: 'Your wager workspace',
   description:
     'Manage the boards you own, the wagers you joined, and the reminders or settlements still waiting on action.',
-  ogImage: {
-    title: 'Napkinbets Dashboard',
-    description: 'Workspace for owned boards, joined wagers, and queued reminders.',
-    icon: '📋',
-  },
+  image: '/brand/og/dashboard.webp',
 })
 
 useWebPageSchema({

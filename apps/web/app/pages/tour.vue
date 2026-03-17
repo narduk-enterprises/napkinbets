@@ -12,12 +12,7 @@ useSeo({
   title: 'Napkinbets walkthrough',
   description:
     'A focused slide walkthrough of how Napkinbets discovery, boards, and closeout work together.',
-  ogImage: {
-    title: 'Napkinbets walkthrough',
-    description:
-      'A focused slide walkthrough of how Napkinbets discovery, boards, and closeout work together.',
-    icon: '🧾',
-  },
+  image: '/brand/og/tour.webp',
 })
 
 useWebPageSchema({

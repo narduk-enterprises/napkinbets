@@ -68,11 +68,7 @@ useSeo({
   title: 'Create a wager board',
   description:
     'Build a friendly wager board from discovery or start manually with your own terms and settlement rail.',
-  ogImage: {
-    title: 'Create a wager board',
-    description: 'Turn an event or custom prompt into a structured Napkinbets board.',
-    icon: '🎟️',
-  },
+  image: '/brand/og/create.webp',
 })
 
 useWebPageSchema({
