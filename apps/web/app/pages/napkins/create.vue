@@ -65,7 +65,7 @@ const activePrefill = computed(() =>
   selectedMode.value === 'event' && eventPreview.value ? eventPrefill.value : manualPrefill.value,
 )
 
-const attachedGameLabel = computed(() => {
+const _attachedGameLabel = computed(() => {
   if (!eventPreview.value) {
     return 'Pick a game from Events first'
   }
@@ -77,7 +77,7 @@ const attachedGameLabel = computed(() => {
   return eventPreview.value.title
 })
 
-const quickGameStatusLabel = computed(() => {
+const _quickGameStatusLabel = computed(() => {
   if (!eventPreview.value) {
     return ''
   }

@@ -40,9 +40,9 @@ const props = defineProps<{
 const {
   formState,
   isSimpleBet,
-  selectedSport,
-  selectedLeague,
-  selectedGroup,
+  selectedSport: _selectedSport,
+  selectedLeague: _selectedLeague,
+  selectedGroup: _selectedGroup,
   selectedOpponent,
   selectedOpponentId,
   manualOpponentName,
@@ -50,34 +50,34 @@ const {
   simpleSideB,
   selectedSimpleSide,
   resolvedSimpleSides,
-  sportOptions,
-  contextOptions,
-  leagueOptions,
-  groupOptions,
+  sportOptions: _sportOptions,
+  contextOptions: _contextOptions,
+  leagueOptions: _leagueOptions,
+  groupOptions: _groupOptions,
   friendOptions,
-  poolFormatOptions,
+  poolFormatOptions: _poolFormatOptions,
   paymentOptions,
-  venueOptions,
-  potTemplateOptions,
-  sideTemplateOptions,
-  seatPresetOptions,
-  selectedPotTemplate,
-  selectedVenuePreset,
-  showCustomContextName,
-  showCustomVenue,
-  poolParticipants,
-  participantDraft,
+  venueOptions: _venueOptions,
+  potTemplateOptions: _potTemplateOptions,
+  sideTemplateOptions: _sideTemplateOptions,
+  seatPresetOptions: _seatPresetOptions,
+  selectedPotTemplate: _selectedPotTemplate,
+  selectedVenuePreset: _selectedVenuePreset,
+  showCustomContextName: _showCustomContextName,
+  showCustomVenue: _showCustomVenue,
+  poolParticipants: _poolParticipants,
+  participantDraft: _participantDraft,
   sideOptionList,
-  sideOptionDraft,
+  sideOptionDraft: _sideOptionDraft,
   boardSummary,
   payload,
-  addPoolParticipant,
-  addFriendToPool,
-  removePoolParticipant,
-  applySeatPreset,
-  addSideOption,
-  removeSideOption,
-  applySideTemplate,
+  addPoolParticipant: _addPoolParticipant,
+  addFriendToPool: _addFriendToPool,
+  removePoolParticipant: _removePoolParticipant,
+  applySeatPreset: _applySeatPreset,
+  addSideOption: _addSideOption,
+  removeSideOption: _removeSideOption,
+  applySideTemplate: _applySideTemplate,
 } = useNapkinbetsCreateBuilder({
   prefill: computed(() => props.prefill),
   mode: computed(() => props.mode),
@@ -87,9 +87,9 @@ const {
   initialFriendId: computed(() => props.initialFriendId),
 })
 
-const showMoreOptions = ref(false)
+const _showMoreOptions = ref(false)
 
-const showEventQuickFlow = computed(
+const _showEventQuickFlow = computed(
   () => props.mode === 'event' && Boolean(props.eventPreview) && isSimpleBet.value,
 )
 
@@ -117,7 +117,7 @@ const canSubmit = computed(() => {
   return Boolean(sideOptionList.value.length > 1)
 })
 
-const formSummary = computed(() =>
+const _formSummary = computed(() =>
   props.mode === 'event'
     ? 'Start from the attached game, then only choose the people, side, and stake.'
     : 'Keep it light: one-on-one first, group only when you actually need it.',
@@ -143,7 +143,7 @@ const quickSelectionLabel = computed(
   () => resolvedSimpleSides.value[selectedSimpleSide.value] || 'your side',
 )
 
-const quickSummary = computed(() => {
+const _quickSummary = computed(() => {
   const amount = Number(formState.entryFeeDollars) || 0
   const amountLabel = new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -154,9 +154,9 @@ const quickSummary = computed(() => {
   return `${quickOpponentLabel.value} on ${quickEventLabel.value}, ${quickSelectionLabel.value}, ${amountLabel} stake.`
 })
 
-function switchToGroupBet() {
+function _switchToGroupBet() {
   formState.napkinType = 'pool'
-  showMoreOptions.value = false
+  _showMoreOptions.value = false
 }
 
 function submit() {

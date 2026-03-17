@@ -42,6 +42,14 @@ function formatCurrency(cents: number) {
 
 useNapkinbetsAutoRefresh(wagerState.refresh)
 
+const acceptJoinPayload = computed(() => {
+  if (!myParticipant.value || !wager.value) return { displayName: '', sideLabel: '' }
+  return {
+    displayName: myParticipant.value.displayName,
+    sideLabel: myParticipant.value.sideLabel || wager.value.sideOptions[0] || 'Open side',
+  }
+})
+
 async function handleJoin(wagerId: string, payload: JoinWagerInput) {
   if (!loggedIn.value) {
     await navigateTo('/register')
@@ -174,7 +182,7 @@ useWebPageSchema({
               size="lg"
               icon="i-lucide-check"
               :loading="actions.activeAction.value === `join:${wager.id}`"
-              @click="handleJoin(wager.id, { displayName: myParticipant!.displayName, sideLabel: myParticipant!.sideLabel || wager.sideOptions[0] || 'Open side' })"
+              @click="handleJoin(wager.id, acceptJoinPayload)"
             >
               Accept bet
             </UButton>
