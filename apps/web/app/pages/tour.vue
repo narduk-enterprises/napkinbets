@@ -98,7 +98,13 @@ useWebPageSchema({
           <UButton to="/register" color="primary" size="lg" icon="i-lucide-user-check">
             Register
           </UButton>
-          <UButton to="/discover" color="neutral" variant="soft" size="lg" icon="i-lucide-arrow-right">
+          <UButton
+            to="/discover"
+            color="neutral"
+            variant="soft"
+            size="lg"
+            icon="i-lucide-arrow-right"
+          >
             Explore on your own
           </UButton>
         </div>

@@ -20,7 +20,9 @@ defineProps<{
       </div>
 
       <div class="absolute inset-x-0 bottom-0 px-4 pb-4">
-        <div class="inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 text-white backdrop-blur-sm">
+        <div
+          class="inline-flex items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 text-white backdrop-blur-sm"
+        >
           <UIcon :name="slide.icon" class="size-4" />
           <span class="text-[0.68rem] font-semibold uppercase tracking-[0.24em]">
             {{ slide.title }}
@@ -38,13 +40,7 @@ defineProps<{
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <UBadge
-          v-for="tag in slide.tags"
-          :key="tag"
-          color="neutral"
-          variant="soft"
-          size="sm"
-        >
+        <UBadge v-for="tag in slide.tags" :key="tag" color="neutral" variant="soft" size="sm">
           {{ tag }}
         </UBadge>
       </div>
