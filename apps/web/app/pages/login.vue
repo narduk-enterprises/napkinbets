@@ -26,8 +26,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Sign in</p>
           <h1 class="napkinbets-hero-title napkinbets-auth-title">Get back to your pools.</h1>
           <p class="napkinbets-hero-lede">
-            Open the games, run your hosted pools, and confirm payment proof without digging
-            through messages.
+            Open the games, run your hosted pools, and confirm payment proof without digging through
+            messages.
           </p>
         </div>
       </div>

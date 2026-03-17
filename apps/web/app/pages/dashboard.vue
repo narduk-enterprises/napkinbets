@@ -27,7 +27,9 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">My pools</p>
-        <h1 class="napkinbets-section-title">Everything you host, joined, or still need to settle.</h1>
+        <h1 class="napkinbets-section-title">
+          Everything you host, joined, or still need to settle.
+        </h1>
         <p class="napkinbets-hero-lede">
           Keep the active pools, player follow-up, and payment confirmation in one place instead of
           chasing it through messages.

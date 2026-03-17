@@ -11,5 +11,8 @@ useWebPageSchema({
   description: 'Redirecting to the Napkinbets pool detail view.',
 })
 
-await navigateTo(`/napkins/${String(route.params.slug || '')}`, { redirectCode: 301, replace: true })
+await navigateTo(`/napkins/${String(route.params.slug || '')}`, {
+  redirectCode: 301,
+  replace: true,
+})
 </script>

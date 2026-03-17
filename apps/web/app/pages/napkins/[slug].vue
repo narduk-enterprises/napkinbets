@@ -76,7 +76,8 @@ async function handleClear(wagerId: string) {
 
 useSeo({
   title: wager.value?.title || 'Pool',
-  description: wager.value?.description || 'View the pool, picks, reminders, and payment confirmation.',
+  description:
+    wager.value?.description || 'View the pool, picks, reminders, and payment confirmation.',
   ogImage: {
     title: wager.value?.title || 'Napkinbets pool',
     description: wager.value?.description || 'Pool detail and picks.',
@@ -86,7 +87,8 @@ useSeo({
 
 useWebPageSchema({
   name: 'Napkinbets Pool',
-  description: 'A detailed view of a Napkinbets pool including players, picks, reminders, and payment confirmation.',
+  description:
+    'A detailed view of a Napkinbets pool including players, picks, reminders, and payment confirmation.',
 })
 </script>
 

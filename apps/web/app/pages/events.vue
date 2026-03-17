@@ -24,7 +24,8 @@ useSeo({
 
 useWebPageSchema({
   name: 'Napkinbets Games',
-  description: 'A sports schedule browser for starting friendly pools from live and upcoming games.',
+  description:
+    'A sports schedule browser for starting friendly pools from live and upcoming games.',
 })
 </script>
 

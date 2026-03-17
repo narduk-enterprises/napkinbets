@@ -156,7 +156,9 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Settle-up updated' : 'Settle-up action failed'"
+      :title="
+        actions.feedback.value.type === 'success' ? 'Settle-up updated' : 'Settle-up action failed'
+      "
       :description="actions.feedback.value.text"
     />
 
@@ -322,7 +324,10 @@ useWebPageSchema({
                   <div class="flex items-start justify-between gap-3">
                     <div class="space-y-1">
                       <p class="font-semibold text-default">
-                        {{ participantById.get(settlement.participantId)?.displayName || settlement.participantId }}
+                        {{
+                          participantById.get(settlement.participantId)?.displayName ||
+                          settlement.participantId
+                        }}
                       </p>
                       <p class="text-sm text-muted">
                         {{ formatCurrency(settlement.amountCents) }} via {{ settlement.method }}
@@ -392,7 +397,9 @@ useWebPageSchema({
                 </div>
               </div>
 
-              <p v-else class="napkinbets-support-copy">Everyone has either paid or submitted proof.</p>
+              <p v-else class="napkinbets-support-copy">
+                Everyone has either paid or submitted proof.
+              </p>
             </div>
           </UCard>
         </div>

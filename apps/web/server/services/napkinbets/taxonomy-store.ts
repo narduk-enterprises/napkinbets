@@ -172,10 +172,9 @@ export async function loadNapkinbetsTaxonomyCatalog(event: H3Event) {
         contextsByKey.get(row.primaryContextKey as NapkinbetsContextKey)?.label ??
         findNapkinbetsContext(row.primaryContextKey)?.label ??
         row.primaryContextKey,
-      contextKeys: parseJsonValue<NapkinbetsContextKey[]>(
-        row.contextKeysJson,
-        [row.primaryContextKey as NapkinbetsContextKey],
-      ),
+      contextKeys: parseJsonValue<NapkinbetsContextKey[]>(row.contextKeysJson, [
+        row.primaryContextKey as NapkinbetsContextKey,
+      ]),
       provider: row.provider as 'espn' | 'manual',
       providerLeagueKey: row.providerLeagueKey ?? undefined,
       scoreboardQueryParams: parseJsonValue<Record<string, string>>(

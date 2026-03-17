@@ -8,7 +8,9 @@ const dashboard = computed(() => dashboardState?.data.value ?? null)
 const featuredWagers = computed(() => dashboard.value?.wagers.slice(0, 2) ?? [])
 const featuredSpotlight = computed(() => discover.value.spotlights[0] ?? null)
 const openingEvents = computed(() =>
-  discover.value.sections.flatMap((section) => section.events).slice(0, isAuthenticated.value ? 4 : 3),
+  discover.value.sections
+    .flatMap((section) => section.events)
+    .slice(0, isAuthenticated.value ? 4 : 3),
 )
 
 useSeo({
@@ -20,7 +22,8 @@ useSeo({
 
 useWebPageSchema({
   name: 'Napkinbets',
-  description: 'A social sports pool app for live games, props, golf drafts, and watch-party side bets.',
+  description:
+    'A social sports pool app for live games, props, golf drafts, and watch-party side bets.',
 })
 </script>
 
@@ -88,13 +91,13 @@ useWebPageSchema({
 
           <div v-else class="napkinbets-aside-note">
             <p class="napkinbets-kicker">What it does</p>
-            <p class="napkinbets-support-copy">Start from a game, invite the room, track picks, and settle after the result is official.</p>
+            <p class="napkinbets-support-copy">
+              Start from a game, invite the room, track picks, and settle after the result is
+              official.
+            </p>
           </div>
 
-          <NapkinbetsSpotlightCard
-            v-if="featuredSpotlight"
-            :spotlight="featuredSpotlight"
-          />
+          <NapkinbetsSpotlightCard v-if="featuredSpotlight" :spotlight="featuredSpotlight" />
         </div>
       </div>
     </div>

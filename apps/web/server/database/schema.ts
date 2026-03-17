@@ -231,9 +231,7 @@ export const napkinbetsTaxonomyLeagues = sqliteTable('napkinbets_taxonomy_league
   scoreboardQueryParamsJson: text('scoreboard_query_params_json').notNull().default('{}'),
   eventShape: text('event_shape'),
   activeMonthsJson: text('active_months_json').notNull(),
-  supportsDateWindow: integer('supports_date_window', { mode: 'boolean' })
-    .notNull()
-    .default(true),
+  supportsDateWindow: integer('supports_date_window', { mode: 'boolean' }).notNull().default(true),
   supportsEventDiscovery: integer('supports_event_discovery', { mode: 'boolean' })
     .notNull()
     .default(false),

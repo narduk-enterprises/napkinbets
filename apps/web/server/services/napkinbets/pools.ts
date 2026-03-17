@@ -244,7 +244,8 @@ const DEMO_USER_NAME = 'Demo Host'
 const DEMO_AVATAR_URLS = {
   demoHost:
     'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=crop&w=200&q=80',
-  olivia: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80',
+  olivia:
+    'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=200&q=80',
   kai: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=200&q=80',
   saoirse:
     'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80',
@@ -253,7 +254,8 @@ const DEMO_AVATAR_URLS = {
   nora: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80',
   leo: 'https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=200&q=80',
   mara: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-  jonah: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=200&q=80',
+  jonah:
+    'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=200&q=80',
   ava: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=200&q=80',
 }
 type AppDatabase = ReturnType<typeof useAppDatabase>
@@ -342,11 +344,7 @@ interface DemoPoolDef {
 
 async function ensureDemoUser(db: AppDatabase) {
   const normalizedEmail = DEMO_USER_EMAIL.toLowerCase()
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, normalizedEmail))
-    .get()
+  const existing = await db.select().from(users).where(eq(users.email, normalizedEmail)).get()
 
   if (existing) {
     return existing
@@ -533,7 +531,8 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
       entryFeeCents: 2000,
       paymentService: 'PayPal',
       paymentHandle: 'demo-watch@example.com',
-      terms: 'Prop bets like first goal and total goals stay logged here ahead of manual settlements.',
+      terms:
+        'Prop bets like first goal and total goals stay logged here ahead of manual settlements.',
       venueName: secondaryEvent?.venueName ?? 'Turf watch lounge',
       latitude: '51.5074',
       longitude: '-0.1278',
@@ -642,7 +641,8 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
       entryFeeCents: 1500,
       paymentService: 'Cash App',
       paymentHandle: '$DemoHost',
-      terms: 'Draft entries and pot splits stay in Napkinbets while transfers happen after the final round.',
+      terms:
+        'Draft entries and pot splits stay in Napkinbets while transfers happen after the final round.',
       venueName: 'Back patio range',
       latitude: '33.5037',
       longitude: '-82.0209',
@@ -942,7 +942,7 @@ export async function ensureSeedData(event: H3Event) {
       venueName: pool.venueName,
       latitude: pool.latitude,
       longitude: pool.longitude,
-      eventSource: pool.eventRow ? 'espn' : pool.eventSource ?? 'manual',
+      eventSource: pool.eventRow ? 'espn' : (pool.eventSource ?? 'manual'),
       eventId: pool.eventRow?.id ?? null,
       eventTitle: pool.eventRow?.eventTitle ?? pool.eventFallbackTitle,
       eventStartsAt: pool.eventRow?.startTime ?? now,
@@ -1026,8 +1026,7 @@ export async function ensureSeedData(event: H3Event) {
           confirmationCode: settlement.confirmationCode ?? null,
           note: settlement.note,
           verificationStatus: settlement.verificationStatus,
-          verifiedByUserId:
-            settlement.verificationStatus === 'confirmed' ? demoUser.id : null,
+          verifiedByUserId: settlement.verificationStatus === 'confirmed' ? demoUser.id : null,
           verifiedAt: settlement.verificationStatus === 'confirmed' ? now : null,
           rejectedByUserId: null,
           rejectedAt: null,

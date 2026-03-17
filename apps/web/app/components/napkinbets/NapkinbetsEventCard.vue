@@ -119,7 +119,9 @@ const primaryIdeaLink = computed(() =>
       <div class="space-y-1">
         <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
         <div class="napkinbets-event-meta">
-          <span>{{ event.state === 'in' ? event.shortStatus : formatDateLabel(event.startTime) }}</span>
+          <span>{{
+            event.state === 'in' ? event.shortStatus : formatDateLabel(event.startTime)
+          }}</span>
           <span v-if="event.broadcast">{{ event.broadcast }}</span>
           <span>{{ event.venueName }}</span>
         </div>

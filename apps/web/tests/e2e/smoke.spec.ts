@@ -10,7 +10,7 @@ test.describe('web smoke', () => {
     await warmUpApp(browser, baseURL)
   })
 
-test('home and events routes render the current Napkinbets flow', async ({ page }) => {
+  test('home and events routes render the current Napkinbets flow', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
     await expect(page.getByText('Put the side bet where everyone can see it.')).toBeVisible()

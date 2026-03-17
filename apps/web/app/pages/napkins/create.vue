@@ -83,7 +83,9 @@ useWebPageSchema({
       <div class="napkinbets-hero-grid xl:grid-cols-[1.05fr_0.95fr]">
         <div class="space-y-4">
           <p class="napkinbets-kicker">Start</p>
-          <h1 class="napkinbets-section-title">Build the pool from a real game or start from scratch.</h1>
+          <h1 class="napkinbets-section-title">
+            Build the pool from a real game or start from scratch.
+          </h1>
           <p class="napkinbets-hero-lede">
             Pick the quick path when the game is already here, or start a custom pool for drafts,
             watch parties, golf, and one-off bets.

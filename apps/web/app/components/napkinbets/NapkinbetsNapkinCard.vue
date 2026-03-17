@@ -206,18 +206,18 @@ function submitSettlement() {
             </UBadge>
           </div>
 
-            <div class="space-y-2">
-              <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
-              <p class="napkinbets-support-copy">
-                {{ wager.description }}
-              </p>
-              <div class="napkinbets-meta-row">
+          <div class="space-y-2">
+            <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
+            <p class="napkinbets-support-copy">
+              {{ wager.description }}
+            </p>
+            <div class="napkinbets-meta-row">
               <span>{{ wager.eventTitle || 'Custom pool' }}</span>
-                <span>{{ wager.venueName || 'Remote group' }}</span>
+              <span>{{ wager.venueName || 'Remote group' }}</span>
               <span>Host: {{ wager.creatorName }}</span>
-              </div>
             </div>
           </div>
+        </div>
 
         <div v-if="canManage" class="flex flex-wrap gap-2">
           <UButton
