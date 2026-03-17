@@ -22,7 +22,9 @@ const props = defineProps<{
         />
       </div>
 
-      <div class="relative flex min-h-0 flex-col justify-between gap-4 overflow-hidden px-4 py-5 sm:px-6 sm:py-6 lg:order-1 lg:gap-6 lg:px-8 lg:py-8">
+      <div
+        class="relative flex min-h-0 flex-col justify-between gap-4 overflow-hidden px-4 py-5 sm:px-6 sm:py-6 lg:order-1 lg:gap-6 lg:px-8 lg:py-8"
+      >
         <div
           class="absolute inset-0 bg-linear-to-br opacity-80"
           :class="slide.accentClass"
