@@ -15,11 +15,19 @@ const props = defineProps<{
       <div
         class="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-default/70 bg-white/80 shadow-overlay backdrop-blur md:min-h-[calc(100vh-3rem)] lg:grid-cols-[0.92fr_1.08fr]"
       >
-        <div class="relative order-2 flex flex-col justify-between gap-6 p-5 sm:p-6 lg:order-1 lg:p-8">
-          <div class="absolute inset-0 bg-linear-to-br opacity-80" :class="slide.accentClass" aria-hidden="true" />
+        <div
+          class="relative order-2 flex flex-col justify-between gap-6 p-5 sm:p-6 lg:order-1 lg:p-8"
+        >
+          <div
+            class="absolute inset-0 bg-linear-to-br opacity-80"
+            :class="slide.accentClass"
+            aria-hidden="true"
+          />
 
           <div class="relative flex items-center justify-between gap-3">
-            <div class="inline-flex items-center gap-2 rounded-full border border-default/70 bg-white/80 px-3 py-2">
+            <div
+              class="inline-flex items-center gap-2 rounded-full border border-default/70 bg-white/80 px-3 py-2"
+            >
               <img
                 src="/brand/napkinbets-mark.svg"
                 alt="Napkinbets"
@@ -30,7 +38,9 @@ const props = defineProps<{
               </span>
             </div>
 
-            <div class="rounded-full border border-default/70 bg-white/80 px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-muted">
+            <div
+              class="rounded-full border border-default/70 bg-white/80 px-3 py-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-muted"
+            >
               {{ props.slideIndex + 1 }} / {{ props.slideCount }}
             </div>
           </div>
