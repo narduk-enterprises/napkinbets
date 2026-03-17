@@ -21,6 +21,7 @@ const emit = defineEmits<{
   recordSettlement: [wagerId: string, payload: WagerSettlementInput]
   confirmSettlement: [wagerId: string, settlementId: string]
   rejectSettlement: [wagerId: string, settlementId: string]
+  acknowledgeSettlement: [wagerId: string, settlementId: string]
   shuffle: [wagerId: string]
   remind: [wagerId: string]
   clear: [wagerId: string]
@@ -50,6 +51,7 @@ const settlementState = reactive<WagerSettlementInput>({
   handle: '',
   confirmationCode: '',
   note: '',
+  proofImage: null,
 })
 
 watch(
@@ -230,7 +232,33 @@ function submitSettlement() {
     handle: settlementState.handle.trim(),
     confirmationCode: settlementState.confirmationCode.trim(),
     note: settlementState.note.trim(),
+    proofImage: settlementState.proofImage,
   })
+}
+
+function handleFileSelected(event: Event) {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  if (files && files.length > 0) {
+    settlementState.proofImage = files[0]
+  } else {
+    settlementState.proofImage = null
+  }
+}
+
+const emitAcknowledge = (wagerId: string, settlementId: string) => {
+  // Pass up to parent view
+  emit('acknowledgeSettlement', wagerId, settlementId)
+}
+
+async function copyPaymentToClipboard() {
+  const { copyPaymentDetails } = useNapkinbetsPaymentLinks()
+  await copyPaymentDetails(
+    props.wager.paymentService,
+    props.wager.paymentHandle,
+    settlementState.amountDollars,
+    paymentNote.value,
+  )
 }
 </script>
 
@@ -552,6 +580,14 @@ function submitSettlement() {
                 <UFormField name="confirmationCode" label="Confirmation code">
                   <UInput v-model="settlementState.confirmationCode" class="w-full" />
                 </UFormField>
+                <UFormField name="proofImage" label="Screenshot proof (optional)">
+                  <UInput
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/heic"
+                    class="w-full"
+                    @change="handleFileSelected"
+                  />
+                </UFormField>
                 <UFormField name="note" label="Note">
                   <UInput
                     v-model="settlementState.note"
@@ -564,7 +600,7 @@ function submitSettlement() {
                   color="info"
                   variant="soft"
                   icon="i-lucide-wallet-cards"
-                  :loading="isBusy(`settlement:${wager.id}`)"
+                  :loading="isBusy(`wager:settle:${wager.id}`)"
                 >
                   Save proof
                 </UButton>
@@ -650,23 +686,34 @@ function submitSettlement() {
             </div>
           </div>
 
-          <div class="napkinbets-card-actions">
+          <div class="napkinbets-card-actions flex-wrap">
             <UButton
               v-for="link in paymentLinks"
               :key="link.href"
               :to="link.href"
-              color="primary"
-              variant="soft"
+              :color="link.isMobileApp ? 'primary' : 'neutral'"
+              :variant="link.isMobileApp ? 'solid' : 'soft'"
+              :size="link.isMobileApp ? 'lg' : 'md'"
               target="_blank"
-              icon="i-lucide-external-link"
+              :icon="link.icon"
+              class="min-h-[44px]"
             >
               {{ link.label }}
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              icon="i-lucide-copy"
+              class="min-h-[44px]"
+              @click="copyPaymentToClipboard"
+            >
+              Copy details
             </UButton>
           </div>
 
           <p class="napkinbets-support-copy">
-            Some providers only support partial prefill. Napkinbets always shows the handle, amount,
-            and note together so the last mile can be copied cleanly.
+            Tap the app button to launch your payment app directly, or copy the details to paste
+            manually.
           </p>
         </div>
 
@@ -714,49 +761,83 @@ function submitSettlement() {
               :key="settlement.id"
               class="napkinbets-list-row"
             >
-              <div>
-                <p class="font-semibold text-default">
-                  {{ participantNames.get(settlement.participantId) || settlement.method }}
-                </p>
-                <p class="text-sm text-muted">
-                  {{ settlement.method }} •
-                  {{
-                    settlement.confirmationCode ||
-                    settlement.handle ||
-                    'Manual confirmation pending'
-                  }}
-                </p>
-                <p v-if="settlement.rejectionNote" class="text-sm text-muted">
-                  {{ settlement.rejectionNote }}
-                </p>
+              <div class="flex gap-4">
+                <div v-if="settlement.proofImageUrl" class="shrink-0">
+                  <img
+                    :src="`/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`"
+                    alt="Payment proof"
+                    class="h-16 w-16 rounded object-cover shadow-sm bg-muted border border-default"
+                  />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-default truncate">
+                    {{ participantNames.get(settlement.participantId) || settlement.method }}
+                  </p>
+                  <p class="text-sm text-muted">
+                    {{ settlement.method }} •
+                    {{
+                      settlement.confirmationCode ||
+                      settlement.handle ||
+                      'Manual confirmation pending'
+                    }}
+                  </p>
+                  <p v-if="settlement.rejectionNote" class="text-sm text-error mt-1">
+                    {{ settlement.rejectionNote }}
+                  </p>
+                </div>
               </div>
-              <div class="text-right space-y-2">
+              <div class="text-right space-y-2 shrink-0">
                 <UBadge :color="settlementBadgeColor(settlement.verificationStatus)" variant="soft">
                   {{ settlement.verificationStatus }}
+                </UBadge>
+                <UBadge
+                  v-if="settlement.recipientAcknowledged"
+                  color="success"
+                  variant="soft"
+                  icon="i-lucide-check-check"
+                >
+                  Recipient received
                 </UBadge>
                 <p class="font-semibold text-default">
                   {{ formatCurrency(settlement.amountCents) }}
                 </p>
-                <UButton
-                  v-if="canManage && settlement.verificationStatus !== 'confirmed'"
-                  color="success"
-                  variant="soft"
-                  size="sm"
-                  :loading="isBusy(`settlement-confirm:${settlement.id}`)"
-                  @click="emit('confirmSettlement', wager.id, settlement.id)"
-                >
-                  Confirm
-                </UButton>
-                <UButton
-                  v-if="canManage && settlement.verificationStatus !== 'confirmed'"
-                  color="error"
-                  variant="soft"
-                  size="sm"
-                  :loading="isBusy(`settlement-reject:${settlement.id}`)"
-                  @click="emit('rejectSettlement', wager.id, settlement.id)"
-                >
-                  Send back
-                </UButton>
+                <div class="flex justify-end gap-2">
+                  <UButton
+                    v-if="
+                      !canManage &&
+                      myParticipant &&
+                      myParticipant.id !== settlement.participantId &&
+                      !settlement.recipientAcknowledged
+                    "
+                    color="success"
+                    variant="soft"
+                    size="sm"
+                    :loading="isBusy(`wager:acknowledge:${settlement.id}`)"
+                    @click="emitAcknowledge(wager.id, settlement.id)"
+                  >
+                    Acknowledge receipt
+                  </UButton>
+                  <UButton
+                    v-if="canManage && settlement.verificationStatus !== 'confirmed'"
+                    color="success"
+                    variant="soft"
+                    size="sm"
+                    :loading="isBusy(`settlement-confirm:${settlement.id}`)"
+                    @click="emit('confirmSettlement', wager.id, settlement.id)"
+                  >
+                    Confirm host
+                  </UButton>
+                  <UButton
+                    v-if="canManage && settlement.verificationStatus !== 'confirmed'"
+                    color="error"
+                    variant="soft"
+                    size="sm"
+                    :loading="isBusy(`settlement-reject:${settlement.id}`)"
+                    @click="emit('rejectSettlement', wager.id, settlement.id)"
+                  >
+                    Send back
+                  </UButton>
+                </div>
               </div>
             </div>
           </div>

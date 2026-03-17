@@ -107,6 +107,10 @@ export interface NapkinbetsSettlement {
   rejectedByUserId: string | null
   rejectedAt: string | null
   rejectionNote: string | null
+  proofImageUrl: string | null
+  recipientAcknowledged: boolean
+  recipientAcknowledgedAt: string | null
+  recipientUserId: string | null
   recordedAt: string
 }
 
@@ -117,6 +121,8 @@ export interface NapkinbetsPaymentProfile {
   displayLabel: string | null
   isDefault: boolean
   isPublicOnBoards: boolean
+  handleVerificationStatus: 'unverified' | 'verified' | 'failed'
+  handleVerifiedAt: string | null
 }
 
 export interface NapkinbetsLeaderboardRow {
@@ -628,6 +634,38 @@ export interface NapkinbetsAdminTaxonomyResponse {
   }
 }
 
+export interface NapkinbetsAdminTaxonomySyncResponse {
+  ok: true
+  league: string
+  resolvedSeason: string
+  teamCount: number
+  playerCount: number
+  rosterCount: number
+  rosterTeamsSynced: number
+  remainingRosterTeams: number
+  teamsRefreshed: boolean
+  venueCount: number
+  warnings: string[]
+}
+
+export interface NapkinbetsAdminLeagueViewerResponse {
+  league: NapkinbetsAdminTaxonomyLeague
+  entityCounts: {
+    teams: number
+    players: number
+    venues: number
+    rosters: number
+  }
+  teams: Array<{
+    id: string
+    slug: string
+    name: string
+    abbreviation: string | null
+    city: string | null
+    logoUrl: string | null
+  }>
+}
+
 export interface SaveNapkinbetsTaxonomyLeagueInput {
   key: string
   label: string
@@ -875,6 +913,7 @@ export interface WagerSettlementInput {
   handle: string
   confirmationCode: string
   note: string
+  proofImage?: File | null
 }
 
 export interface WagerSettlementReviewInput {
@@ -975,4 +1014,34 @@ export interface NapkinbetsAdminWagerUpdateInput {
   league?: string
   eventTitle?: string
   slug?: string
+}
+
+// ─── Payment Reconciliation Ledger ──────────────────────────────────
+
+export interface NapkinbetsLedgerWagerEntry {
+  wagerId: string
+  wagerSlug: string
+  wagerTitle: string
+  amountCents: number
+  paymentStatus: string
+  settlementId: string | null
+  verificationStatus: string | null
+  method: string | null
+}
+
+export interface NapkinbetsLedgerCounterparty {
+  userId: string
+  displayName: string
+  avatarUrl: string
+  netBalanceCents: number
+  wagerEntries: NapkinbetsLedgerWagerEntry[]
+  preferredPaymentMethod: string | null
+  preferredPaymentHandle: string | null
+}
+
+export interface NapkinbetsLedgerResponse {
+  counterparties: NapkinbetsLedgerCounterparty[]
+  totalOwedCents: number
+  totalOwedToYouCents: number
+  refreshedAt: string
 }

@@ -27,6 +27,9 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
     actionKey: string,
     successText: string,
     runner: () => Promise<T>,
+    options?: {
+      refreshOnError?: boolean
+    },
   ): Promise<T | null> {
     activeAction.value = actionKey
     feedback.value = null
@@ -40,6 +43,13 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       }
       return result
     } catch (error) {
+      if (options?.refreshOnError) {
+        try {
+          await refresh()
+        } catch {
+          // Keep the original mutation error as the user-facing failure.
+        }
+      }
       const message = error instanceof Error ? error.message : 'Something went wrong.'
       feedback.value = {
         type: 'error',
@@ -78,8 +88,22 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     recordSettlement(wagerId: string, payload: WagerSettlementInput) {
-      return runAction(`settlement:${wagerId}`, 'Settlement confirmation recorded.', () =>
-        api.recordSettlement(wagerId, payload),
+      return runAction(`wager:settle:${wagerId}`, 'Payment confirmation submitted.', async () => {
+        const res = await api.recordSettlement(wagerId, payload)
+        if (payload.proofImage && res.settlementId) {
+          await api.uploadSettlementProof(wagerId, res.settlementId, payload.proofImage)
+        }
+        return res
+      })
+    },
+    acknowledgeSettlement(wagerId: string, settlementId: string) {
+      return runAction(`wager:acknowledge:${settlementId}`, 'Payment receipt acknowledged.', () =>
+        api.acknowledgeSettlement(wagerId, settlementId),
+      )
+    },
+    uploadSettlementProof(wagerId: string, settlementId: string, file: File) {
+      return runAction(`wager:upload-proof:${settlementId}`, 'Proof screenshot attached.', () =>
+        api.uploadSettlementProof(wagerId, settlementId, file),
       )
     },
     confirmSettlement(wagerId: string, settlementId: string) {
@@ -130,8 +154,11 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     syncAdminTaxonomyLeague(key: string) {
-      return runAction(`admin-taxonomy-league:sync:${key}`, 'League entity sync completed.', () =>
-        api.syncAdminTaxonomyLeague(key),
+      return runAction(
+        `admin-taxonomy-league:sync:${key}`,
+        'League entity sync completed.',
+        () => api.syncAdminTaxonomyLeague(key),
+        { refreshOnError: true },
       )
     },
     runAdminIngest(tier: string) {
@@ -154,6 +181,11 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         `payment-profile:default:${profileId}`,
         'Default payment profile updated.',
         () => api.setDefaultPaymentProfile(profileId),
+      )
+    },
+    verifyPaymentProfile(profileId: string) {
+      return runAction(`payment-profile:verify:${profileId}`, 'Handle verification complete.', () =>
+        api.verifyPaymentProfile(profileId),
       )
     },
     saveFeaturedBet(payload: SaveFeaturedBetInput) {

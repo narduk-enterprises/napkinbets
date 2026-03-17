@@ -1678,8 +1678,10 @@ export async function recordSettlement(event: H3Event, wagerId: string, input: S
     })
   }
 
+  const settlementId = crypto.randomUUID()
+
   await db.insert(napkinbetsSettlements).values({
-    id: crypto.randomUUID(),
+    id: settlementId,
     wagerId,
     participantId: participant.id,
     amountCents: Math.round(input.amountDollars * 100),
@@ -1714,7 +1716,7 @@ export async function recordSettlement(event: H3Event, wagerId: string, input: S
     participant.id,
   )
 
-  return { ok: true }
+  return { ok: true, settlementId }
 }
 
 export async function confirmSettlement(event: H3Event, wagerId: string, settlementId: string) {
@@ -1756,6 +1758,83 @@ export async function confirmSettlement(event: H3Event, wagerId: string, settlem
     'settlement',
     settlement.participantId,
   )
+
+  return { ok: true }
+}
+
+export async function acknowledgeSettlement(event: H3Event, wagerId: string, settlementId: string) {
+  const authUser = await requireAuth(event)
+  const db = useAppDatabase(event)
+  const settlement = await getSettlementOrThrow(event, settlementId)
+
+  if (settlement.wagerId !== wagerId) {
+    throw createError({ statusCode: 400, message: 'Settlement does not belong to this wager.' })
+  }
+
+  const participants = await db
+    .select()
+    .from(napkinbetsParticipants)
+    .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+  const ackUser = participants.find((p) => p.userId === authUser.id)
+
+  if (!ackUser && !authUser.isAdmin) {
+    throw createError({
+      statusCode: 403,
+      message: 'You must be a participant to acknowledge this payment.',
+    })
+  }
+
+  if (settlement.participantId === ackUser?.id && !authUser.isAdmin) {
+    throw createError({ statusCode: 400, message: 'You cannot acknowledge your own payment.' })
+  }
+
+  const acknowledgedAt = nowIso()
+
+  await db
+    .update(napkinbetsSettlements)
+    .set({
+      recipientAcknowledged: true,
+      recipientAcknowledgedAt: acknowledgedAt,
+      recipientUserId: authUser.id,
+    })
+    .where(eq(napkinbetsSettlements.id, settlementId))
+
+  const payer = participants.find((p) => p.id === settlement.participantId)
+
+  await createNotification(
+    event,
+    wagerId,
+    'Payment received',
+    `${ackUser?.displayName || authUser.name} confirmed receiving payment from ${payer?.displayName || 'a player'}.`,
+    'settlement',
+    settlement.participantId,
+  )
+
+  // If we are playing a simple-bet (1v1) and the other person acknowledges,
+  // we can auto-confirm the settlement safely.
+  const wager = await getWagerOrThrow(event, wagerId)
+  if (wager.napkinType === 'simple-bet' && settlement.verificationStatus !== 'confirmed') {
+    await db
+      .update(napkinbetsSettlements)
+      .set({
+        verificationStatus: 'confirmed',
+        verifiedByUserId: authUser.id,
+        verifiedAt: acknowledgedAt,
+        rejectedByUserId: null,
+        rejectedAt: null,
+        rejectionNote: null,
+      })
+      .where(eq(napkinbetsSettlements.id, settlementId))
+
+    await db
+      .update(napkinbetsParticipants)
+      .set({
+        paymentStatus: 'confirmed',
+        updatedAt: acknowledgedAt,
+      })
+      .where(eq(napkinbetsParticipants.id, settlement.participantId))
+  }
 
   return { ok: true }
 }

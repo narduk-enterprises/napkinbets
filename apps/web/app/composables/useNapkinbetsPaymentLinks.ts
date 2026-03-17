@@ -9,6 +9,8 @@ function formatAmount(amountDollars: number) {
 export interface NapkinbetsPaymentLink {
   label: string
   href: string
+  icon: string
+  isMobileApp: boolean
 }
 
 export function useNapkinbetsPaymentLinks() {
@@ -24,18 +26,24 @@ export function useNapkinbetsPaymentLinks() {
           links.push({
             label: 'Open PayPal.Me',
             href: `https://paypal.me/${safeHandle}/${safeAmount}`,
+            icon: 'i-lucide-external-link',
+            isMobileApp: false,
           })
         }
         break
       case 'Venmo':
         if (safeHandle) {
           links.push({
-            label: 'Open Venmo profile',
-            href: `https://venmo.com/u/${safeHandle}`,
+            label: 'Open in Venmo app',
+            href: `venmo://paycharge?txn=pay&recipients=${encodeURIComponent(safeHandle)}&amount=${safeAmount}&note=${safeNote}`,
+            icon: 'i-lucide-smartphone',
+            isMobileApp: true,
           })
           links.push({
-            label: 'Open Venmo app',
-            href: `venmo://paycharge?txn=pay&recipients=${encodeURIComponent(safeHandle)}&amount=${safeAmount}&note=${safeNote}`,
+            label: 'Venmo profile',
+            href: `https://venmo.com/u/${safeHandle}`,
+            icon: 'i-lucide-external-link',
+            isMobileApp: false,
           })
         }
         break
@@ -43,7 +51,9 @@ export function useNapkinbetsPaymentLinks() {
         if (safeHandle) {
           links.push({
             label: 'Open Cash App',
-            href: `https://cash.app/$${safeHandle}`,
+            href: `https://cash.app/$${safeHandle}/${safeAmount}`,
+            icon: 'i-lucide-external-link',
+            isMobileApp: false,
           })
         }
         break
@@ -51,6 +61,8 @@ export function useNapkinbetsPaymentLinks() {
         links.push({
           label: 'Open Zelle',
           href: 'https://www.zellepay.com/',
+          icon: 'i-lucide-external-link',
+          isMobileApp: false,
         })
         break
     }
@@ -62,8 +74,27 @@ export function useNapkinbetsPaymentLinks() {
     return `NB ${wagerSlug} • entry $${formatAmount(amountDollars)} • ${participantName}`
   }
 
+  /**
+   * Copy payment details to clipboard for easy pasting into a payment app.
+   */
+  async function copyPaymentDetails(
+    provider: string,
+    handle: string,
+    amountDollars: number,
+    note: string,
+  ) {
+    const text = `${provider}: ${handle}\nAmount: $${formatAmount(amountDollars)}\nNote: ${note}`
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      return false
+    }
+  }
+
   return {
     buildLinks,
     buildPaymentNote,
+    copyPaymentDetails,
   }
 }

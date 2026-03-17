@@ -17,6 +17,12 @@
       "database_id": "e7ea2992-e0e1-4bef-af9f-323e27c31033"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "napkinbets-uploads"
+    }
+  ],
   "routes": [
     {
       "pattern": "napkinbets.nard.uk",

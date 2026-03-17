@@ -404,6 +404,15 @@ async function syncLeague(key: string) {
 
             <div class="flex gap-2 shrink-0">
               <UButton
+                color="neutral"
+                variant="soft"
+                size="sm"
+                icon="i-lucide-eye"
+                :to="`/admin/taxonomy/${league.key}`"
+              >
+                Inspect
+              </UButton>
+              <UButton
                 color="primary"
                 variant="soft"
                 size="sm"

@@ -119,6 +119,9 @@ useWebPageSchema({
           <UButton to="/groups" color="neutral" variant="soft" icon="i-lucide-users-round">
             Groups
           </UButton>
+          <UButton to="/ledger" color="neutral" variant="soft" icon="i-lucide-book-open">
+            Ledger
+          </UButton>
         </div>
       </div>
     </div>

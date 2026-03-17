@@ -81,6 +81,10 @@ async function handleConfirmSettlement(wagerId: string, settlementId: string) {
   await actions.confirmSettlement(wagerId, settlementId)
 }
 
+async function handleAcknowledgeSettlement(wagerId: string, settlementId: string) {
+  await actions.acknowledgeSettlement(wagerId, settlementId)
+}
+
 async function handleRejectSettlement(
   wagerId: string,
   settlementId: string,
@@ -281,6 +285,7 @@ useWebPageSchema({
         @record-settlement="handleSettlement"
         @confirm-settlement="handleConfirmSettlement"
         @reject-settlement="handleRejectSettlement"
+        @acknowledge-settlement="handleAcknowledgeSettlement"
         @shuffle="handleShuffle"
         @remind="handleReminder"
         @clear="handleClear"

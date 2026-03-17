@@ -43,6 +43,43 @@ async function handleSetDefault(profileId: string) {
   await actions.setDefaultPaymentProfile(profileId)
 }
 
+async function handleVerify(profileId: string) {
+  await actions.verifyPaymentProfile(profileId)
+}
+
+function verificationIcon(status: string) {
+  switch (status) {
+    case 'verified':
+      return 'i-lucide-badge-check'
+    case 'failed':
+      return 'i-lucide-badge-x'
+    default:
+      return 'i-lucide-badge-help'
+  }
+}
+
+function verificationColor(status: string): 'success' | 'error' | 'neutral' {
+  switch (status) {
+    case 'verified':
+      return 'success'
+    case 'failed':
+      return 'error'
+    default:
+      return 'neutral'
+  }
+}
+
+function verificationLabel(status: string) {
+  switch (status) {
+    case 'verified':
+      return 'Verified'
+    case 'failed':
+      return 'Not found'
+    default:
+      return 'Unverified'
+  }
+}
+
 useSeo({
   title: 'Payment profiles',
   description:
@@ -70,7 +107,7 @@ useWebPageSchema({
         </h1>
         <p class="napkinbets-hero-lede">
           Store non-sensitive payment identities only. Napkinbets uses them to prefill collection
-          rails and link users out to the right provider.
+          rails and link users out to the right provider. Venmo handles are automatically verified.
         </p>
       </div>
     </div>
@@ -121,6 +158,15 @@ useWebPageSchema({
               />
             </UFormField>
 
+            <UAlert
+              v-if="formState.provider === 'Venmo'"
+              color="info"
+              variant="soft"
+              icon="i-lucide-shield-check"
+              title="Auto-verified"
+              description="Venmo handles are verified against public profiles when you save. Verified handles get a badge visible to other players."
+            />
+
             <div class="space-y-3">
               <UCheckbox v-model="formState.isDefault" label="Use as default payment profile" />
               <UCheckbox
@@ -154,7 +200,7 @@ useWebPageSchema({
               :key="profile.id"
               class="napkinbets-note-row"
             >
-              <div>
+              <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                   <p class="font-semibold text-default">
                     {{ profile.displayLabel || profile.provider }}
@@ -163,11 +209,35 @@ useWebPageSchema({
                   <UBadge v-if="profile.isPublicOnBoards" color="info" variant="soft"
                     >Public on bets</UBadge
                   >
+                  <UBadge
+                    v-if="profile.provider === 'Venmo'"
+                    :color="verificationColor(profile.handleVerificationStatus)"
+                    variant="soft"
+                    :icon="verificationIcon(profile.handleVerificationStatus)"
+                  >
+                    {{ verificationLabel(profile.handleVerificationStatus) }}
+                  </UBadge>
                 </div>
                 <p class="text-sm text-muted">{{ profile.provider }} • {{ profile.handle }}</p>
+                <p v-if="profile.handleVerifiedAt" class="text-xs text-dimmed">
+                  Verified {{ new Date(profile.handleVerifiedAt).toLocaleDateString() }}
+                </p>
               </div>
 
-              <div class="napkinbets-card-actions">
+              <div class="napkinbets-card-actions shrink-0">
+                <UButton
+                  v-if="
+                    profile.provider === 'Venmo' && profile.handleVerificationStatus !== 'verified'
+                  "
+                  color="info"
+                  variant="soft"
+                  size="sm"
+                  icon="i-lucide-shield-check"
+                  :loading="actions.activeAction.value === `payment-profile:verify:${profile.id}`"
+                  @click="handleVerify(profile.id)"
+                >
+                  Verify
+                </UButton>
                 <UButton
                   v-if="!profile.isDefault"
                   color="neutral"

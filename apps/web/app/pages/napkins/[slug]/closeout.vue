@@ -212,15 +212,17 @@ useWebPageSchema({
                 </div>
               </div>
 
-              <div class="napkinbets-card-actions">
+              <div class="napkinbets-card-actions flex-wrap">
                 <UButton
                   v-for="link in paymentLinks"
                   :key="link.href"
                   :to="link.href"
-                  color="primary"
-                  variant="soft"
+                  :color="link.isMobileApp ? 'primary' : 'neutral'"
+                  :variant="link.isMobileApp ? 'solid' : 'soft'"
+                  :size="link.isMobileApp ? 'lg' : 'md'"
                   target="_blank"
-                  icon="i-lucide-external-link"
+                  :icon="link.icon"
+                  class="min-h-[44px]"
                 >
                   {{ link.label }}
                 </UButton>
@@ -322,30 +324,49 @@ useWebPageSchema({
                   class="napkinbets-surface space-y-3"
                 >
                   <div class="flex items-start justify-between gap-3">
-                    <div class="space-y-1">
-                      <p class="font-semibold text-default">
-                        {{
-                          participantById.get(settlement.participantId)?.displayName ||
-                          settlement.participantId
-                        }}
-                      </p>
-                      <p class="text-sm text-muted">
-                        {{ formatCurrency(settlement.amountCents) }} via {{ settlement.method }}
-                      </p>
+                    <div class="flex gap-4">
+                      <div v-if="settlement.proofImageUrl" class="shrink-0 mt-1">
+                        <img
+                          :src="`/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`"
+                          alt="Payment proof"
+                          class="h-16 w-16 rounded object-cover shadow-sm bg-muted border border-default"
+                        />
+                      </div>
+                      <div class="space-y-1">
+                        <p class="font-semibold text-default">
+                          {{
+                            participantById.get(settlement.participantId)?.displayName ||
+                            settlement.participantId
+                          }}
+                        </p>
+                        <p class="text-sm text-muted">
+                          {{ formatCurrency(settlement.amountCents) }} via {{ settlement.method }}
+                        </p>
+                      </div>
                     </div>
 
-                    <UBadge
-                      :color="
-                        settlement.verificationStatus === 'confirmed'
-                          ? 'success'
-                          : settlement.verificationStatus === 'rejected'
-                            ? 'error'
-                            : 'warning'
-                      "
-                      variant="soft"
-                    >
-                      {{ settlement.verificationStatus }}
-                    </UBadge>
+                    <div class="flex flex-col items-end gap-2 shrink-0">
+                      <UBadge
+                        :color="
+                          settlement.verificationStatus === 'confirmed'
+                            ? 'success'
+                            : settlement.verificationStatus === 'rejected'
+                              ? 'error'
+                              : 'warning'
+                        "
+                        variant="soft"
+                      >
+                        {{ settlement.verificationStatus }}
+                      </UBadge>
+                      <UBadge
+                        v-if="settlement.recipientAcknowledged"
+                        color="success"
+                        variant="soft"
+                        icon="i-lucide-check-check"
+                      >
+                        Recipient received
+                      </UBadge>
+                    </div>
                   </div>
 
                   <p class="napkinbets-support-copy">

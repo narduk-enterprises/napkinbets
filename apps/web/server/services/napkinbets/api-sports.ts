@@ -89,9 +89,9 @@ const API_SPORTS_BASE_URLS: Record<NapkinbetsApiSportsProduct, string> = {
 }
 
 export class NapkinbetsApiSportsError extends Error {
-  code: 'config' | 'plan' | 'endpoint' | 'request'
+  code: 'config' | 'plan' | 'endpoint' | 'rate-limit' | 'request'
 
-  constructor(code: 'config' | 'plan' | 'endpoint' | 'request', message: string) {
+  constructor(code: 'config' | 'plan' | 'endpoint' | 'rate-limit' | 'request', message: string) {
     super(message)
     this.name = 'NapkinbetsApiSportsError'
     this.code = code
@@ -394,6 +394,13 @@ async function fetchApiSports<T>(
   })
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new NapkinbetsApiSportsError(
+        'rate-limit',
+        `API-Sports ${product} rate limit reached. Please wait before retrying.`,
+      )
+    }
+
     throw new NapkinbetsApiSportsError(
       'request',
       `API-Sports ${product} ${path} returned ${response.status}.`,
@@ -406,6 +413,13 @@ async function fetchApiSports<T>(
     const message = errors.join('; ')
     if (message.toLowerCase().includes('free plans')) {
       throw new NapkinbetsApiSportsError('plan', message)
+    }
+
+    if (
+      message.toLowerCase().includes('too many requests') ||
+      message.toLowerCase().includes('rate limit')
+    ) {
+      throw new NapkinbetsApiSportsError('rate-limit', message)
     }
 
     if (message.toLowerCase().includes('endpoint')) {

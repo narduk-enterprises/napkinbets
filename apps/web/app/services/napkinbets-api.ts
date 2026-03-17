@@ -8,6 +8,8 @@ import type {
   NapkinbetsAdminResponse,
   NapkinbetsAdminFeaturedBetsResponse,
   NapkinbetsAdminTaxonomyResponse,
+  NapkinbetsAdminLeagueViewerResponse,
+  NapkinbetsAdminTaxonomySyncResponse,
   NapkinbetsDashboardResponse,
   NapkinbetsDiscoveryResponse,
   NapkinbetsEventDetailResponse,
@@ -36,6 +38,7 @@ import type {
   NapkinbetsAdminWagersResponse,
   NapkinbetsAdminWagerCreateInput,
   NapkinbetsAdminWagerUpdateInput,
+  NapkinbetsLedgerResponse,
 } from '../../types/napkinbets'
 
 export function useNapkinbetsApi() {
@@ -78,6 +81,9 @@ export function useNapkinbetsApi() {
     },
     getWorkspace() {
       return fetch<NapkinbetsWorkspaceResponse>('/api/napkinbets/workspace')
+    },
+    getLedger() {
+      return fetch<NapkinbetsLedgerResponse>('/api/napkinbets/ledger')
     },
     getNotifications() {
       return fetch<NapkinbetsNotificationsResponse>('/api/napkinbets/notifications')
@@ -134,6 +140,11 @@ export function useNapkinbetsApi() {
     getAdminTaxonomy() {
       return fetch<NapkinbetsAdminTaxonomyResponse>('/api/napkinbets/admin/taxonomy')
     },
+    getAdminLeagueViewer(key: string) {
+      return fetch<NapkinbetsAdminLeagueViewerResponse>(
+        `/api/napkinbets/admin/taxonomy/leagues/${encodeURIComponent(key)}`,
+      )
+    },
     saveAdminTaxonomyLeague(payload: SaveNapkinbetsTaxonomyLeagueInput) {
       return fetch<{ ok: true }>('/api/napkinbets/admin/taxonomy/leagues', {
         method: 'POST',
@@ -141,18 +152,12 @@ export function useNapkinbetsApi() {
       })
     },
     syncAdminTaxonomyLeague(key: string) {
-      return fetch<{
-        ok: true
-        league: string
-        resolvedSeason: string
-        teamCount: number
-        playerCount: number
-        rosterCount: number
-        venueCount: number
-        warnings: string[]
-      }>(`/api/napkinbets/admin/taxonomy/leagues/${encodeURIComponent(key)}/sync`, {
-        method: 'POST',
-      })
+      return fetch<NapkinbetsAdminTaxonomySyncResponse>(
+        `/api/napkinbets/admin/taxonomy/leagues/${encodeURIComponent(key)}/sync`,
+        {
+          method: 'POST',
+        },
+      )
     },
     saveAdminAiSettings(payload: UpdateNapkinbetsAiSettingsInput) {
       return fetch('/api/napkinbets/admin/ai-settings', {
@@ -240,10 +245,33 @@ export function useNapkinbetsApi() {
       })
     },
     recordSettlement(wagerId: string, payload: WagerSettlementInput) {
-      return fetch('/api/napkinbets/wagers/' + wagerId + '/settlements', {
+      return fetch<{ ok: true; settlementId: string }>(
+        '/api/napkinbets/wagers/' + wagerId + '/settlements',
+        {
+          method: 'POST',
+          body: payload,
+        },
+      )
+    },
+    acknowledgeSettlement(wagerId: string, settlementId: string) {
+      return fetch(`/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/acknowledge`, {
         method: 'POST',
-        body: payload,
       })
+    },
+    uploadSettlementProof(wagerId: string, settlementId: string, file: File) {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      return fetch<{ ok: true; proofImageUrl: string }>(
+        `/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/upload-proof`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      )
+    },
+    getSettlementProofImageUrl(wagerId: string, settlementId: string) {
+      return `/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/proof-image`
     },
     confirmSettlement(wagerId: string, settlementId: string) {
       return fetch(`/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/confirm`, {
@@ -321,6 +349,14 @@ export function useNapkinbetsApi() {
       return fetch('/api/napkinbets/me/payment-profiles/' + profileId + '/default', {
         method: 'POST',
       })
+    },
+    verifyPaymentProfile(profileId: string) {
+      return fetch<{ ok: true; verificationStatus: string; displayName?: string | null }>(
+        '/api/napkinbets/me/payment-profiles/' + profileId + '/verify',
+        {
+          method: 'POST',
+        },
+      )
     },
   }
 }

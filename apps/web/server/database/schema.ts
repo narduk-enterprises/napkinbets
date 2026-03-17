@@ -201,6 +201,12 @@ export const napkinbetsSettlements = sqliteTable('napkinbets_settlements', {
   }),
   rejectedAt: text('rejected_at'),
   rejectionNote: text('rejection_note'),
+  proofImageUrl: text('proof_image_url'),
+  recipientAcknowledged: integer('recipient_acknowledged', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  recipientAcknowledgedAt: text('recipient_acknowledged_at'),
+  recipientUserId: text('recipient_user_id').references(() => users.id, { onDelete: 'set null' }),
   recordedAt: text('recorded_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -216,6 +222,8 @@ export const napkinbetsUserPaymentProfiles = sqliteTable('napkinbets_user_paymen
   displayLabel: text('display_label'),
   isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
   isPublicOnBoards: integer('is_public_on_boards', { mode: 'boolean' }).notNull().default(true),
+  handleVerificationStatus: text('handle_verification_status').notNull().default('unverified'),
+  handleVerifiedAt: text('handle_verified_at'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

@@ -160,6 +160,12 @@ test.describe('web page coverage', () => {
       page.getByRole('heading', { name: 'Everything that needs your attention.' }),
     ).toBeVisible()
     await expect(page.getByText('Saoirse is still pending')).toBeVisible()
+
+    await page.goto('/ledger')
+    await waitForHydration(page)
+    await expect(
+      page.getByRole('heading', { name: 'Who owes what, settled in one place.' }),
+    ).toBeVisible()
   })
 
   test('settings pages and authenticated creation flow render for the demo user', async ({

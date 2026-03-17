@@ -22,8 +22,38 @@ import {
 import { findNapkinbetsLeagueFromStore } from '#server/services/napkinbets/taxonomy-store'
 import { useAppDatabase } from '#server/utils/database'
 
+const MINUTE_MS = 60_000
+const DAY_MS = 24 * 60 * MINUTE_MS
+const ENTITY_SYNC_COOLDOWN_MS = 75 * 1000
+const TEAM_SYNC_TTL_MS = 7 * DAY_MS
+const ROSTER_SYNC_TTL_MS = 7 * DAY_MS
+const MAX_ROSTER_TEAMS_PER_RUN = 4
+
 function nowIso() {
   return new Date().toISOString()
+}
+
+function parseTimestampMs(value: string | null | undefined) {
+  if (!value) {
+    return null
+  }
+
+  const parsed = new Date(value).getTime()
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function isFresh(value: string | null | undefined, maxAgeMs: number, nowMs = Date.now()) {
+  const parsed = parseTimestampMs(value)
+  return parsed !== null && nowMs - parsed <= maxAgeMs
+}
+
+function formatWaitDuration(ms: number) {
+  const seconds = Math.max(1, Math.ceil(ms / 1000))
+  if (seconds < 60) {
+    return `${seconds}s`
+  }
+
+  return `${Math.ceil(seconds / 60)}m`
 }
 
 function slugify(value: string) {
@@ -284,6 +314,111 @@ async function setLeagueSyncState(
     .run()
 }
 
+async function loadLeagueTeamRows(event: H3Event, leagueKey: string) {
+  const db = useAppDatabase(event)
+
+  return await db
+    .select({
+      id: napkinbetsTeams.id,
+      name: napkinbetsTeams.name,
+      externalTeamId: napkinbetsTeams.externalTeamId,
+      lastSyncedAt: napkinbetsTeams.lastSyncedAt,
+    })
+    .from(napkinbetsTeams)
+    .where(eq(napkinbetsTeams.primaryLeagueKey, leagueKey))
+    .orderBy(asc(napkinbetsTeams.name))
+}
+
+async function loadRosterFreshnessByTeam(event: H3Event, leagueKey: string, season: string) {
+  const db = useAppDatabase(event)
+  const rosterRows = await db
+    .select({
+      teamId: napkinbetsTeamRosters.teamId,
+      lastSyncedAt: napkinbetsTeamRosters.lastSyncedAt,
+    })
+    .from(napkinbetsTeamRosters)
+    .where(
+      and(eq(napkinbetsTeamRosters.leagueKey, leagueKey), eq(napkinbetsTeamRosters.season, season)),
+    )
+
+  const freshnessByTeam = new Map<string, string>()
+  for (const row of rosterRows) {
+    const existing = freshnessByTeam.get(row.teamId)
+    if (!existing || new Date(row.lastSyncedAt).getTime() > new Date(existing).getTime()) {
+      freshnessByTeam.set(row.teamId, row.lastSyncedAt)
+    }
+  }
+
+  return freshnessByTeam
+}
+
+async function resolveSeasonForLeague(
+  event: H3Event,
+  league: NonNullable<Awaited<ReturnType<typeof findNapkinbetsLeagueFromStore>>>,
+  needsRemoteTeamFetch: boolean,
+) {
+  const preferredSeason =
+    league.entityResolvedSeason?.trim() || league.entityProviderSeason?.trim() || ''
+  let metadata: NapkinbetsApiSportsLeagueMetadata | null = null
+  let resolvedSeason = preferredSeason
+  let teams: NapkinbetsApiSportsTeamPayload[] = []
+  let lastPlanError = ''
+  const attemptedSeasons = new Set<string>()
+
+  const tryCandidates = async (candidates: string[]) => {
+    for (const candidateSeason of candidates) {
+      if (!candidateSeason || attemptedSeasons.has(candidateSeason)) {
+        continue
+      }
+
+      attemptedSeasons.add(candidateSeason)
+
+      try {
+        if (needsRemoteTeamFetch) {
+          teams = await fetchApiSportsTeams(
+            event,
+            league.entityProviderSportKey!,
+            league.entityProviderLeagueId!,
+            candidateSeason,
+          )
+        }
+
+        resolvedSeason = candidateSeason
+        return true
+      } catch (error) {
+        if (error instanceof NapkinbetsApiSportsError && error.code === 'plan') {
+          lastPlanError = error.message
+          continue
+        }
+
+        throw error
+      }
+    }
+
+    return false
+  }
+
+  if (preferredSeason && (await tryCandidates([preferredSeason]))) {
+    return { metadata, resolvedSeason, teams }
+  }
+
+  metadata = await fetchApiSportsLeagueMetadata(
+    event,
+    league.entityProviderSportKey!,
+    league.entityProviderLeagueId!,
+  )
+
+  const seasonCandidates = buildSeasonCandidates(metadata, preferredSeason)
+  if (!(await tryCandidates(seasonCandidates))) {
+    throw createError({
+      statusCode: 400,
+      message: lastPlanError || 'No accessible season was available for this league.',
+    })
+  }
+
+  return { metadata, resolvedSeason, teams }
+}
+
 export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
   const db = useAppDatabase(event)
   const league = await findNapkinbetsLeagueFromStore(event, leagueKey)
@@ -305,134 +440,130 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
     })
   }
 
+  const nowMs = Date.now()
+  const lastSyncMs = parseTimestampMs(league.entityLastSyncAt)
+  if (lastSyncMs !== null && nowMs - lastSyncMs < ENTITY_SYNC_COOLDOWN_MS) {
+    const remainingMs = ENTITY_SYNC_COOLDOWN_MS - (nowMs - lastSyncMs)
+    throw createError({
+      statusCode: 429,
+      message: `Entity sync is cooling down. Wait ${formatWaitDuration(remainingMs)} before retrying ${league.key}.`,
+    })
+  }
+
   const syncedAt = nowIso()
   const warnings: string[] = []
+  let infoMessage: string | null = null
   let metadata: NapkinbetsApiSportsLeagueMetadata | null = null
+  let teamsRefreshed = false
 
   try {
-    metadata = await fetchApiSportsLeagueMetadata(
-      event,
-      league.entityProviderSportKey,
-      league.entityProviderLeagueId,
-    )
+    let leagueTeams = await loadLeagueTeamRows(event, league.key)
+    const shouldRefreshTeams =
+      leagueTeams.length === 0 ||
+      leagueTeams.some((team) => !isFresh(team.lastSyncedAt, TEAM_SYNC_TTL_MS, nowMs))
 
-    const seasonCandidates = buildSeasonCandidates(metadata, league.entityProviderSeason)
-    let resolvedSeason = ''
-    let teams: NapkinbetsApiSportsTeamPayload[] = []
-    let lastPlanError = ''
+    const seasonResolution = await resolveSeasonForLeague(event, league, shouldRefreshTeams)
+    metadata = seasonResolution.metadata
+    const resolvedSeason = seasonResolution.resolvedSeason
 
-    for (const candidateSeason of seasonCandidates) {
-      try {
-        teams = await fetchApiSportsTeams(
-          event,
-          league.entityProviderSportKey,
-          league.entityProviderLeagueId,
-          candidateSeason,
-        )
-        resolvedSeason = candidateSeason
-        break
-      } catch (error) {
-        if (error instanceof NapkinbetsApiSportsError && error.code === 'plan') {
-          lastPlanError = error.message
-          warnings.push(`${candidateSeason}: ${error.message}`)
-          continue
+    if (shouldRefreshTeams) {
+      for (const team of seasonResolution.teams) {
+        const venueId = team.venue
+          ? await upsertVenue(
+              event,
+              league.entityProviderSportKey,
+              league.key,
+              league.sportKey,
+              team.venue,
+              syncedAt,
+            )
+          : null
+
+        const teamId = buildProviderEntityId(league.entityProviderSportKey, 'team', team.externalId)
+        const teamValues: typeof napkinbetsTeams.$inferInsert = {
+          id: teamId,
+          slug: buildTeamSlug({ name: team.name, externalTeamId: team.externalId }),
+          source: 'api-sports',
+          externalTeamId: team.externalId,
+          sportKey: league.sportKey,
+          primaryLeagueKey: league.key,
+          venueId,
+          name: team.name,
+          shortName: team.shortName || team.name,
+          abbreviation: team.abbreviation,
+          city: team.city,
+          country: team.country,
+          logoUrl: team.logoUrl,
+          isNational: team.isNational,
+          foundedYear: team.foundedYear,
+          metadataJson: recordToJson(team.metadata),
+          rawPayloadJson: JSON.stringify(team.rawPayload),
+          sourceUpdatedAt: null,
+          lastSyncedAt: syncedAt,
+          createdAt: syncedAt,
+          updatedAt: syncedAt,
         }
 
-        throw error
+        await db
+          .insert(napkinbetsTeams)
+          .values(teamValues)
+          .onConflictDoUpdate({
+            target: napkinbetsTeams.id,
+            set: {
+              slug: teamValues.slug,
+              primaryLeagueKey: teamValues.primaryLeagueKey,
+              venueId: teamValues.venueId,
+              name: teamValues.name,
+              shortName: teamValues.shortName,
+              abbreviation: teamValues.abbreviation,
+              city: teamValues.city,
+              country: teamValues.country,
+              logoUrl: teamValues.logoUrl,
+              isNational: teamValues.isNational,
+              foundedYear: teamValues.foundedYear,
+              metadataJson: teamValues.metadataJson,
+              rawPayloadJson: teamValues.rawPayloadJson,
+              sourceUpdatedAt: teamValues.sourceUpdatedAt,
+              lastSyncedAt: teamValues.lastSyncedAt,
+              updatedAt: teamValues.updatedAt,
+            },
+          })
+          .run()
       }
+
+      teamsRefreshed = true
+      leagueTeams = await loadLeagueTeamRows(event, league.key)
     }
 
-    if (!resolvedSeason) {
-      throw createError({
-        statusCode: 400,
-        message: lastPlanError || 'No accessible season was available for this league.',
-      })
-    }
-
-    let teamCount = 0
+    const teamCount = leagueTeams.length
     let playerCount = 0
     let rosterCount = 0
-    let venueCount = 0
+    const venueCount = teamsRefreshed
+      ? seasonResolution.teams.filter((team) => Boolean(team.venue)).length
+      : 0
     let rosterEndpointUnavailable = false
+    const rosterFreshnessByTeam = await loadRosterFreshnessByTeam(event, league.key, resolvedSeason)
+    const rosterQueue = leagueTeams
+      .filter((team) => !isFresh(rosterFreshnessByTeam.get(team.id), ROSTER_SYNC_TTL_MS, nowMs))
+      .sort((left, right) => {
+        const leftMs = parseTimestampMs(rosterFreshnessByTeam.get(left.id)) ?? 0
+        const rightMs = parseTimestampMs(rosterFreshnessByTeam.get(right.id)) ?? 0
+        return leftMs - rightMs
+      })
 
-    for (const team of teams) {
-      const venueId = team.venue
-        ? await upsertVenue(
-            event,
-            league.entityProviderSportKey,
-            league.key,
-            league.sportKey,
-            team.venue,
-            syncedAt,
-          )
-        : null
+    const rosterBatch = rosterQueue.slice(0, MAX_ROSTER_TEAMS_PER_RUN)
+    let rosterTeamsSynced = 0
 
-      if (team.venue) {
-        venueCount += 1
-      }
-
-      const teamId = buildProviderEntityId(league.entityProviderSportKey, 'team', team.externalId)
-      const teamValues: typeof napkinbetsTeams.$inferInsert = {
-        id: teamId,
-        slug: buildTeamSlug({ name: team.name, externalTeamId: team.externalId }),
-        source: 'api-sports',
-        externalTeamId: team.externalId,
-        sportKey: league.sportKey,
-        primaryLeagueKey: league.key,
-        venueId,
-        name: team.name,
-        shortName: team.shortName || team.name,
-        abbreviation: team.abbreviation,
-        city: team.city,
-        country: team.country,
-        logoUrl: team.logoUrl,
-        isNational: team.isNational,
-        foundedYear: team.foundedYear,
-        metadataJson: recordToJson(team.metadata),
-        rawPayloadJson: JSON.stringify(team.rawPayload),
-        sourceUpdatedAt: null,
-        lastSyncedAt: syncedAt,
-        createdAt: syncedAt,
-        updatedAt: syncedAt,
-      }
-
-      await db
-        .insert(napkinbetsTeams)
-        .values(teamValues)
-        .onConflictDoUpdate({
-          target: napkinbetsTeams.id,
-          set: {
-            slug: teamValues.slug,
-            primaryLeagueKey: teamValues.primaryLeagueKey,
-            venueId: teamValues.venueId,
-            name: teamValues.name,
-            shortName: teamValues.shortName,
-            abbreviation: teamValues.abbreviation,
-            city: teamValues.city,
-            country: teamValues.country,
-            logoUrl: teamValues.logoUrl,
-            isNational: teamValues.isNational,
-            foundedYear: teamValues.foundedYear,
-            metadataJson: teamValues.metadataJson,
-            rawPayloadJson: teamValues.rawPayloadJson,
-            sourceUpdatedAt: teamValues.sourceUpdatedAt,
-            lastSyncedAt: teamValues.lastSyncedAt,
-            updatedAt: teamValues.updatedAt,
-          },
-        })
-        .run()
-
-      teamCount += 1
-
+    for (const team of rosterBatch) {
       if (rosterEndpointUnavailable) {
-        continue
+        break
       }
 
       try {
         const players = await fetchApiSportsPlayersByTeam(
           event,
           league.entityProviderSportKey,
-          team.externalId,
+          team.externalTeamId,
           resolvedSeason,
         )
 
@@ -440,7 +571,7 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
           .delete(napkinbetsTeamRosters)
           .where(
             and(
-              eq(napkinbetsTeamRosters.teamId, teamId),
+              eq(napkinbetsTeamRosters.teamId, team.id),
               eq(napkinbetsTeamRosters.season, resolvedSeason),
               eq(napkinbetsTeamRosters.leagueKey, league.key),
             ),
@@ -464,7 +595,7 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
             source: 'api-sports',
             externalPlayerId: player.externalId,
             sportKey: league.sportKey,
-            currentTeamId: teamId,
+            currentTeamId: team.id,
             currentLeagueKey: league.key,
             displayName: player.displayName,
             firstName: player.firstName || names.firstName,
@@ -519,9 +650,9 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
             .run()
 
           const rosterValues: typeof napkinbetsTeamRosters.$inferInsert = {
-            id: `${league.key}:${resolvedSeason}:${teamId}:${playerId}`,
+            id: `${league.key}:${resolvedSeason}:${team.id}:${playerId}`,
             leagueKey: league.key,
-            teamId,
+            teamId: team.id,
             playerId,
             season: resolvedSeason,
             jerseyNumber: player.jerseyNumber,
@@ -540,11 +671,13 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
           playerCount += 1
           rosterCount += 1
         }
+
+        rosterTeamsSynced += 1
       } catch (error) {
         if (error instanceof NapkinbetsApiSportsError && error.code === 'endpoint') {
           rosterEndpointUnavailable = true
           warnings.push(error.message)
-          continue
+          break
         }
 
         if (error instanceof NapkinbetsApiSportsError && error.code === 'plan') {
@@ -552,8 +685,28 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
           continue
         }
 
+        if (error instanceof NapkinbetsApiSportsError && error.code === 'rate-limit') {
+          warnings.push(
+            `API-Sports rate limit reached during roster sync. ${rosterQueue.length - rosterTeamsSynced} teams remain queued.`,
+          )
+          break
+        }
+
         throw error
       }
+    }
+
+    const remainingRosterTeams = Math.max(0, rosterQueue.length - rosterTeamsSynced)
+
+    if (remainingRosterTeams > 0) {
+      warnings.push(
+        `Roster sync is incremental to stay within API limits. ${remainingRosterTeams} teams remain queued for ${league.key}.`,
+      )
+    }
+
+    if (!teamsRefreshed && rosterBatch.length === 0 && warnings.length === 0) {
+      infoMessage =
+        'All cached team and roster data is still fresh. No remote API calls were needed.'
     }
 
     await linkEventsToCanonicalEntities(event, league.key)
@@ -561,7 +714,7 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
     await setLeagueSyncState(event, league.key, {
       entityLastSyncAt: syncedAt,
       entityLastSyncStatus: warnings.length > 0 ? 'partial' : 'success',
-      entityLastSyncMessage: warnings.join(' | ') || null,
+      entityLastSyncMessage: (infoMessage ?? warnings.join(' | ')) || null,
       entityResolvedSeason: resolvedSeason,
     })
 
@@ -572,6 +725,9 @@ export async function syncLeagueEntities(event: H3Event, leagueKey: string) {
       teamCount,
       playerCount,
       rosterCount,
+      rosterTeamsSynced,
+      remainingRosterTeams,
+      teamsRefreshed,
       venueCount,
       warnings,
       metadata,
