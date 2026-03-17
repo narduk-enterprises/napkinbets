@@ -2,6 +2,8 @@ import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+const DEFAULT_CONTROL_PLANE_URL = 'https://control-plane.nard.uk'
+
 function run(cmd: string, cwd = process.cwd()) {
   console.log(`\n> ${cmd}`)
   execSync(cmd, { stdio: 'inherit', cwd })
@@ -114,7 +116,11 @@ async function shipApp(appTarget: string) {
   try {
     const controlPlaneUrl =
       process.env.CONTROL_PLANE_URL ||
-      runQuiet('doppler secrets get CONTROL_PLANE_URL --config prd --plain', appDir)
+      runQuiet('doppler secrets get CONTROL_PLANE_URL --config prd --plain', appDir) ||
+      DEFAULT_CONTROL_PLANE_URL
+    const controlPlaneApiKey =
+      process.env.CONTROL_PLANE_API_KEY ||
+      runQuiet('doppler secrets get CONTROL_PLANE_API_KEY --config prd --plain', appDir)
     const siteUrl =
       process.env.SITE_URL || runQuiet('doppler secrets get SITE_URL --config prd --plain', appDir)
     const appName =
@@ -122,12 +128,12 @@ async function shipApp(appTarget: string) {
       runQuiet('doppler secrets get APP_NAME --config prd --plain', appDir) ||
       appTarget
 
-    if (controlPlaneUrl && siteUrl) {
-      const curlCmd = `curl -s -X PUT "${controlPlaneUrl}/api/fleet/apps/${appName}" -H "Content-Type: application/json" -d '{"url": "${siteUrl}", "isActive": true}'`
+    if (controlPlaneUrl && siteUrl && controlPlaneApiKey) {
+      const curlCmd = `curl -s -X PUT "${controlPlaneUrl}/api/fleet/apps/${appName}" -H "Authorization: Bearer ${controlPlaneApiKey}" -H "Content-Type: application/json" -d '{"url": "${siteUrl}", "isActive": true}'`
       execSync(curlCmd, { stdio: 'ignore' })
       console.log(`✅ Fleet registry synced for ${appName}.`)
     } else {
-      console.log(`⏭ CONTROL_PLANE_URL or SITE_URL not set — skipping fleet sync.`)
+      console.log(`⏭ CONTROL_PLANE_API_KEY or SITE_URL not set — skipping fleet sync.`)
     }
   } catch (e) {
     console.log(`⚠️ Fleet sync failed (non-fatal).`)
