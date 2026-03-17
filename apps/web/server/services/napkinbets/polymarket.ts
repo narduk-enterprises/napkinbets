@@ -33,6 +33,10 @@ export interface NapkinbetsEventOdds {
   moneyline: NapkinbetsEventOddsMarket | null
   spread: NapkinbetsEventOddsMarket | null
   total: NapkinbetsEventOddsMarket | null
+  extraMarkets: NapkinbetsEventOddsMarket[]
+  volume: number | null
+  priceChange24h: number | null
+  commentCount: number | null
 }
 
 interface PolymarketMarket {
@@ -43,6 +47,14 @@ interface PolymarketMarket {
   updatedAt?: string
   line?: number | string
   gameStartTime?: string
+  volume?: string | number
+  bestBid?: number
+  bestAsk?: number
+  lastTradePrice?: number
+  spread?: number
+  oneDayPriceChange?: number
+  groupItemTitle?: string
+  description?: string
 }
 
 interface PolymarketEvent {
@@ -53,6 +65,9 @@ interface PolymarketEvent {
   archived?: boolean
   updatedAt?: string
   markets?: PolymarketMarket[]
+  volume?: number
+  commentCount?: number
+  competitive?: number
 }
 
 interface PolymarketSearchResponse {
@@ -61,15 +76,53 @@ interface PolymarketSearchResponse {
 
 const POLYMARKET_SUPPORTED_LEAGUES = new Set([
   'nba',
+  'wnba',
   'ncaamb',
   'ncaaw',
+  'ncaaf',
   'mlb',
   'nhl',
   'nfl',
   'epl',
   'mls',
   'nwsl',
+  'uefa-champions',
+  'lpga',
+  'ufc',
 ])
+
+const POLYMARKET_LEAGUE_SLUG_MAP: Record<string, string> = {
+  nba: 'nba',
+  wnba: 'wnba',
+  ncaamb: 'ncaab',
+  ncaaw: 'cwbb',
+  ncaaf: 'cfb',
+  mlb: 'mlb',
+  nhl: 'nhl',
+  nfl: 'nfl',
+  epl: 'epl',
+  mls: 'mls',
+  'uefa-champions': 'ucl',
+  ufc: 'ufc',
+}
+
+const POLYMARKET_EXTRA_MARKET_DEFS: Array<{
+  type: string
+  label: string
+  sports?: string[]
+}> = [
+  { type: 'both_teams_to_score', label: 'Both Teams to Score', sports: ['soccer'] },
+  { type: 'first_half_moneyline', label: '1st Half ML' },
+  { type: 'first_half_spreads', label: '1st Half Spread' },
+  { type: 'first_half_totals', label: '1st Half Total' },
+  { type: 'nrfi', label: 'NRFI', sports: ['baseball'] },
+  { type: 'double_chance', label: 'Double Chance', sports: ['soccer'] },
+  { type: 'team_totals', label: 'Team Totals' },
+  { type: 'team_totals_home', label: 'Home Team Total' },
+  { type: 'team_totals_away', label: 'Away Team Total' },
+  { type: 'total_goals', label: 'Total Goals', sports: ['soccer'] },
+  { type: 'total_corners', label: 'Total Corners', sports: ['soccer'] },
+]
 
 const POLYMARKET_LOOKUP_LIMIT = 10
 const POLYMARKET_TIMEOUT_MS = 2_500
@@ -142,10 +195,15 @@ function buildSearchQueries(event: NapkinbetsOddsEventInput) {
   const queries = new Set<string>()
   const awayShort = event.awayTeam.shortName || event.awayTeam.name
   const homeShort = event.homeTeam.shortName || event.homeTeam.name
+  const leagueSlug = POLYMARKET_LEAGUE_SLUG_MAP[event.league] ?? ''
 
   queries.add(`${awayShort} ${homeShort}`)
   queries.add(`${event.awayTeam.name} ${event.homeTeam.name}`)
   queries.add(`${event.awayTeam.abbreviation} ${event.homeTeam.abbreviation}`)
+
+  if (leagueSlug) {
+    queries.add(`${awayShort} ${homeShort} ${leagueSlug}`)
+  }
 
   return [...queries].map((query) => normalizeText(query)).filter((query) => query.length >= 4)
 }
@@ -330,6 +388,47 @@ function buildGenericMarketOdds(
   }
 }
 
+function buildExtraMarketOdds(
+  matchedEvent: PolymarketEvent,
+  coreTypes: Set<string>,
+): NapkinbetsEventOddsMarket[] {
+  if (!matchedEvent.markets) {
+    return []
+  }
+
+  const extras: NapkinbetsEventOddsMarket[] = []
+
+  for (const def of POLYMARKET_EXTRA_MARKET_DEFS) {
+    if (coreTypes.has(def.type)) {
+      continue
+    }
+
+    const market = matchedEvent.markets.find((m) => m.sportsMarketType === def.type)
+    if (!market) {
+      continue
+    }
+
+    const detail = market.line !== undefined && market.line !== null ? String(market.line) : null
+
+    const parsed = buildGenericMarketOdds(market, def.label, detail)
+    if (parsed) {
+      extras.push(parsed)
+    }
+  }
+
+  return extras
+}
+
+function computeMoneylinePriceChange(matchedEvent: PolymarketEvent): number | null {
+  const moneylineMarket = matchedEvent.markets?.find((m) => m.sportsMarketType === 'moneyline')
+
+  if (!moneylineMarket || moneylineMarket.oneDayPriceChange === undefined) {
+    return null
+  }
+
+  return Math.round(moneylineMarket.oneDayPriceChange * 100)
+}
+
 async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
   const candidates = new Map<string, PolymarketEvent>()
 
@@ -346,6 +445,8 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
   if (!matchedEvent) {
     return null
   }
+
+  const coreTypes = new Set(['moneyline', 'spreads', 'totals'])
 
   const moneylineMarket = matchedEvent.markets?.find(
     (market) => market.sportsMarketType === 'moneyline',
@@ -369,9 +470,16 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
       : null,
   )
 
-  if (!moneyline && !spread && !total) {
+  const extraMarkets = buildExtraMarketOdds(matchedEvent, coreTypes)
+
+  if (!moneyline && !spread && !total && extraMarkets.length === 0) {
     return null
   }
+
+  const eventVolume =
+    matchedEvent.volume !== undefined && matchedEvent.volume !== null
+      ? Math.round(matchedEvent.volume)
+      : null
 
   return {
     source: 'polymarket' as const,
@@ -387,6 +495,10 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
     moneyline,
     spread,
     total,
+    extraMarkets,
+    volume: eventVolume,
+    priceChange24h: computeMoneylinePriceChange(matchedEvent),
+    commentCount: matchedEvent.commentCount ?? null,
   }
 }
 

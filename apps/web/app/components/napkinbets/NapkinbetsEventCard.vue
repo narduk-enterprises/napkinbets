@@ -116,6 +116,30 @@ const secondaryOdds = computed<NapkinbetsEventOddsMarket[]>(() =>
     .filter((market): market is NapkinbetsEventOddsMarket => Boolean(market))
     .slice(0, 2),
 )
+const extraOdds = computed<NapkinbetsEventOddsMarket[]>(() => {
+  const extras = props.event.odds?.extraMarkets ?? []
+  return extras.slice(0, 3)
+})
+const extraOddsOverflow = computed(() => {
+  const total = props.event.odds?.extraMarkets?.length ?? 0
+  return total > 3 ? total - 3 : 0
+})
+const volumeLabel = computed(() => {
+  const vol = props.event.odds?.volume
+  if (!vol || vol <= 0) return null
+  if (vol >= 1_000_000) return `$${(vol / 1_000_000).toFixed(1)}M`
+  if (vol >= 1_000) return `$${(vol / 1_000).toFixed(0)}K`
+  return `$${vol}`
+})
+const priceChangeInfo = computed(() => {
+  const change = props.event.odds?.priceChange24h
+  if (change === null || change === undefined || Math.abs(change) < 2) return null
+  return {
+    label: `${change > 0 ? '+' : ''}${change}pp`,
+    icon: change > 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down',
+    color: change > 0 ? 'text-success' : 'text-error',
+  }
+})
 const showInsights = computed(() => !moneylineOdds.value && insightRows.value.length > 0)
 
 function formatProbability(value: number | null) {
@@ -229,6 +253,40 @@ function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
               {{ market.right.label }} {{ formatProbability(market.right.probability) }}
             </strong>
           </div>
+        </div>
+
+        <div v-if="extraOdds.length" class="napkinbets-event-odds-secondary">
+          <div
+            v-for="market in extraOdds"
+            :key="`extra-${market.label}-${market.detail ?? 'none'}`"
+            class="napkinbets-event-odds-chip"
+          >
+            <span>
+              {{ market.label }}<template v-if="market.detail"> · {{ market.detail }}</template>
+            </span>
+            <strong>
+              {{ market.left.label }} {{ formatProbability(market.left.probability) }} /
+              {{ market.right.label }} {{ formatProbability(market.right.probability) }}
+            </strong>
+          </div>
+          <span v-if="extraOddsOverflow" class="napkinbets-event-odds-overflow">
+            +{{ extraOddsOverflow }} more
+          </span>
+        </div>
+
+        <div v-if="volumeLabel || priceChangeInfo" class="napkinbets-event-odds-meta">
+          <span v-if="volumeLabel" class="napkinbets-event-odds-volume">
+            <UIcon name="i-lucide-droplets" class="size-3" />
+            {{ volumeLabel }} traded
+          </span>
+          <span
+            v-if="priceChangeInfo"
+            class="napkinbets-event-odds-trend"
+            :class="priceChangeInfo.color"
+          >
+            <UIcon :name="priceChangeInfo.icon" class="size-3" />
+            {{ priceChangeInfo.label }} 24h
+          </span>
         </div>
       </div>
 

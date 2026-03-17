@@ -367,3 +367,28 @@ export const napkinbetsIngestRuns = sqliteTable('napkinbets_ingest_runs', {
     .$defaultFn(() => new Date().toISOString()),
   completedAt: text('completed_at'),
 })
+
+export const napkinbetsEventOdds = sqliteTable('napkinbets_event_odds', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => napkinbetsEvents.id, { onDelete: 'cascade' }),
+  source: text('source').notNull().default('polymarket'),
+  polymarketEventSlug: text('polymarket_event_slug'),
+  polymarketUrl: text('polymarket_url'),
+  moneylineJson: text('moneyline_json'),
+  spreadJson: text('spread_json'),
+  totalJson: text('total_json'),
+  extraMarketsJson: text('extra_markets_json').notNull().default('[]'),
+  volume: integer('volume'),
+  priceChange24h: integer('price_change_24h'),
+  commentCount: integer('comment_count'),
+  fetchedAt: text('fetched_at').notNull(),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})

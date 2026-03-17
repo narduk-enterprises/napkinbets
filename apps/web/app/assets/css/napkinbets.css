@@ -908,6 +908,40 @@ body {
   gap: 0.35rem;
 }
 
+.napkinbets-event-odds-overflow {
+  color: var(--napkinbets-toned);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.3rem;
+}
+
+.napkinbets-event-odds-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+}
+
+.napkinbets-event-odds-volume,
+.napkinbets-event-odds-trend {
+  align-items: center;
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 600;
+  gap: 0.2rem;
+  letter-spacing: 0.04em;
+}
+
+.napkinbets-event-odds-volume {
+  color: var(--napkinbets-muted);
+}
+
+.napkinbets-event-odds-trend {
+  letter-spacing: 0.02em;
+}
+
 .napkinbets-event-insight {
   background: rgb(21 83 45 / 0.07);
   border-radius: 0.95rem;

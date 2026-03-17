@@ -204,6 +204,10 @@ export interface NapkinbetsEventOdds {
   moneyline: NapkinbetsEventOddsMarket | null
   spread: NapkinbetsEventOddsMarket | null
   total: NapkinbetsEventOddsMarket | null
+  extraMarkets: NapkinbetsEventOddsMarket[]
+  volume: number | null
+  priceChange24h: number | null
+  commentCount: number | null
 }
 
 export interface NapkinbetsCreatePrefillQuery {

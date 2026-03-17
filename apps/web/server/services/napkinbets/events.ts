@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { and, asc, desc, eq, inArray, lt, or } from 'drizzle-orm'
 import {
   napkinbetsEvents,
+  napkinbetsEventOdds,
   napkinbetsEventSnapshots,
   napkinbetsIngestRuns,
 } from '#server/database/schema'
@@ -1716,6 +1717,141 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }
 }
 
+const ODDS_TTL_PRE_MS = 5 * 60 * 1000
+const ODDS_TTL_LIVE_MS = 2 * 60 * 1000
+
+function oddsTtlMs(state: string) {
+  return state === 'in' ? ODDS_TTL_LIVE_MS : ODDS_TTL_PRE_MS
+}
+
+function deserializeOddsRow(
+  row: typeof napkinbetsEventOdds.$inferSelect,
+): NapkinbetsEventOdds | null {
+  try {
+    return {
+      source: 'polymarket' as const,
+      url: row.polymarketUrl ?? 'https://polymarket.com',
+      updatedAt: row.fetchedAt,
+      moneyline: row.moneylineJson
+        ? (JSON.parse(row.moneylineJson) as NapkinbetsEventOddsMarket)
+        : null,
+      spread: row.spreadJson ? (JSON.parse(row.spreadJson) as NapkinbetsEventOddsMarket) : null,
+      total: row.totalJson ? (JSON.parse(row.totalJson) as NapkinbetsEventOddsMarket) : null,
+      extraMarkets: row.extraMarketsJson
+        ? (JSON.parse(row.extraMarketsJson) as NapkinbetsEventOddsMarket[])
+        : [],
+      volume: row.volume ?? null,
+      priceChange24h: row.priceChange24h ?? null,
+      commentCount: row.commentCount ?? null,
+    }
+  } catch {
+    return null
+  }
+}
+
+type NapkinbetsEventOddsMarket = NapkinbetsEventOdds extends { moneyline: infer M }
+  ? NonNullable<M>
+  : never
+
+async function loadCachedOddsOrFetch(
+  h3Event: H3Event,
+  candidates: NapkinbetsCachedEvent[],
+): Promise<Map<string, NapkinbetsEventOdds>> {
+  if (candidates.length === 0) {
+    return new Map()
+  }
+
+  const db = useAppDatabase(h3Event)
+  const nowMs = Date.now()
+  const result = new Map<string, NapkinbetsEventOdds>()
+
+  const candidateIds = candidates.map((c) => c.id)
+  const cachedRows =
+    candidateIds.length > 0
+      ? await db
+          .select()
+          .from(napkinbetsEventOdds)
+          .where(inArray(napkinbetsEventOdds.eventId, candidateIds))
+      : []
+
+  const cachedByEventId = new Map(cachedRows.map((row) => [row.eventId, row]))
+
+  const staleEvents: NapkinbetsCachedEvent[] = []
+
+  for (const candidate of candidates) {
+    const cached = cachedByEventId.get(candidate.id)
+    if (cached) {
+      const expiresMs = new Date(cached.expiresAt).getTime()
+      if (!Number.isNaN(expiresMs) && expiresMs > nowMs) {
+        const deserialized = deserializeOddsRow(cached)
+        if (deserialized) {
+          result.set(candidate.id, deserialized)
+          continue
+        }
+      }
+    }
+
+    staleEvents.push(candidate)
+  }
+
+  if (staleEvents.length > 0) {
+    const freshOdds = await enrichNapkinbetsEventsWithPolymarketOdds(staleEvents)
+
+    for (const [eventId, odds] of freshOdds) {
+      result.set(eventId, odds)
+
+      const candidate = staleEvents.find((c) => c.id === eventId)
+      const ttl = candidate ? oddsTtlMs(candidate.state) : ODDS_TTL_PRE_MS
+      const expiresAt = new Date(nowMs + ttl).toISOString()
+      const fetchedAt = nowIso()
+      const rowId = `odds:${eventId}`
+
+      try {
+        await db
+          .insert(napkinbetsEventOdds)
+          .values({
+            id: rowId,
+            eventId,
+            source: odds.source,
+            polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+            polymarketUrl: odds.url,
+            moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+            spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+            totalJson: odds.total ? JSON.stringify(odds.total) : null,
+            extraMarketsJson: JSON.stringify(odds.extraMarkets),
+            volume: odds.volume,
+            priceChange24h: odds.priceChange24h,
+            commentCount: odds.commentCount,
+            fetchedAt,
+            expiresAt,
+          })
+          .onConflictDoUpdate({
+            target: napkinbetsEventOdds.id,
+            set: {
+              polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+              polymarketUrl: odds.url,
+              moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+              spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+              totalJson: odds.total ? JSON.stringify(odds.total) : null,
+              extraMarketsJson: JSON.stringify(odds.extraMarkets),
+              volume: odds.volume,
+              priceChange24h: odds.priceChange24h,
+              commentCount: odds.commentCount,
+              fetchedAt,
+              expiresAt,
+              updatedAt: fetchedAt,
+            },
+          })
+          .run()
+      } catch {
+        // Non-critical — cache write failure should not block odds delivery
+      }
+    }
+  }
+
+  return result
+}
+
 export async function loadCachedDiscoverData(event: H3Event) {
   const db = useAppDatabase(event)
   const readSnapshot = async () => {
@@ -1757,7 +1893,7 @@ export async function loadCachedDiscoverData(event: H3Event) {
         allEvents.findIndex((entry) => entry.id === cachedEvent.id) === index,
     )
 
-  const oddsByEventId = await enrichNapkinbetsEventsWithPolymarketOdds(oddsCandidates)
+  const oddsByEventId = await loadCachedOddsOrFetch(event, oddsCandidates)
   sections = sections.map((section) => ({
     ...section,
     events: section.events.map((cachedEvent) => ({
