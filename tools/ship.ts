@@ -17,6 +17,17 @@ function runQuiet(cmd: string, cwd = process.cwd()) {
   }
 }
 
+function resolveDopplerProject(cwd: string) {
+  return process.env.DOPPLER_PROJECT || runQuiet('doppler configure get project --plain', cwd)
+}
+
+function getDopplerPrefix(cwd: string) {
+  const project = resolveDopplerProject(cwd)
+  return project
+    ? `doppler run --project ${project} --config prd --`
+    : 'doppler run --config prd --'
+}
+
 async function shipApp(appTarget: string) {
   // Find target directory
   let appDir = resolve(process.cwd(), 'apps', appTarget)
@@ -38,10 +49,12 @@ async function shipApp(appTarget: string) {
     }
   }
 
+  const dopplerPrefix = getDopplerPrefix(appDir)
+
   // 1. Build Verification
   console.log(`\n🏗️ Building ${appTarget}...`)
   try {
-    run('doppler run -- pnpm run build', appDir)
+    run(`${dopplerPrefix} pnpm run build`, appDir)
   } catch (error) {
     console.error(`\n❌ Build failed for ${appTarget}. Aborting ship to prevent broken commit.`)
     process.exit(1)
@@ -84,13 +97,13 @@ async function shipApp(appTarget: string) {
     console.log(`\n🗄️ Running remote D1 migrations for ${appTarget}...`)
     const migrateCmd = pkg.scripts['db:migrate'].replaceAll('--local', '--remote')
     const escaped = migrateCmd.replace(/\$/g, '\\$').replace(/"/g, '\\"')
-    run(`doppler run -- bash -c "${escaped}"`, appDir)
+    run(`${dopplerPrefix} bash -c "${escaped}"`, appDir)
   }
 
   // 4. Deploy
   console.log(`\n☁️ Deploying ${appTarget} to Edge...`)
   try {
-    run('doppler run -- pnpm run deploy', appDir)
+    run(`${dopplerPrefix} pnpm run deploy`, appDir)
   } catch (error) {
     console.error(`\n❌ Deploy failed for ${appTarget}.`)
     process.exit(1)
@@ -101,10 +114,13 @@ async function shipApp(appTarget: string) {
   try {
     const controlPlaneUrl =
       process.env.CONTROL_PLANE_URL ||
-      runQuiet('doppler secrets get CONTROL_PLANE_URL --plain', appDir)
-    const siteUrl = process.env.SITE_URL || runQuiet('doppler secrets get SITE_URL --plain', appDir)
+      runQuiet('doppler secrets get CONTROL_PLANE_URL --config prd --plain', appDir)
+    const siteUrl =
+      process.env.SITE_URL || runQuiet('doppler secrets get SITE_URL --config prd --plain', appDir)
     const appName =
-      process.env.APP_NAME || runQuiet('doppler secrets get APP_NAME --plain', appDir) || appTarget
+      process.env.APP_NAME ||
+      runQuiet('doppler secrets get APP_NAME --config prd --plain', appDir) ||
+      appTarget
 
     if (controlPlaneUrl && siteUrl) {
       const curlCmd = `curl -s -X PUT "${controlPlaneUrl}/api/fleet/apps/${appName}" -H "Content-Type: application/json" -d '{"url": "${siteUrl}", "isActive": true}'`
