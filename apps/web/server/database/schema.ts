@@ -57,6 +57,7 @@ export const napkinbetsParticipants = sqliteTable('napkinbets_participants', {
     .references(() => napkinbetsWagers.id, { onDelete: 'cascade' }),
   userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
   displayName: text('display_name').notNull(),
+  avatarUrl: text('avatar_url').notNull().default(''),
   sideLabel: text('side_label'),
   joinStatus: text('join_status').notNull().default('invited'),
   draftOrder: integer('draft_order'),
@@ -184,12 +185,76 @@ export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
     .$defaultFn(() => new Date().toISOString()),
 })
 
+export const napkinbetsTaxonomySports = sqliteTable('napkinbets_taxonomy_sports', {
+  key: text('key').primaryKey(),
+  label: text('label').notNull(),
+  icon: text('icon').notNull(),
+  supportsEventDiscovery: integer('supports_event_discovery', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsTaxonomyContexts = sqliteTable('napkinbets_taxonomy_contexts', {
+  key: text('key').primaryKey(),
+  label: text('label').notNull(),
+  description: text('description').notNull(),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsTaxonomyLeagues = sqliteTable('napkinbets_taxonomy_leagues', {
+  key: text('key').primaryKey(),
+  label: text('label').notNull(),
+  sportKey: text('sport_key')
+    .notNull()
+    .references(() => napkinbetsTaxonomySports.key, { onDelete: 'cascade' }),
+  primaryContextKey: text('primary_context_key')
+    .notNull()
+    .references(() => napkinbetsTaxonomyContexts.key, { onDelete: 'cascade' }),
+  contextKeysJson: text('context_keys_json').notNull(),
+  provider: text('provider').notNull(),
+  providerLeagueKey: text('provider_league_key'),
+  scoreboardQueryParamsJson: text('scoreboard_query_params_json').notNull().default('{}'),
+  eventShape: text('event_shape'),
+  activeMonthsJson: text('active_months_json').notNull(),
+  supportsDateWindow: integer('supports_date_window', { mode: 'boolean' })
+    .notNull()
+    .default(true),
+  supportsEventDiscovery: integer('supports_event_discovery', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
 export const napkinbetsEvents = sqliteTable('napkinbets_events', {
   id: text('id').primaryKey(),
   source: text('source').notNull(),
   externalEventId: text('external_event_id').notNull(),
   sport: text('sport').notNull(),
   sportLabel: text('sport_label').notNull(),
+  contextKey: text('context_key').notNull().default('community'),
+  contextLabel: text('context_label').notNull().default('Community'),
   league: text('league').notNull(),
   leagueLabel: text('league_label').notNull(),
   state: text('state').notNull(),

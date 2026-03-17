@@ -1,29 +1,26 @@
 <script setup lang="ts">
-const [dashboardState, discoverState] = await Promise.all([
-  useNapkinbetsDashboard(),
-  useNapkinbetsDiscover(),
-])
 const { isAuthenticated } = useNapkinbetsNavLinks()
+const discoverState = await useNapkinbetsDiscover()
+const dashboardState = isAuthenticated.value ? await useNapkinbetsDashboard() : null
 
-const dashboard = computed(() => dashboardState.data.value)
 const discover = computed(() => discoverState.data.value)
-const featuredWagers = computed(() => dashboard.value.wagers.slice(0, 2))
-const featuredSpotlights = computed(() => discover.value.spotlights.slice(0, 2))
+const dashboard = computed(() => dashboardState?.data.value ?? null)
+const featuredWagers = computed(() => dashboard.value?.wagers.slice(0, 2) ?? [])
+const featuredSpotlight = computed(() => discover.value.spotlights[0] ?? null)
 const openingEvents = computed(() =>
-  discover.value.sections.flatMap((section) => section.events).slice(0, 4),
+  discover.value.sections.flatMap((section) => section.events).slice(0, isAuthenticated.value ? 4 : 3),
 )
 
 useSeo({
-  title: 'Friendly wager boards for sports nights, drafts, and prop bets',
+  title: 'Social sports pools for games, props, and drafts',
   description:
-    'Napkinbets turns live games, drafts, and prop ideas into clear friendly wager boards with manual payment closeout.',
+    'Napkinbets turns live games, props, and drafts into clean social pools with manual payment follow-up.',
   image: '/brand/og/home.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets',
-  description:
-    'A friendly wagering platform prototype for sports events, prop bet boards, and golf-draft style pools.',
+  description: 'A social sports pool app for live games, props, golf drafts, and watch-party side bets.',
 })
 </script>
 
@@ -33,87 +30,95 @@ useWebPageSchema({
       <div class="napkinbets-hero-grid">
         <div class="space-y-5">
           <div class="space-y-3">
-            <p class="napkinbets-kicker">Napkin-first wagering</p>
-            <h1 class="napkinbets-hero-title">Welcome to the back of the napkin.</h1>
+            <p class="napkinbets-kicker">Napkinbets</p>
+            <h1 class="napkinbets-hero-title">
+              {{
+                isAuthenticated
+                  ? 'Run tonight’s pools without running the group chat.'
+                  : 'Put the side bet where everyone can see it.'
+              }}
+            </h1>
             <p class="napkinbets-hero-lede">
-              Take the side bet out of the group chat, put it on a board, and settle it after the
-              final.
+              {{
+                isAuthenticated
+                  ? 'Start from a real game, keep the rules short, track the picks, and settle up after the final.'
+                  : 'Real games in, simple pool out. Fewer texts, clearer picks, and easy settle-up after the final.'
+              }}
             </p>
           </div>
 
           <div class="napkinbets-hero-actions">
-            <UButton to="/discover" size="xl" color="primary" icon="i-lucide-radar">
-              Browse the slate
+            <UButton to="/events" size="xl" color="primary" icon="i-lucide-radar">
+              Browse games
             </UButton>
             <UButton
-              :to="isAuthenticated ? '/wagers/create' : '/register'"
+              :to="isAuthenticated ? '/napkins/create' : '/register'"
               size="xl"
               color="neutral"
               variant="soft"
               icon="i-lucide-ticket-plus"
             >
-              {{ isAuthenticated ? 'Quick board' : 'Join Napkinbets' }}
+              {{ isAuthenticated ? 'Start a pool' : 'Create account' }}
+            </UButton>
+            <UButton
+              v-if="!isAuthenticated"
+              to="/tour"
+              size="xl"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-panels-top-left"
+            >
+              See how it works
             </UButton>
           </div>
 
           <div class="napkinbets-hero-pills">
+            <span class="napkinbets-hero-pill">Real games</span>
             <span class="napkinbets-hero-pill">Pay off-platform</span>
-            <span class="napkinbets-hero-pill">Live sports + golf</span>
-            <span class="napkinbets-hero-pill">Picks, seats, reminders</span>
+            <span class="napkinbets-hero-pill">Picks and settle up</span>
           </div>
         </div>
 
         <div class="napkinbets-hero-stack">
-          <div class="napkinbets-aside-note">
-            <p class="napkinbets-kicker">Board count</p>
+          <div v-if="isAuthenticated && dashboard" class="napkinbets-aside-note">
+            <p class="napkinbets-kicker">My pools</p>
             <p class="napkinbets-surface-value">{{ dashboard.metrics[0]?.value || '0' }}</p>
-            <p class="napkinbets-support-copy">Boards already running in the workspace.</p>
+            <p class="napkinbets-support-copy">Hosted, joined, and still in motion.</p>
+          </div>
+
+          <div v-else class="napkinbets-aside-note">
+            <p class="napkinbets-kicker">What it does</p>
+            <p class="napkinbets-support-copy">Start from a game, invite the room, track picks, and settle after the result is official.</p>
           </div>
 
           <NapkinbetsSpotlightCard
-            v-if="featuredSpotlights[0]"
-            :spotlight="featuredSpotlights[0]"
+            v-if="featuredSpotlight"
+            :spotlight="featuredSpotlight"
           />
         </div>
       </div>
     </div>
 
     <UAlert
-      v-if="dashboardState.error.value"
+      v-if="discoverState.error.value"
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
-      title="Home workspace failed to load"
-      :description="dashboardState.error.value?.message || 'Please refresh and try again.'"
+      title="Home feed failed to load"
+      :description="discoverState.error.value?.message || 'Please refresh and try again.'"
     />
-
-    <div v-if="featuredSpotlights.length > 1" class="napkinbets-section-stack">
-      <div class="flex items-end justify-between gap-3">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Golf desk</p>
-          <h2 class="napkinbets-section-title">Masters week and tour form</h2>
-        </div>
-        <UButton to="/discover" color="neutral" variant="ghost" icon="i-lucide-arrow-right">
-          Open discovery
-        </UButton>
-      </div>
-
-      <div class="napkinbets-spotlight-grid">
-        <NapkinbetsSpotlightCard
-          v-for="spotlight in featuredSpotlights.slice(1)"
-          :key="spotlight.id"
-          :spotlight="spotlight"
-        />
-      </div>
-    </div>
 
     <div v-if="openingEvents.length" class="napkinbets-section-stack">
       <div class="flex items-end justify-between gap-3">
         <div class="space-y-1">
-          <p class="napkinbets-kicker">On deck</p>
-          <h2 class="napkinbets-section-title">Live and next-up events</h2>
+          <p class="napkinbets-kicker">{{ isAuthenticated ? 'On deck' : 'Tonight' }}</p>
+          <h2 class="napkinbets-section-title">
+            {{ isAuthenticated ? 'Live and upcoming games' : 'A few good places to start' }}
+          </h2>
         </div>
-        <UButton to="/discover" color="neutral" variant="ghost">Full slate</UButton>
+        <UButton to="/events" color="neutral" variant="ghost">
+          {{ isAuthenticated ? 'All games' : 'More games' }}
+        </UButton>
       </div>
 
       <div class="napkinbets-scroll-strip">
@@ -121,28 +126,23 @@ useWebPageSchema({
       </div>
     </div>
 
-    <div class="napkinbets-section-stack">
+    <div v-if="isAuthenticated" class="napkinbets-section-stack">
       <div class="flex items-end justify-between gap-3">
         <div class="space-y-1">
-          <p class="napkinbets-kicker">Open boards</p>
-          <h2 class="napkinbets-section-title">Boards already in motion</h2>
+          <p class="napkinbets-kicker">Open pools</p>
+          <h2 class="napkinbets-section-title">Pools already in motion</h2>
         </div>
-        <UButton
-          :to="isAuthenticated ? '/dashboard' : '/register'"
-          color="primary"
-          variant="soft"
-          icon="i-lucide-layout-dashboard"
-        >
-          {{ isAuthenticated ? 'Your dashboard' : 'Create account' }}
+        <UButton to="/dashboard" color="primary" variant="soft" icon="i-lucide-layout-dashboard">
+          My pools
         </UButton>
       </div>
 
       <div v-if="featuredWagers.length" class="grid gap-4 xl:grid-cols-2">
-        <NapkinbetsWagerSummaryCard
+        <NapkinbetsNapkinSummaryCard
           v-for="wager in featuredWagers"
           :key="wager.id"
-          title="Tracked board"
-          description="Seats, reminders, and settlement proof stay attached to the board."
+          title="Live pool"
+          description="Players, picks, reminders, and payment follow-up stay in one place."
           :wager="wager"
         />
       </div>
@@ -152,8 +152,8 @@ useWebPageSchema({
         color="info"
         variant="soft"
         icon="i-lucide-ticket"
-        title="No boards yet"
-        description="Start from discovery or spin up a quick manual board for tonight."
+        title="No pools yet"
+        description="Start from events or spin up a quick custom pool for tonight."
       />
     </div>
   </div>

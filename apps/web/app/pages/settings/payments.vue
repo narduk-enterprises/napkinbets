@@ -46,7 +46,7 @@ async function handleSetDefault(profileId: string) {
 useSeo({
   title: 'Payment profiles',
   description:
-    'Register your Venmo, PayPal, Cash App, or Zelle handles so Napkinbets can prefill board collection and closeout flows.',
+    'Register your Venmo, PayPal, Cash App, or Zelle handles so Napkinbets can prefill pool collection and settle-up flows.',
   ogImage: {
     title: 'Napkinbets Payment Profiles',
     description: 'Manage the payment handles tied to your account.',
@@ -66,7 +66,7 @@ useWebPageSchema({
       <div class="space-y-4">
         <p class="napkinbets-kicker">Payments</p>
         <h1 class="napkinbets-section-title">
-          Saved handles for smoother board collection and closeout.
+          Saved handles for smoother pool collection and settle-up.
         </h1>
         <p class="napkinbets-hero-lede">
           Store non-sensitive payment identities only. Napkinbets uses them to prefill collection
@@ -125,7 +125,7 @@ useWebPageSchema({
               <UCheckbox v-model="formState.isDefault" label="Use as default payment profile" />
               <UCheckbox
                 v-model="formState.isPublicOnBoards"
-                label="Show this handle on shared board views"
+                label="Show this handle on shared pool views"
               />
             </div>
 
@@ -161,7 +161,7 @@ useWebPageSchema({
                   </p>
                   <UBadge v-if="profile.isDefault" color="success" variant="soft">Default</UBadge>
                   <UBadge v-if="profile.isPublicOnBoards" color="info" variant="soft"
-                    >Public on boards</UBadge
+                    >Public on pools</UBadge
                   >
                 </div>
                 <p class="text-sm text-muted">{{ profile.provider }} • {{ profile.handle }}</p>
@@ -197,7 +197,7 @@ useWebPageSchema({
             variant="soft"
             icon="i-lucide-wallet-cards"
             title="No payment profiles saved yet"
-            description="Add at least one payment identity so board creation and closeout can prefill the right destination."
+            description="Add at least one payment identity so pool creation and settle-up can prefill the right destination."
           />
         </div>
       </UCard>

@@ -1,23 +1,21 @@
-import {
-  getNapkinbetsContexts,
-  getNapkinbetsLeagues,
-  getNapkinbetsSports,
-} from '#server/services/napkinbets/taxonomy'
+import { loadNapkinbetsTaxonomyCatalog } from '#server/services/napkinbets/taxonomy-store'
 
-export default defineEventHandler(() => {
+export default defineEventHandler(async (event) => {
+  const taxonomy = await loadNapkinbetsTaxonomyCatalog(event)
+
   return {
-    sports: getNapkinbetsSports().map((sport) => ({
+    sports: taxonomy.sports.map((sport) => ({
       value: sport.key,
       label: sport.label,
       icon: sport.icon,
       supportsEventDiscovery: sport.supportsEventDiscovery,
     })),
-    contexts: getNapkinbetsContexts().map((context) => ({
+    contexts: taxonomy.contexts.map((context) => ({
       value: context.key,
       label: context.label,
       description: context.description,
     })),
-    leagues: getNapkinbetsLeagues().map((league) => ({
+    leagues: taxonomy.leagues.map((league) => ({
       value: league.key,
       label: league.label,
       sport: league.sportKey,

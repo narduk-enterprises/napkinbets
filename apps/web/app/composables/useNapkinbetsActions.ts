@@ -56,17 +56,17 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
     createWager(payload: CreateWagerInput) {
       return runAction(
         'create-wager',
-        'Wager board created and seeded with a randomized draft order.',
+        'Pool created and seeded with a randomized draft order.',
         () => api.createWager(payload),
       )
     },
     joinWager(wagerId: string, payload: JoinWagerInput) {
-      return runAction(`join:${wagerId}`, 'Participant added to the board.', () =>
+      return runAction(`join:${wagerId}`, 'Player added to the pool.', () =>
         api.joinWager(wagerId, payload),
       )
     },
     addPick(wagerId: string, payload: WagerPickInput) {
-      return runAction(`pick:${wagerId}`, 'Pick logged on the wager board.', () =>
+      return runAction(`pick:${wagerId}`, 'Pick added to the pool.', () =>
         api.addPick(wagerId, payload),
       )
     },
@@ -98,7 +98,7 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     clearWager(wagerId: string) {
-      return runAction(`clear:${wagerId}`, 'Wager board cleared.', () => api.clearWager(wagerId))
+      return runAction(`clear:${wagerId}`, 'Pool cleared.', () => api.clearWager(wagerId))
     },
     setAdminStatus(userId: string, isAdmin: boolean) {
       return runAction(
@@ -118,7 +118,7 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     runAdminIngest(tier: string) {
-      return runAction(`admin-ingest:${tier}`, 'Event cache refresh started.', () =>
+      return runAction(`admin-ingest:${tier}`, 'Event refresh started.', () =>
         api.runAdminIngest(tier),
       )
     },

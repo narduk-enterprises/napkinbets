@@ -45,6 +45,7 @@ export interface NapkinbetsParticipant {
   id: string
   userId: string | null
   displayName: string
+  avatarUrl: string
   sideLabel: string | null
   joinStatus: string
   draftOrder: number | null

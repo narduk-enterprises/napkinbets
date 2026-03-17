@@ -11,14 +11,14 @@ const { slides } = useNapkinbetsTour()
 useSeo({
   title: 'Napkinbets walkthrough',
   description:
-    'A focused slide walkthrough of how Napkinbets discovery, boards, and closeout work together.',
+    'A focused slide walkthrough of how Napkinbets Events, pools, and settle-up work together.',
   image: '/brand/og/tour.webp',
 })
 
 useWebPageSchema({
   name: 'Napkinbets walkthrough',
   description:
-    'A focused slide walkthrough of how Napkinbets discovery, boards, and closeout work together.',
+    'A focused slide walkthrough of how Napkinbets Events, pools, and settle-up work together.',
 })
 </script>
 

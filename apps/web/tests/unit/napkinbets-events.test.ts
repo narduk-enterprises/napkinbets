@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildIngestWindows,
   buildDiscoverSpotlights,
   buildEspnScoreboardUrl,
   isDiscoverCacheStale,
@@ -98,6 +99,20 @@ describe('napkinbets event ingest helpers', () => {
     expect(nflUrl.pathname).toContain('/football/nfl/scoreboard')
     expect(nflUrl.searchParams.get('groups')).toBeNull()
     expect(nflUrl.searchParams.get('dates')).toBe('20260103-20260105')
+  })
+
+  it('builds chunked 8-week ingest windows for broader coverage', () => {
+    const windows = buildIngestWindows('next-8w', new Date('2026-03-17T12:00:00.000Z'))
+    const mls = findNapkinbetsLeague('mls')
+    const epl = findNapkinbetsLeague('epl')
+
+    expect(windows).toHaveLength(8)
+    expect(windows[0]?.datesParam).toBe('20260317-20260324')
+    expect(windows.at(-1)?.datesParam).toBe('20260505-20260512')
+    expect(mls?.providerLeagueKey).toBe('usa.1')
+    expect(mls?.supportsEventDiscovery).toBe(true)
+    expect(epl?.providerLeagueKey).toBe('eng.1')
+    expect(epl?.supportsEventDiscovery).toBe(true)
   })
 
   it('normalizes head-to-head ESPN events into cached discovery cards', () => {

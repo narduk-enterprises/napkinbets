@@ -11,7 +11,7 @@ const props = defineProps<{
 
 function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
   return {
-    path: '/wagers/create',
+    path: '/napkins/create',
     query: {
       createMode: 'event',
       source: prefill.source,
@@ -89,10 +89,10 @@ const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
 
     <div class="napkinbets-card-actions">
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-ticket-plus">
-        Build board
+        Start pool
       </UButton>
-      <UButton to="/discover" color="neutral" variant="ghost" size="sm" icon="i-lucide-arrow-right">
-        Slate
+      <UButton to="/events" color="neutral" variant="ghost" size="sm" icon="i-lucide-arrow-right">
+        See games
       </UButton>
     </div>
   </UCard>

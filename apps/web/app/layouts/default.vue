@@ -27,7 +27,7 @@
     <div class="napkinbets-footer">
       <div class="napkinbets-footer-inner">
         <p class="napkinbets-support-copy">
-          Friendly wagers only. Napkinbets tracks the board. Payments stay outside the app.
+          Friendly bets only. Napkinbets keeps the pool organized. Payments stay outside the app.
         </p>
       </div>
     </div>

@@ -77,6 +77,7 @@ export default defineNuxtConfig({
     '/dashboard': { ssr: false },
     '/dashboard/**': { ssr: false },
     '/settings/**': { ssr: false },
+    '/napkins/create': { ssr: false },
     '/wagers/create': { ssr: false },
   },
 

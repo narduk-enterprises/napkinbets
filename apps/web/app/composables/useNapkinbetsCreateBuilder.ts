@@ -223,20 +223,20 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
   const boardSummary = computed(() => {
     if (options.mode.value === 'event') {
-      return `Friendly ${formState.format.replaceAll('-', ' ')} for ${formState.title}, with a clean board and manual settlement after the official result.`
+      return `Friendly ${formState.format.replaceAll('-', ' ')} for ${formState.title}, with a clean pool and manual settle-up after the official result.`
     }
 
-    return `Friendly ${formState.format.replaceAll('-', ' ')} for ${selectedLeague.value?.label || selectedSport.value?.label || 'the room'}, with quick side lanes and manual settlement outside the app.`
+    return `Friendly ${formState.format.replaceAll('-', ' ')} for ${selectedLeague.value?.label || selectedSport.value?.label || 'the room'}, with quick side lanes and manual settle-up outside the app.`
   })
 
   const closeoutTerms = computed(() => {
     const provider = formState.paymentService || 'your payment app'
 
     if (formState.format === 'golf-draft') {
-      return `Friendly wagers only. ${provider} settlement happens manually after the official leaderboard posts, and the board owner confirms the final result before the room closes out.`
+      return `Friendly bets only. ${provider} settlement happens manually after the official leaderboard posts, and the host confirms the final result before the room closes out.`
     }
 
-    return `Friendly wagers only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the board, reminders, and proof instead of moving money.`
+    return `Friendly bets only. ${provider} settlement happens manually after the official result posts, and Napkinbets records the pool, reminders, and proof instead of moving money.`
   })
 
   const payload = computed<CreateWagerInput>(() => ({

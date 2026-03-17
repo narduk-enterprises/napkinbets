@@ -21,7 +21,7 @@ async function setStatus(wagerId: string, status: string) {
   await actions.setWagerStatus(wagerId, status)
 }
 
-async function runIngest(tier: 'live-window' | 'next-48h' | 'next-7d') {
+async function runIngest(tier: 'live-window' | 'next-48h' | 'next-7d' | 'next-8w') {
   await actions.runAdminIngest(tier)
 }
 
@@ -62,14 +62,14 @@ const aiControlRows = computed(() => [
     key: 'aiPropSuggestionsEnabled' as const,
     label: 'Prop suggestion assists',
     description:
-      'Lets discovery and create flows ask for grounded prop variants from cached event context.',
+      'Lets Events and create flows ask for grounded prop variants from live event context.',
     enabled: admin.value.aiSettings.aiPropSuggestionsEnabled,
   },
   {
     key: 'aiTermsAssistEnabled' as const,
     label: 'Terms rewrite assists',
     description:
-      'Lets board owners tighten house rules and settlement wording without changing the stake logic.',
+      'Lets hosts tighten house rules and settle-up wording without changing the stake logic.',
     enabled: admin.value.aiSettings.aiTermsAssistEnabled,
   },
   {
@@ -82,12 +82,12 @@ const aiControlRows = computed(() => [
 ])
 
 useSeo({
-  title: 'Admin board controls',
+  title: 'Admin pool controls',
   description:
-    'Manage registered users, promote admins, refresh event ingestion, and control operator-only features across Napkinbets.',
+    'Manage registered users, promote admins, refresh event coverage, and control operator-only features across Napkinbets.',
   ogImage: {
     title: 'Napkinbets Admin',
-    description: 'User, cache, and feature controls for the prototype.',
+    description: 'User, event, and feature controls for the prototype.',
     icon: '🛡️',
   },
 })
@@ -95,7 +95,7 @@ useSeo({
 useWebPageSchema({
   name: 'Napkinbets Admin',
   description:
-    'Administrative overview for users, event ingestion, and feature controls in the Napkinbets prototype.',
+    'Administrative overview for users, event coverage, and feature controls in the Napkinbets prototype.',
 })
 </script>
 
@@ -104,10 +104,10 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">Admin</p>
-        <h1 class="napkinbets-section-title">Run the prototype, not just the boards.</h1>
+        <h1 class="napkinbets-section-title">Run the product, not just the pools.</h1>
         <p class="napkinbets-hero-lede">
-          This route now covers users, wager states, cached event health, and operator-controlled AI
-          toggles so product behavior stays explicit.
+          This route covers users, pool states, event coverage health, and operator-controlled AI
+          toggles so the product stays explicit.
         </p>
       </div>
     </div>
@@ -137,10 +137,10 @@ useWebPageSchema({
           <div class="space-y-4">
             <div class="space-y-2">
               <p class="napkinbets-kicker">Operations</p>
-              <h2 class="napkinbets-subsection-title">Event cache and ingest health</h2>
+              <h2 class="napkinbets-subsection-title">Event coverage and ingest health</h2>
             </div>
 
-            <div class="grid gap-3 sm:grid-cols-3">
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <UButton
                 color="primary"
                 variant="soft"
@@ -164,6 +164,14 @@ useWebPageSchema({
                 @click="runIngest('next-7d')"
               >
                 Refresh next 7d
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="soft"
+                :loading="actions.activeAction.value === 'admin-ingest:next-8w'"
+                @click="runIngest('next-8w')"
+              >
+                Refresh 8 weeks
               </UButton>
             </div>
 
@@ -274,7 +282,7 @@ useWebPageSchema({
           <div class="space-y-4">
             <div class="space-y-2">
               <p class="napkinbets-kicker">Boards</p>
-              <h2 class="napkinbets-subsection-title">Status management</h2>
+              <h2 class="napkinbets-subsection-title">Pool status management</h2>
             </div>
 
             <div class="space-y-4">
@@ -323,13 +331,13 @@ useWebPageSchema({
                     Archive
                   </UButton>
                   <UButton
-                    :to="`/wagers/${wager.slug}`"
+                    :to="`/napkins/${wager.slug}`"
                     color="primary"
                     variant="soft"
                     size="sm"
                     icon="i-lucide-arrow-right"
                   >
-                    Open board
+                    Open pool
                   </UButton>
                 </div>
               </div>

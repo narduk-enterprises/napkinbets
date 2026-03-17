@@ -10,16 +10,15 @@ const workspace = computed(() => workspaceState.data.value)
 useNapkinbetsAutoRefresh(workspaceState.refresh)
 
 useSeo({
-  title: 'Your wager workspace',
+  title: 'My pools',
   description:
-    'Manage the boards you own, the wagers you joined, and the reminders or settlements still waiting on action.',
+    'Manage the pools you host, the ones you joined, and the payment follow-up still waiting on action.',
   image: '/brand/og/dashboard.webp',
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Dashboard',
-  description:
-    'A protected dashboard for managing friendly wager boards, reminders, and settlements.',
+  name: 'Napkinbets My Pools',
+  description: 'A protected dashboard for managing pools, picks, reminders, and settle-up tasks.',
 })
 </script>
 
@@ -27,13 +26,11 @@ useWebPageSchema({
   <div class="napkinbets-page">
     <div class="napkinbets-hero">
       <div class="space-y-4">
-        <p class="napkinbets-kicker">Your workspace</p>
-        <h1 class="napkinbets-section-title">
-          Welcome back to the boards you own, the ones you joined, and what still needs attention.
-        </h1>
+        <p class="napkinbets-kicker">My pools</p>
+        <h1 class="napkinbets-section-title">Everything you host, joined, or still need to settle.</h1>
         <p class="napkinbets-hero-lede">
-          Wager creation, participant follow-up, and settlement proof all move through the dashboard
-          instead of being buried in a single public page.
+          Keep the active pools, player follow-up, and payment confirmation in one place instead of
+          chasing it through messages.
         </p>
       </div>
     </div>
@@ -41,10 +38,8 @@ useWebPageSchema({
     <ClientOnly>
       <template #fallback>
         <div class="napkinbets-aside-note">
-          <p class="napkinbets-kicker">Workspace loading</p>
-          <p class="napkinbets-support-copy">
-            Pulling your boards, reminders, and settlement queue.
-          </p>
+          <p class="napkinbets-kicker">Loading</p>
+          <p class="napkinbets-support-copy">Pulling your pools, reminders, and settle-up queue.</p>
         </div>
       </template>
 
@@ -54,7 +49,7 @@ useWebPageSchema({
           color="error"
           variant="soft"
           icon="i-lucide-circle-alert"
-          title="Workspace failed to load"
+          title="My pools failed to load"
           :description="workspaceState.error.value.message"
         />
 
@@ -70,28 +65,28 @@ useWebPageSchema({
           <div class="space-y-4">
             <div class="flex items-center justify-between gap-3">
               <div class="space-y-1">
-                <p class="napkinbets-kicker">Owned boards</p>
-                <h2 class="napkinbets-subsection-title">You manage these</h2>
+                <p class="napkinbets-kicker">Hosted pools</p>
+                <h2 class="napkinbets-subsection-title">You run these</h2>
               </div>
 
               <UButton
-                to="/wagers/create"
+                to="/napkins/create"
                 color="primary"
                 variant="soft"
                 icon="i-lucide-ticket-plus"
               >
-                New board
+                Start a pool
               </UButton>
             </div>
 
             <div v-if="workspace.ownedWagers.length" class="space-y-4">
-              <NapkinbetsWagerSummaryCard
+              <NapkinbetsNapkinSummaryCard
                 v-for="wager in workspace.ownedWagers"
                 :key="wager.id"
-                title="Owner lane"
-                description="Open the board to manage draft order, reminders, picks, and settlement proof."
+                title="Host view"
+                description="Open the pool to manage players, picks, reminders, and payment confirmation."
                 :wager="wager"
-                action-label="Manage board"
+                action-label="Manage pool"
               />
             </div>
 
@@ -100,20 +95,20 @@ useWebPageSchema({
               color="info"
               variant="soft"
               icon="i-lucide-ticket-plus"
-              title="No boards owned yet"
-              description="Start with the discover page, then turn one live or upcoming event into a board."
+              title="No hosted pools yet"
+              description="Start with events, then turn a live or upcoming game into a pool."
             />
 
             <div class="space-y-3 pt-4">
-              <p class="napkinbets-kicker">Joined boards</p>
+              <p class="napkinbets-kicker">Joined pools</p>
               <div v-if="workspace.joinedWagers.length" class="space-y-4">
-                <NapkinbetsWagerSummaryCard
+                <NapkinbetsNapkinSummaryCard
                   v-for="wager in workspace.joinedWagers"
                   :key="wager.id"
-                  title="Participant lane"
-                  description="Open the board to add picks or confirm payment proof."
+                  title="Player view"
+                  description="Open the pool to add picks or confirm payment proof."
                   :wager="wager"
-                  action-label="Open board"
+                  action-label="Open pool"
                 />
               </div>
 
@@ -122,8 +117,8 @@ useWebPageSchema({
                 color="neutral"
                 variant="soft"
                 icon="i-lucide-users"
-                title="You have not joined any boards yet"
-                description="Use the discover page to find a live or upcoming event and create one, or join a board from a shared link."
+                title="You have not joined any pools yet"
+                description="Use events to find a live or upcoming game, or join a pool from a shared link."
               />
             </div>
           </div>

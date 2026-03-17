@@ -15,10 +15,10 @@ interface NapkinbetsCreateEventPreview {
 }
 
 export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
-  title: 'Wednesday watch party board',
+  title: 'Wednesday watch party pool',
   creatorName: '',
   description:
-    'A friendly board for tonight with a clean side market, manual payment proof, and one fast prop that settles off the broadcast.',
+    'A friendly pool for tonight with a clean side market, manual payment proof, and one fast prop that settles off the broadcast.',
   boardType: 'community-created',
   format: 'sports-game',
   sport: 'basketball',
@@ -35,14 +35,14 @@ export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
   latitude: '',
   longitude: '',
   terms:
-    'Friendly wagers only. Napkinbets tracks the board, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
+    'Friendly bets only. Napkinbets tracks the pool, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
 }
 
 const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>> = {
   'masters-week': {
-    title: 'Masters week board',
+    title: 'Masters week pool',
     description:
-      'A golf-first board for Masters week with featured golfer lanes, low-round sweats, and manual settlement after the final round is official.',
+      'A golf-first pool for Masters week with featured golfer lanes, low-round sweats, and manual settle-up after the final round is official.',
     boardType: 'manual-curated',
     format: 'golf-draft',
     sport: 'golf',
@@ -53,7 +53,7 @@ const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>>
     potRules: 'Champion: 50\nLow round: 25\nWeekend charge: 25',
     venueName: 'Augusta watch party or clubhouse',
     terms:
-      'Friendly wagers only. Masters week boards settle manually after the official result posts, and payment proof still lives outside the app.',
+      'Friendly bets only. Masters week pools settle manually after the official result posts, and payment proof still lives outside the app.',
   },
 }
 
@@ -75,7 +75,7 @@ function buildSideOptions(homeTeamName: string, awayTeamName: string) {
 
 function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: string) {
   if (homeTeamName && awayTeamName) {
-    return `${awayTeamName} at ${homeTeamName} board`
+    return `${awayTeamName} at ${homeTeamName} pool`
   }
 
   return eventTitle || NAPKINBETS_DEFAULT_CREATE_INPUT.title
@@ -144,7 +144,7 @@ export function useNapkinbetsCreatePrefill() {
       title: buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName),
       description:
         preview.homeTeamName && preview.awayTeamName
-          ? `Friendly board for ${preview.awayTeamName} at ${preview.homeTeamName}, with a simple side market, one prop lane, and manual payment confirmation after the result is official.`
+          ? `Friendly pool for ${preview.awayTeamName} at ${preview.homeTeamName}, with a simple side market, one prop lane, and manual payment confirmation after the result is official.`
           : NAPKINBETS_DEFAULT_CREATE_INPUT.description,
       boardType: 'event-backed',
       format: getQueryString(route.query.format) || NAPKINBETS_DEFAULT_CREATE_INPUT.format,

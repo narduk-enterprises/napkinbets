@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
       {
         label: 'Tracked wagers',
         value: String(dashboard.wagers.length),
-        hint: 'all boards across the prototype',
+        hint: 'all pools across the product',
         icon: 'i-lucide-ticket',
       },
       {
@@ -69,9 +69,9 @@ export default defineEventHandler(async (event) => {
         icon: 'i-lucide-wallet',
       },
       {
-        label: 'Cached events',
+        label: 'Tracked events',
         value: String(ingestHealth.totalCachedEvents),
-        hint: 'event cards ready for discovery',
+        hint: 'event cards ready for Events',
         icon: 'i-lucide-radar',
       },
     ],

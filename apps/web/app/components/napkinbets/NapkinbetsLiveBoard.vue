@@ -46,7 +46,7 @@ function competitorLabel(value: string) {
     <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
       <div class="space-y-1">
         <p class="napkinbets-kicker">Live context</p>
-        <h2 class="napkinbets-section-title">ESPN slates and weather snapshots</h2>
+        <h2 class="napkinbets-section-title">Live event pulse and weather snapshots</h2>
       </div>
       <p class="napkinbets-support-copy">Refreshed {{ formatRefresh(refreshedAt) }}</p>
     </div>
@@ -57,7 +57,7 @@ function competitorLabel(value: string) {
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="napkinbets-subsection-title">Scoreboard</p>
-              <p class="napkinbets-support-copy">Sports context for wagers tied to a live slate.</p>
+              <p class="napkinbets-support-copy">Sports context for pools tied to live action.</p>
             </div>
             <UBadge color="primary" variant="soft" icon="i-lucide-radio-tower"> ESPN </UBadge>
           </div>
@@ -99,7 +99,7 @@ function competitorLabel(value: string) {
           </div>
 
           <p v-if="liveGames.length === 0" class="napkinbets-support-copy">
-            Add a sport and league to a wager to see live scoreboard context here.
+            Add a sport and league to a pool to see live scoreboard context here.
           </p>
         </div>
       </UCard>
@@ -110,7 +110,7 @@ function competitorLabel(value: string) {
             <div>
               <p class="napkinbets-subsection-title">Venue weather</p>
               <p class="napkinbets-support-copy">
-                Pulled from Open-Meteo for golf rounds and outdoor boards.
+                Pulled from Open-Meteo for golf rounds and outdoor pools.
               </p>
             </div>
             <UBadge color="info" variant="soft" icon="i-lucide-cloud-sun"> Forecast </UBadge>
@@ -146,7 +146,7 @@ function competitorLabel(value: string) {
           </div>
 
           <p v-if="weather.length === 0" class="napkinbets-support-copy">
-            Add venue coordinates when a board depends on outdoor conditions.
+            Add venue coordinates when a pool depends on outdoor conditions.
           </p>
         </div>
       </UCard>

@@ -50,7 +50,7 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
         <div class="napkinbets-surface">
           <p class="napkinbets-surface-label">Participants</p>
           <p class="napkinbets-surface-value">{{ wager.participants.length }}</p>
-          <p class="napkinbets-support-copy">{{ wager.sideOptions.length }} sides on board</p>
+          <p class="napkinbets-support-copy">{{ wager.sideOptions.length }} pick options</p>
         </div>
 
         <div class="napkinbets-surface">
@@ -68,12 +68,12 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
 
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="napkinbets-meta-row">
-          <span>{{ wager.eventTitle || 'Custom board' }}</span>
+          <span>{{ wager.eventTitle || 'Custom pool' }}</span>
           <span>{{ wager.venueName || 'Remote group' }}</span>
         </div>
 
-        <UButton :to="`/wagers/${wager.slug}`" color="primary" icon="i-lucide-arrow-right">
-          {{ actionLabel || 'Open board' }}
+        <UButton :to="`/napkins/${wager.slug}`" color="primary" icon="i-lucide-arrow-right">
+          {{ actionLabel || 'Open pool' }}
         </UButton>
       </div>
     </div>

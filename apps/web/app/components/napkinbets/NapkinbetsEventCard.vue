@@ -35,7 +35,7 @@ function buildCreatePrefill(
 
 function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
   return {
-    path: '/wagers/create',
+    path: '/napkins/create',
     query: {
       createMode: 'event',
       source: prefill.source,
@@ -90,16 +90,10 @@ const isMatchupEvent = computed(
 )
 const eventTeams = computed(() => [props.event.awayTeam, props.event.homeTeam])
 const primaryIdea = computed(() => props.event.ideas[0] ?? null)
-const secondaryIdea = computed(() => props.event.ideas[1] ?? null)
-const insightRows = computed(() => props.event.leaders.slice(0, 2))
+const insightRows = computed(() => props.event.leaders.slice(0, 1))
 const createLink = computed(() => buildCreateLink(buildCreatePrefill(props.event)))
 const primaryIdeaLink = computed(() =>
   primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
-)
-const secondaryIdeaLink = computed(() =>
-  secondaryIdea.value
-    ? buildCreateLink(buildCreatePrefill(props.event, secondaryIdea.value))
-    : null,
 )
 </script>
 
@@ -117,7 +111,7 @@ const secondaryIdeaLink = computed(() =>
       </div>
 
       <UButton :to="createLink" color="primary" variant="soft" size="sm" icon="i-lucide-plus">
-        Board
+        Start pool
       </UButton>
     </div>
 
@@ -125,7 +119,7 @@ const secondaryIdeaLink = computed(() =>
       <div class="space-y-1">
         <h3 class="napkinbets-subsection-title napkinbets-event-title">{{ event.eventTitle }}</h3>
         <div class="napkinbets-event-meta">
-          <span>{{ event.shortStatus }}</span>
+          <span>{{ event.state === 'in' ? event.shortStatus : formatDateLabel(event.startTime) }}</span>
           <span v-if="event.broadcast">{{ event.broadcast }}</span>
           <span>{{ event.venueName }}</span>
         </div>
@@ -173,7 +167,7 @@ const secondaryIdeaLink = computed(() =>
       </div>
 
       <div class="napkinbets-event-footer">
-        <span>Synced {{ formatDateLabel(event.lastSyncedAt) }}</span>
+        <span>{{ event.summary }}</span>
         <div class="napkinbets-event-action-row">
           <UButton
             v-if="primaryIdea && primaryIdeaLink"
@@ -184,14 +178,8 @@ const secondaryIdeaLink = computed(() =>
           >
             {{ primaryIdea.title }}
           </UButton>
-          <UButton
-            v-if="secondaryIdea && secondaryIdeaLink"
-            :to="secondaryIdeaLink"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-          >
-            {{ secondaryIdea.title }}
+          <UButton v-else :to="createLink" color="neutral" variant="ghost" size="sm">
+            Open picks
           </UButton>
         </div>
       </div>

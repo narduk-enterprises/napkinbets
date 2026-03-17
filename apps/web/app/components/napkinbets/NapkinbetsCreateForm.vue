@@ -31,11 +31,11 @@ const props = defineProps<{
 }>()
 
 const formatOptions = [
-  { label: 'Game board', value: 'sports-game' },
-  { label: 'Prop board', value: 'sports-prop' },
-  { label: 'Race board', value: 'sports-race' },
+  { label: 'Game pool', value: 'sports-game' },
+  { label: 'Prop pool', value: 'sports-prop' },
+  { label: 'Race pool', value: 'sports-race' },
   { label: 'Golf draft', value: 'golf-draft' },
-  { label: 'Custom board', value: 'custom-prop' },
+  { label: 'Custom pool', value: 'custom-prop' },
 ]
 
 const paymentOptions = [
@@ -115,8 +115,8 @@ const potRuleChips = computed(() => payload.value.potRules.split('\n').filter(Bo
 
 const formSummary = computed(() =>
   props.mode === 'event'
-    ? 'Event locked. Set the market, seats, and payment rail.'
-    : 'Pick the structure first, then add only what the room needs.',
+    ? 'Game locked in. Set the pool shape, players, and pay-with details.'
+    : 'Pick the structure first, then add only what the room actually needs.',
 )
 
 function submit() {
@@ -133,9 +133,9 @@ function submit() {
   <UCard id="napkinbets-create" class="napkinbets-panel">
     <template #header>
       <div class="space-y-2">
-        <p class="napkinbets-kicker">Board setup</p>
+        <p class="napkinbets-kicker">Pool setup</p>
         <h2 class="napkinbets-section-title">
-          {{ mode === 'event' ? 'Finish the board' : 'Start a room-ready board' }}
+          {{ mode === 'event' ? 'Finish the pool' : 'Start a room-ready pool' }}
         </h2>
         <p class="napkinbets-support-copy">{{ formSummary }}</p>
       </div>
@@ -147,7 +147,7 @@ function submit() {
         class="napkinbets-event-preview napkinbets-surface"
       >
         <div>
-          <p class="napkinbets-surface-label">Attached event</p>
+          <p class="napkinbets-surface-label">Attached game</p>
           <p class="font-semibold text-default">
             {{
               eventPreview.awayTeamName && eventPreview.homeTeamName
@@ -171,15 +171,15 @@ function submit() {
       </div>
 
       <div class="napkinbets-form-grid">
-        <UFormField name="title" label="Board title">
+        <UFormField name="title" label="Pool title">
           <UInput v-model="formState.title" class="w-full" />
         </UFormField>
 
-        <UFormField name="creatorName" label="Board owner">
+        <UFormField name="creatorName" label="Host">
           <UInput v-model="formState.creatorName" class="w-full" />
         </UFormField>
 
-        <UFormField name="format" label="Board format">
+        <UFormField name="format" label="Pool format">
           <USelect v-model="formState.format" :items="formatOptions" class="w-full" />
         </UFormField>
 
@@ -192,7 +192,7 @@ function submit() {
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Context</p>
-            <h3 class="napkinbets-subsection-title">What this board belongs to</h3>
+            <h3 class="napkinbets-subsection-title">What this pool belongs to</h3>
           </div>
 
           <div class="napkinbets-form-grid">
@@ -256,7 +256,7 @@ function submit() {
 
           <div class="napkinbets-surface space-y-3">
             <div class="flex items-center justify-between gap-3">
-              <p class="napkinbets-surface-label">Board options</p>
+              <p class="napkinbets-surface-label">Pick options</p>
               <UButton
                 v-if="suggestedSideOptions.length"
                 color="neutral"
@@ -313,7 +313,7 @@ function submit() {
 
           <div class="napkinbets-surface space-y-3">
             <div class="space-y-2">
-              <p class="napkinbets-surface-label">Seed participants</p>
+              <p class="napkinbets-surface-label">Start with players</p>
               <div class="napkinbets-chip-grid">
                 <UButton
                   v-for="preset in seatPresetOptions"
@@ -369,11 +369,11 @@ function submit() {
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Collection</p>
-            <h3 class="napkinbets-subsection-title">Payment rail and pot shape</h3>
+            <h3 class="napkinbets-subsection-title">Pay with and pot split</h3>
           </div>
 
           <div class="napkinbets-form-grid">
-            <UFormField name="paymentService" label="Settlement app">
+            <UFormField name="paymentService" label="Pay with">
               <USelect v-model="formState.paymentService" :items="paymentOptions" class="w-full" />
             </UFormField>
 
@@ -389,13 +389,13 @@ function submit() {
 
         <div class="space-y-4">
           <div class="space-y-2">
-            <p class="napkinbets-kicker">Generated board note</p>
+            <p class="napkinbets-kicker">Generated note</p>
             <h3 class="napkinbets-subsection-title">Clear by default</h3>
           </div>
 
           <div class="napkinbets-surface space-y-3">
             <div class="space-y-2">
-              <p class="napkinbets-surface-label">Board summary</p>
+              <p class="napkinbets-surface-label">Pool summary</p>
               <p class="napkinbets-support-copy">{{ boardSummary }}</p>
             </div>
 
@@ -420,8 +420,8 @@ function submit() {
         color="warning"
         variant="soft"
         icon="i-lucide-wallet-cards"
-        title="Settlement stays manual"
-        description="Napkinbets tracks the rail and proof, but money still moves outside the app."
+        title="Payments stay manual"
+        description="Napkinbets tracks who owes what and the proof after, but money still moves outside the app."
       />
 
       <div class="napkinbets-form-actions">
@@ -432,7 +432,7 @@ function submit() {
           icon="i-lucide-ticket-plus"
           :loading="loading"
         >
-          {{ isAuthenticated ? 'Create wager board' : 'Create account to publish' }}
+          {{ isAuthenticated ? 'Create pool' : 'Create account to publish' }}
         </UButton>
       </div>
     </UForm>

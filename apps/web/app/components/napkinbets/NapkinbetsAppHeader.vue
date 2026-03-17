@@ -12,7 +12,7 @@ const accountLabel = computed(() => {
 })
 
 const headerLinks = computed(() =>
-  primaryLinks.value.filter((link) => !['/', '/dashboard'].includes(link.to)),
+  primaryLinks.value.filter((link) => ['/events', '/napkins/create'].includes(link.to)),
 )
 
 const accountMenuItems = computed(() => {

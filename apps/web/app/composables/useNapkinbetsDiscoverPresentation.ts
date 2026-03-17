@@ -73,13 +73,13 @@ export function useNapkinbetsDiscoverPresentation(
       {
         label: 'On deck',
         value: String(upcomingCount),
-        hint: 'fresh events from the cache',
+        hint: 'games coming up',
         icon: 'i-lucide-calendar-range',
       },
       {
-        label: 'Golf cues',
+        label: 'Featured',
         value: String(discovery.value.spotlights.length),
-        hint: 'majors and tour windows',
+        hint: 'tournaments and watch list',
         icon: 'i-lucide-flag',
       },
     ]

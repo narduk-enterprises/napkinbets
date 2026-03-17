@@ -9,7 +9,7 @@ import { requireCronAuth } from '#server/utils/cron'
 const querySchema = z.object({
   tier: z.preprocess(
     (value) => (Array.isArray(value) ? value[0] : value),
-    z.enum(['manual', 'live-window', 'next-48h', 'next-7d']).default('manual'),
+    z.enum(['manual', 'live-window', 'next-48h', 'next-7d', 'next-8w']).default('manual'),
   ),
 })
 

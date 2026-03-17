@@ -6,12 +6,11 @@ import {
   napkinbetsIngestRuns,
 } from '#server/database/schema'
 import {
-  NAPKINBETS_EVENT_LEAGUES,
   getNapkinbetsContextLabel,
-  getNapkinbetsLeagues,
   getNapkinbetsSportLabel,
   type NapkinbetsLeagueDefinition,
 } from '#server/services/napkinbets/taxonomy'
+import { loadNapkinbetsLeaguesFromStore } from '#server/services/napkinbets/taxonomy-store'
 import { useAppDatabase } from '#server/utils/database'
 
 interface EspnTeamRecord {
@@ -238,10 +237,10 @@ export interface NapkinbetsDiscoverFilters {
   states: Array<{ value: string; label: string }>
 }
 
-type DiscoverTier = 'live-window' | 'next-48h' | 'next-7d' | 'manual'
+type DiscoverTier = 'live-window' | 'next-48h' | 'next-7d' | 'next-8w' | 'manual'
 
 export type NapkinbetsEventIngestTier = DiscoverTier
-export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'all'
+export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'next-8w' | 'all'
 
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 const EVENT_LOOKUP_BATCH_SIZE = 64
@@ -399,8 +398,30 @@ function formatEventTime(value: string) {
   }).format(new Date(value))
 }
 
-function isLeagueActive(config: NapkinbetsLeagueDefinition, now = new Date()) {
-  return (config.activeMonths as readonly number[]).includes(now.getMonth() + 1)
+interface IngestWindow {
+  start: Date
+  end: Date
+  datesParam: string
+}
+
+function getMonthsCoveredByWindows(windows: IngestWindow[]) {
+  const months = new Set<number>()
+
+  for (const window of windows) {
+    const cursor = new Date(window.start)
+    while (cursor <= window.end) {
+      months.add(cursor.getUTCMonth() + 1)
+      cursor.setUTCDate(cursor.getUTCDate() + 1)
+    }
+  }
+
+  return months
+}
+
+function isLeagueActive(config: NapkinbetsLeagueDefinition, windows: IngestWindow[]) {
+  const coveredMonths = getMonthsCoveredByWindows(windows)
+
+  return (config.activeMonths as readonly number[]).some((month) => coveredMonths.has(month))
 }
 
 function getLeagueIdeas(
@@ -675,35 +696,58 @@ function buildGolfSummary(event: EspnEvent, startTime: string, state: 'pre' | 'i
   return `${tournament} starts ${formatEventTime(startTime)}.`
 }
 
-function buildIngestWindow(tier: DiscoverTier, now = new Date()) {
+export function buildIngestWindows(tier: DiscoverTier, now = new Date()) {
   switch (tier) {
     case 'live-window': {
       const start = addDays(now, -1)
       const end = addDays(now, 1)
-      return {
-        start,
-        end,
-        datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-      }
+      return [
+        {
+          start,
+          end,
+          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
+        },
+      ] satisfies IngestWindow[]
     }
     case 'next-48h': {
       const start = now
       const end = addDays(now, 2)
-      return {
-        start,
-        end,
-        datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-      }
+      return [
+        {
+          start,
+          end,
+          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
+        },
+      ] satisfies IngestWindow[]
     }
     case 'next-7d':
     case 'manual': {
       const start = now
       const end = addDays(now, 7)
-      return {
-        start,
-        end,
-        datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
+      return [
+        {
+          start,
+          end,
+          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
+        },
+      ] satisfies IngestWindow[]
+    }
+    case 'next-8w': {
+      const windows: IngestWindow[] = []
+      let cursor = new Date(now)
+
+      for (let index = 0; index < 8; index += 1) {
+        const start = new Date(cursor)
+        const end = addDays(start, 7)
+        windows.push({
+          start,
+          end,
+          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
+        })
+        cursor = end
       }
+
+      return windows
     }
   }
 }
@@ -722,13 +766,6 @@ function parseJsonValue<T>(value: string, fallback: T): T {
   } catch {
     return fallback
   }
-}
-
-function inferEventContextKey(leagueKey: string) {
-  return (
-    getNapkinbetsLeagues().find((league) => league.key === leagueKey)?.primaryContextKey ??
-    'community'
-  )
 }
 
 function readScoreFromJson(value: string) {
@@ -752,7 +789,11 @@ export function buildEspnScoreboardUrl(
   tier: DiscoverTier,
   now = new Date(),
 ) {
-  const window = buildIngestWindow(tier, now)
+  const [window] = buildIngestWindows(tier, now)
+  if (!window) {
+    throw new Error(`No ingest window available for ${tier}.`)
+  }
+
   const url = new URL(
     `https://site.web.api.espn.com/apis/site/v2/sports/${config.sportKey}/${config.providerLeagueKey ?? config.key}/scoreboard`,
   )
@@ -795,9 +836,9 @@ export function normalizeMatchupEspnEvent(
     id: buildEventId('espn', config.key, event.id),
     source: 'espn',
     sport: config.sportKey,
-    sportLabel: getNapkinbetsSportLabel(config.sportKey),
+    sportLabel: config.sportLabel ?? getNapkinbetsSportLabel(config.sportKey),
     contextKey: config.primaryContextKey,
-    contextLabel: getNapkinbetsContextLabel(config.primaryContextKey),
+    contextLabel: config.primaryContextLabel ?? getNapkinbetsContextLabel(config.primaryContextKey),
     league: config.key,
     leagueLabel: config.label,
     eventTitle: event.shortName ?? event.name ?? `${awayName} at ${homeName}`,
@@ -867,9 +908,9 @@ export function normalizeTournamentEspnEvent(
     id: buildEventId('espn', config.key, event.id),
     source: 'espn',
     sport: config.sportKey,
-    sportLabel: getNapkinbetsSportLabel(config.sportKey),
+    sportLabel: config.sportLabel ?? getNapkinbetsSportLabel(config.sportKey),
     contextKey: config.primaryContextKey,
-    contextLabel: getNapkinbetsContextLabel(config.primaryContextKey),
+    contextLabel: config.primaryContextLabel ?? getNapkinbetsContextLabel(config.primaryContextKey),
     league: config.key,
     leagueLabel: config.label,
     eventTitle,
@@ -977,54 +1018,68 @@ async function fetchLeagueEvents(
   tier: DiscoverTier,
   syncedAt: string,
 ) {
-  const { window, url } = buildEspnScoreboardUrl(config, tier)
-  const { response, payload } = await fetchEspnJson<EspnScoreboardResponse>(url.toString())
+  const windows = buildIngestWindows(tier)
+  const normalizedEventsById = new Map<string, NapkinbetsCachedEvent>()
+  const payloads: EspnScoreboardResponse[] = []
 
-  if (response.status === 400 || response.status === 404) {
-    return {
-      window,
-      payload: { events: [] },
-      events: [],
-    }
-  }
-
-  if (!response.ok) {
-    throw new Error(`ESPN ${config.key} returned ${response.status}.`)
-  }
-
-  const tournamentEventDetails = new Map<string, EspnEvent>()
-  if (config.eventShape === 'tournament') {
-    for (const event of payload.events ?? []) {
-      if (!event.id) {
-        continue
-      }
-
-      const details = await fetchTournamentEventDetails(config, event.id)
-      if (details) {
-        tournamentEventDetails.set(event.id, details)
-      }
-    }
-  }
-
-  const normalizedEvents: NapkinbetsCachedEvent[] = []
-
-  for (const event of payload.events ?? []) {
-    const normalized = normalizeEspnEvent(
-      tournamentEventDetails.get(event.id ?? '') ?? event,
-      config,
-      syncedAt,
+  for (const window of windows) {
+    const url = new URL(
+      `https://site.web.api.espn.com/apis/site/v2/sports/${config.sportKey}/${config.providerLeagueKey ?? config.key}/scoreboard`,
     )
-    if (!normalized) {
+
+    if (config.supportsDateWindow !== false) {
+      url.searchParams.set('dates', window.datesParam)
+    }
+
+    for (const [key, value] of Object.entries(config.scoreboardQueryParams ?? {})) {
+      url.searchParams.set(key, value)
+    }
+
+    const { response, payload } = await fetchEspnJson<EspnScoreboardResponse>(url.toString())
+
+    if (response.status === 400 || response.status === 404) {
+      payloads.push({ events: [] })
       continue
     }
 
-    normalizedEvents.push(normalized)
+    if (!response.ok) {
+      throw new Error(`ESPN ${config.key} returned ${response.status}.`)
+    }
+
+    payloads.push(payload)
+
+    const tournamentEventDetails = new Map<string, EspnEvent>()
+    if (config.eventShape === 'tournament') {
+      for (const currentEvent of payload.events ?? []) {
+        if (!currentEvent.id) {
+          continue
+        }
+
+        const details = await fetchTournamentEventDetails(config, currentEvent.id)
+        if (details) {
+          tournamentEventDetails.set(currentEvent.id, details)
+        }
+      }
+    }
+
+    for (const currentEvent of payload.events ?? []) {
+      const normalized = normalizeEspnEvent(
+        tournamentEventDetails.get(currentEvent.id ?? '') ?? currentEvent,
+        config,
+        syncedAt,
+      )
+      if (!normalized) {
+        continue
+      }
+
+      normalizedEventsById.set(normalized.id, normalized)
+    }
   }
 
   return {
-    window,
-    payload,
-    events: normalizedEvents,
+    windows,
+    payload: payloads.at(-1) ?? { events: [] },
+    events: [...normalizedEventsById.values()],
   }
 }
 
@@ -1032,10 +1087,16 @@ async function recordIngestRunStart(
   event: H3Event,
   config: NapkinbetsLeagueDefinition,
   tier: DiscoverTier,
-  window: ReturnType<typeof buildIngestWindow>,
+  windows: IngestWindow[],
 ) {
   const db = useAppDatabase(event)
   const runId = crypto.randomUUID()
+  const firstWindow = windows[0]
+  const lastWindow = windows.at(-1) ?? firstWindow
+
+  if (!firstWindow || !lastWindow) {
+    throw new Error(`No ingest windows available for ${tier}.`)
+  }
 
   await db
     .insert(napkinbetsIngestRuns)
@@ -1045,8 +1106,8 @@ async function recordIngestRunStart(
       sport: config.sportKey,
       league: config.key,
       tier,
-      windowStartsAt: window.start.toISOString(),
-      windowEndsAt: window.end.toISOString(),
+      windowStartsAt: firstWindow.start.toISOString(),
+      windowEndsAt: lastWindow.end.toISOString(),
       eventCount: 0,
       status: 'running',
       errorMessage: null,
@@ -1115,6 +1176,8 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
       externalEventId: item.id.split(':').at(-1) ?? item.id,
       sport: item.sport,
       sportLabel: item.sportLabel,
+      contextKey: item.contextKey,
+      contextLabel: item.contextLabel,
       league: item.league,
       leagueLabel: item.leagueLabel,
       state: item.state,
@@ -1147,6 +1210,8 @@ async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[
           externalEventId: rowValues.externalEventId,
           sport: rowValues.sport,
           sportLabel: rowValues.sportLabel,
+          contextKey: rowValues.contextKey,
+          contextLabel: rowValues.contextLabel,
           league: rowValues.league,
           leagueLabel: rowValues.leagueLabel,
           state: rowValues.state,
@@ -1214,8 +1279,8 @@ function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCac
     source: row.source as 'espn',
     sport: row.sport,
     sportLabel: row.sportLabel,
-    contextKey: inferEventContextKey(row.league),
-    contextLabel: getNapkinbetsContextLabel(inferEventContextKey(row.league)),
+    contextKey: row.contextKey,
+    contextLabel: row.contextLabel,
     league: row.league,
     leagueLabel: row.leagueLabel,
     eventTitle: row.eventTitle,
@@ -1349,7 +1414,7 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
     {
       key: 'today',
       label: 'Today',
-      description: 'The rest of the high-signal slate inside the next 24 hours.',
+      description: 'The rest of the strongest events inside the next 24 hours.',
       events: today,
     },
     {
@@ -1580,7 +1645,10 @@ export function buildDiscoverSpotlights(events: NapkinbetsCachedEvent[], now = n
 
 export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTier = 'manual') {
   const syncedAt = nowIso()
-  const activeLeagues = NAPKINBETS_EVENT_LEAGUES.filter((config) => isLeagueActive(config))
+  const windows = buildIngestWindows(tier)
+  const activeLeagues = (await loadNapkinbetsLeaguesFromStore(event, { eventBackedOnly: true }))
+    .filter((config) => config.provider === 'espn')
+    .filter((config) => isLeagueActive(config, windows))
   const summaries: Array<{
     league: string
     sport: string
@@ -1591,8 +1659,7 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }> = []
 
   for (const config of activeLeagues) {
-    const window = buildIngestWindow(tier)
-    const runId = await recordIngestRunStart(event, config, tier, window)
+    const runId = await recordIngestRunStart(event, config, tier, windows)
 
     try {
       const result = await fetchLeagueEvents(config, tier, syncedAt)
@@ -1670,10 +1737,15 @@ export async function runEventIngest(event: H3Event, scope: NapkinbetsDiscoverSc
     return await refreshDiscoverEventCache(event, 'next-7d')
   }
 
+  if (scope === 'next-8w') {
+    return await refreshDiscoverEventCache(event, 'next-8w')
+  }
+
   const runs = [
     await refreshDiscoverEventCache(event, 'live-window'),
     await refreshDiscoverEventCache(event, 'next-48h'),
     await refreshDiscoverEventCache(event, 'next-7d'),
+    await refreshDiscoverEventCache(event, 'next-8w'),
   ]
 
   return {

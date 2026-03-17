@@ -21,6 +21,7 @@ export default defineNitroPlugin((nitroApp) => {
       '* * * * *': { tier: 'live-window', label: 'live-window refresh' },
       '*/10 * * * *': { tier: 'next-48h', label: 'next-48h refresh' },
       '7 */6 * * *': { tier: 'next-7d', label: 'next-7d refresh' },
+      '23 */12 * * *': { tier: 'next-8w', label: 'next-8w refresh' },
     } as const
 
     const job =

@@ -206,18 +206,18 @@ function submitSettlement() {
             </UBadge>
           </div>
 
-          <div class="space-y-2">
-            <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
-            <p class="napkinbets-support-copy">
-              {{ wager.description }}
-            </p>
-            <div class="napkinbets-meta-row">
-              <span>{{ wager.eventTitle || 'Custom board' }}</span>
-              <span>{{ wager.venueName || 'Remote group' }}</span>
-              <span>Owner: {{ wager.creatorName }}</span>
+            <div class="space-y-2">
+              <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
+              <p class="napkinbets-support-copy">
+                {{ wager.description }}
+              </p>
+              <div class="napkinbets-meta-row">
+              <span>{{ wager.eventTitle || 'Custom pool' }}</span>
+                <span>{{ wager.venueName || 'Remote group' }}</span>
+              <span>Host: {{ wager.creatorName }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
         <div v-if="canManage" class="flex flex-wrap gap-2">
           <UButton
@@ -269,8 +269,8 @@ function submitSettlement() {
           </div>
 
           <div class="napkinbets-surface">
-            <p class="napkinbets-surface-label">Board state</p>
-            <p class="napkinbets-surface-value">{{ wager.participants.length }} seats</p>
+            <p class="napkinbets-surface-label">At a glance</p>
+            <p class="napkinbets-surface-value">{{ wager.participants.length }} players</p>
             <p class="napkinbets-support-copy">{{ wager.notifications.length }} recent reminders</p>
           </div>
         </div>
@@ -298,6 +298,15 @@ function submitSettlement() {
               >
                 <div class="flex items-center gap-3">
                   <span class="napkinbets-order-pill">#{{ participant.draftOrder ?? '—' }}</span>
+                  <span class="napkinbets-event-avatar">
+                    <img
+                      v-if="participant.avatarUrl"
+                      :src="participant.avatarUrl"
+                      :alt="participant.displayName"
+                      class="napkinbets-event-avatar-image"
+                    />
+                    <span v-else>{{ participant.displayName.slice(0, 2).toUpperCase() }}</span>
+                  </span>
                   <div>
                     <p class="font-semibold text-default">{{ participant.displayName }}</p>
                     <p class="text-sm text-muted">
@@ -385,7 +394,7 @@ function submitSettlement() {
 
         <div v-if="isAuthenticated" class="napkinbets-form-section">
           <div class="space-y-4">
-            <h3 class="napkinbets-subsection-title">Join the board</h3>
+            <h3 class="napkinbets-subsection-title">Join the pool</h3>
             <div class="napkinbets-chip-grid">
               <span
                 v-for="option in wager.sideOptions"
@@ -412,7 +421,7 @@ function submitSettlement() {
                 icon="i-lucide-user-plus"
                 :loading="isBusy(`join:${wager.id}`)"
               >
-                Confirm seat
+                Join pool
               </UButton>
             </UForm>
           </div>
@@ -449,7 +458,7 @@ function submitSettlement() {
           </div>
 
           <div class="space-y-4">
-            <h3 class="napkinbets-subsection-title">Confirm settlement</h3>
+            <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
             <UForm :state="settlementState" class="space-y-3" @submit.prevent="submitSettlement">
               <UFormField name="participantId" label="Participant">
                 <USelect
@@ -478,7 +487,7 @@ function submitSettlement() {
                 icon="i-lucide-wallet-cards"
                 :loading="isBusy(`settlement:${wager.id}`)"
               >
-                Save settlement
+                Save proof
               </UButton>
             </UForm>
           </div>
@@ -490,7 +499,7 @@ function submitSettlement() {
           variant="soft"
           icon="i-lucide-log-in"
           title="Sign in to join, pick, or settle"
-          description="Board detail is shareable, but participant actions and settlement proof require an account."
+          description="Pool detail is shareable, but player actions and payment proof require an account."
         >
           <template #actions>
             <div class="napkinbets-card-actions">
@@ -503,11 +512,11 @@ function submitSettlement() {
 
       <div class="space-y-6">
         <div class="napkinbets-surface space-y-3">
-          <h3 class="napkinbets-subsection-title">Payment pack</h3>
+          <h3 class="napkinbets-subsection-title">Pay with</h3>
           <div class="space-y-2">
             <div class="napkinbets-list-row">
               <div>
-                <p class="font-semibold text-default">Collector</p>
+                <p class="font-semibold text-default">Pay to</p>
                 <p class="text-sm text-muted">
                   {{ wager.paymentService
                   }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}

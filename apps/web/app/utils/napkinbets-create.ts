@@ -37,7 +37,7 @@ export function buildNapkinbetsCreateLink(
   options?: NapkinbetsCreateLinkOptions,
 ) {
   return {
-    path: '/wagers/create',
+    path: '/napkins/create',
     query: {
       createMode: 'event',
       source: prefill.source,

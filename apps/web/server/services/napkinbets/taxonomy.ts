@@ -35,14 +35,14 @@ export const NAPKINBETS_CONTEXT_KEYS = [
 
 export type NapkinbetsContextKey = (typeof NAPKINBETS_CONTEXT_KEYS)[number]
 
-interface NapkinbetsSportDefinition {
+export interface NapkinbetsSportDefinition {
   key: NapkinbetsSportKey
   label: string
   icon: string
   supportsEventDiscovery: boolean
 }
 
-interface NapkinbetsContextDefinition {
+export interface NapkinbetsContextDefinition {
   key: NapkinbetsContextKey
   label: string
   description: string
@@ -52,7 +52,9 @@ export interface NapkinbetsLeagueDefinition {
   key: string
   label: string
   sportKey: NapkinbetsSportKey
+  sportLabel?: string
   primaryContextKey: NapkinbetsContextKey
+  primaryContextLabel?: string
   contextKeys: NapkinbetsContextKey[]
   provider: 'espn' | 'manual'
   providerLeagueKey?: string
@@ -73,7 +75,7 @@ interface CreateWagerTaxonomyInput {
   customContextName?: string
 }
 
-const SPORTS: ReadonlyArray<NapkinbetsSportDefinition> = [
+export const NAPKINBETS_DEFAULT_SPORTS: ReadonlyArray<NapkinbetsSportDefinition> = [
   {
     key: 'basketball',
     label: 'Basketball',
@@ -148,7 +150,7 @@ const SPORTS: ReadonlyArray<NapkinbetsSportDefinition> = [
   },
 ] satisfies ReadonlyArray<NapkinbetsSportDefinition>
 
-const CONTEXTS: ReadonlyArray<NapkinbetsContextDefinition> = [
+export const NAPKINBETS_DEFAULT_CONTEXTS: ReadonlyArray<NapkinbetsContextDefinition> = [
   {
     key: 'pro',
     label: 'Professional',
@@ -304,9 +306,54 @@ export const NAPKINBETS_LEAGUES: ReadonlyArray<NapkinbetsLeagueDefinition> = [
     sportKey: 'soccer',
     primaryContextKey: 'pro',
     contextKeys: ['pro', 'international'],
-    provider: 'manual',
+    provider: 'espn',
+    providerLeagueKey: 'usa.1',
     activeMonths: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    supportsEventDiscovery: false,
+    supportsEventDiscovery: true,
+  },
+  {
+    key: 'nwsl',
+    label: 'NWSL',
+    sportKey: 'soccer',
+    primaryContextKey: 'pro',
+    contextKeys: ['pro', 'international'],
+    provider: 'espn',
+    providerLeagueKey: 'usa.nwsl',
+    activeMonths: [3, 4, 5, 6, 7, 8, 9, 10, 11],
+    supportsEventDiscovery: true,
+  },
+  {
+    key: 'college-baseball',
+    label: 'College Baseball',
+    sportKey: 'baseball',
+    primaryContextKey: 'college',
+    contextKeys: ['college', 'tournament'],
+    provider: 'espn',
+    providerLeagueKey: 'college-baseball',
+    activeMonths: [2, 3, 4, 5, 6],
+    supportsEventDiscovery: true,
+  },
+  {
+    key: 'epl',
+    label: 'Premier League',
+    sportKey: 'soccer',
+    primaryContextKey: 'international',
+    contextKeys: ['pro', 'international'],
+    provider: 'espn',
+    providerLeagueKey: 'eng.1',
+    activeMonths: [1, 2, 3, 4, 5, 8, 9, 10, 11, 12],
+    supportsEventDiscovery: true,
+  },
+  {
+    key: 'uefa-champions',
+    label: 'UEFA Champions League',
+    sportKey: 'soccer',
+    primaryContextKey: 'international',
+    contextKeys: ['international', 'tournament'],
+    provider: 'espn',
+    providerLeagueKey: 'uefa.champions',
+    activeMonths: [1, 2, 3, 4, 9, 10, 11, 12],
+    supportsEventDiscovery: true,
   },
   {
     key: 'ufc',
@@ -335,11 +382,11 @@ export const NAPKINBETS_EVENT_LEAGUES = NAPKINBETS_LEAGUES.filter(
 )
 
 export function getNapkinbetsSports() {
-  return SPORTS
+  return NAPKINBETS_DEFAULT_SPORTS
 }
 
 export function getNapkinbetsContexts() {
-  return CONTEXTS
+  return NAPKINBETS_DEFAULT_CONTEXTS
 }
 
 export function getNapkinbetsLeagues(options?: {
@@ -368,11 +415,11 @@ export function getNapkinbetsLeagues(options?: {
 }
 
 export function findNapkinbetsSport(key: string) {
-  return SPORTS.find((sport) => sport.key === key) ?? null
+  return NAPKINBETS_DEFAULT_SPORTS.find((sport) => sport.key === key) ?? null
 }
 
 export function findNapkinbetsContext(key: string) {
-  return CONTEXTS.find((context) => context.key === key) ?? null
+  return NAPKINBETS_DEFAULT_CONTEXTS.find((context) => context.key === key) ?? null
 }
 
 export function findNapkinbetsLeague(key: string) {

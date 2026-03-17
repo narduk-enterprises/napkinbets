@@ -8,7 +8,7 @@ import {
 } from '#server/services/napkinbets/events'
 
 const bodySchema = z.object({
-  tier: z.enum(['manual', 'live-window', 'next-48h', 'next-7d']).default('manual'),
+  tier: z.enum(['manual', 'live-window', 'next-48h', 'next-7d', 'next-8w']).default('manual'),
 })
 
 export default defineEventHandler(async (event) => {
