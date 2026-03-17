@@ -3,7 +3,7 @@ import { loadPoolData } from '#server/services/napkinbets/pools'
 
 export default defineEventHandler(async (event) => {
   const user = await requireAuth(event)
-  const dashboard = await loadPoolData(event)
+  const dashboard = await loadPoolData(event, { includeContext: false })
 
   const ownedWagers = dashboard.wagers.filter((wager) => wager.ownerUserId === user.id)
   const joinedWagers = dashboard.wagers.filter(
