@@ -9,35 +9,52 @@ const EMPTY_NOTIFICATIONS: NapkinbetsNotificationsResponse = {
 export function useNapkinbetsNotifications() {
   const api = useNapkinbetsApi()
 
-  const state = useAsyncData<NapkinbetsNotificationsResponse>(
-    'napkinbets-notifications',
-    () => api.getNotifications(),
+  const data = useState<NapkinbetsNotificationsResponse>(
+    'napkinbets-notifications:data',
+    () => EMPTY_NOTIFICATIONS,
+  )
+
+  const asyncState = useAsyncData(
+    'napkinbets-notifications-fetch',
+    async () => {
+      const response = await api.getNotifications()
+      data.value = response
+      return true
+    },
     {
-      default: () => EMPTY_NOTIFICATIONS,
       server: false,
       lazy: true,
+      getCachedData() {
+        if (data.value && data.value.notifications.length > 0) {
+          return true
+        }
+        return
+      },
     },
   )
 
   async function markAsRead(id: string) {
-    if (!state.data.value) return
-    const notification = state.data.value.notifications.find((n) => n.id === id)
+    if (!data.value) return
+    const notification = data.value.notifications.find((n) => n.id === id)
     if (!notification || notification.deliveryStatus !== 'queued') return
 
-    // Optimistically update read state
+    // Optimistically update read state in shared store
     notification.deliveryStatus = 'read'
-    state.data.value.unreadCount = Math.max(0, state.data.value.unreadCount - 1)
+    data.value.unreadCount = Math.max(0, data.value.unreadCount - 1)
 
     try {
       await api.markNotificationRead(id)
     } catch {
       // Revert if API fails
-      state.refresh()
+      asyncState.refresh()
     }
   }
 
   return {
-    ...state,
+    data,
+    pending: asyncState.pending,
+    error: asyncState.error,
+    refresh: asyncState.refresh,
     markAsRead,
   }
 }

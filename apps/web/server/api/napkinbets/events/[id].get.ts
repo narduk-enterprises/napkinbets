@@ -8,10 +8,15 @@ import {
 import { useAppDatabase } from '#server/utils/database'
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-  if (!id) {
+  const encodedId = getRouterParam(event, 'id')
+  if (!encodedId) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
   }
+  // The ID is base64 encoded by the client to bypass Nitro routing issues with colons
+  const id =
+    typeof atob !== 'undefined'
+      ? atob(encodedId)
+      : Buffer.from(encodedId, 'base64').toString('ascii')
 
   const db = useAppDatabase(event)
 

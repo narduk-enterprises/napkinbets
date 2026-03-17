@@ -7,8 +7,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Missing wager slug.' })
   }
 
-  const dashboard = await loadPoolData(event)
-  const wager = dashboard.wagers.find((entry) => entry.slug === slug)
+  const dashboard = await loadPoolData(event, { slug })
+  const wager = dashboard.wagers[0] ?? null
 
   if (!wager) {
     throw createError({ statusCode: 404, message: 'Wager not found.' })

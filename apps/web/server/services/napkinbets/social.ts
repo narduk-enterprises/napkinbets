@@ -556,10 +556,44 @@ export async function loadNapkinbetsGroupsBundle(event: H3Event) {
   const authUser = await requireAuth(event)
   const db = useAppDatabase(event)
 
-  const [groups, members, owners] = await Promise.all([
-    db.select().from(napkinbetsGroups).orderBy(asc(napkinbetsGroups.name)),
-    db.select().from(napkinbetsGroupMembers).orderBy(asc(napkinbetsGroupMembers.createdAt)),
-    db.select({ id: users.id, email: users.email, name: users.name }).from(users),
+  const myMemberships = await db
+    .select()
+    .from(napkinbetsGroupMembers)
+    .where(eq(napkinbetsGroupMembers.userId, authUser.id))
+
+  const myGroupIds = [...new Set(myMemberships.map((membership) => membership.groupId))]
+  const groupConditions = [
+    eq(napkinbetsGroups.visibility, 'public'),
+    eq(napkinbetsGroups.ownerUserId, authUser.id),
+  ]
+
+  if (myGroupIds.length > 0) {
+    groupConditions.push(inArray(napkinbetsGroups.id, myGroupIds))
+  }
+
+  const groups = await db
+    .select()
+    .from(napkinbetsGroups)
+    .where(or(...groupConditions))
+    .orderBy(asc(napkinbetsGroups.name))
+
+  const groupIds = groups.map((group) => group.id)
+  const ownerIds = [...new Set(groups.map((group) => group.ownerUserId))]
+
+  const [members, owners] = await Promise.all([
+    groupIds.length > 0
+      ? db
+          .select()
+          .from(napkinbetsGroupMembers)
+          .where(inArray(napkinbetsGroupMembers.groupId, groupIds))
+          .orderBy(asc(napkinbetsGroupMembers.createdAt))
+      : [],
+    ownerIds.length > 0
+      ? db
+          .select({ id: users.id, email: users.email, name: users.name })
+          .from(users)
+          .where(inArray(users.id, ownerIds))
+      : [],
   ])
 
   const ownersById = new Map(owners.map((owner) => [owner.id, owner]))

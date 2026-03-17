@@ -432,8 +432,11 @@ function computeMoneylinePriceChange(matchedEvent: PolymarketEvent): number | nu
 async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
   const candidates = new Map<string, PolymarketEvent>()
 
-  for (const query of buildSearchQueries(event)) {
-    const searchResults = await fetchPolymarketSearch(query)
+  const searchResultsByQuery = await Promise.all(
+    buildSearchQueries(event).map((query) => fetchPolymarketSearch(query)),
+  )
+
+  for (const searchResults of searchResultsByQuery) {
     for (const candidate of searchResults) {
       if (candidate.slug) {
         candidates.set(candidate.slug, candidate)
@@ -511,10 +514,12 @@ export async function enrichNapkinbetsEventsWithPolymarketOdds<T extends Napkinb
     .filter((event) => isReasonableTimeWindow(event.startTime))
     .slice(0, POLYMARKET_LOOKUP_LIMIT)
 
-  const oddsEntries: Array<readonly [string, NapkinbetsEventOdds | null]> = []
+  const oddsPromises: Array<Promise<readonly [string, NapkinbetsEventOdds | null]>> = []
   for (const event of prioritizedEvents) {
-    oddsEntries.push([event.id, await findPolymarketOddsForEvent(event)] as const)
+    oddsPromises.push(findPolymarketOddsForEvent(event).then((odds) => [event.id, odds] as const))
   }
+
+  const oddsEntries = await Promise.all(oddsPromises)
 
   return new Map(
     oddsEntries.filter((entry): entry is readonly [string, NapkinbetsEventOdds] =>

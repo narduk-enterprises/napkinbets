@@ -52,9 +52,9 @@ export function useNapkinbetsApi() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
     },
     getEventDetail(id: string) {
-      return fetch<NapkinbetsEventDetailResponse>(
-        `/api/napkinbets/events/${encodeURIComponent(id)}`,
-      )
+      // Use base64 encoding for the ID to completely bypass Nitro colon/bracket routing issues
+      const safeId = typeof btoa !== 'undefined' ? btoa(id) : Buffer.from(id).toString('base64')
+      return fetch<NapkinbetsEventDetailResponse>(`/api/napkinbets/events/${safeId}`)
     },
     getLeagueProfile(key: string) {
       return fetch<NapkinbetsLeagueProfileResponse>(

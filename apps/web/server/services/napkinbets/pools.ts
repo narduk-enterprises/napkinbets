@@ -14,10 +14,7 @@ import {
 import { users } from '#layer/server/database/schema'
 import { requireAuth } from '#layer/server/utils/auth'
 import { hashUserPassword } from '#layer/server/utils/password'
-import {
-  getWeatherForecast,
-  type NapkinbetsWeatherSnapshot,
-} from '#server/services/napkinbets/live'
+import type { NapkinbetsWeatherSnapshot } from '#server/services/napkinbets/live'
 import { loadCachedEventsByIds, loadFeaturedLiveGames } from '#server/services/napkinbets/events'
 import { ensureDemoSocialGraph } from '#server/services/napkinbets/social'
 import { useAppDatabase } from '#server/utils/database'
@@ -87,6 +84,8 @@ interface ReminderInput {
 
 interface LoadPoolDataOptions {
   includeContext?: boolean
+  slug?: string
+  userId?: string
 }
 
 interface SerializedLeaderboardRow {
@@ -1096,17 +1095,85 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
   await ensureSeedData(event)
 
   const db = useAppDatabase(event)
-  const [wagers, groups, participants, pots, picks, notifications, settlements] = await Promise.all(
-    [
-      db.select().from(napkinbetsWagers).orderBy(asc(napkinbetsWagers.createdAt)),
-      db.select().from(napkinbetsGroups),
-      db.select().from(napkinbetsParticipants).orderBy(asc(napkinbetsParticipants.createdAt)),
-      db.select().from(napkinbetsPots).orderBy(asc(napkinbetsPots.sortOrder)),
-      db.select().from(napkinbetsPicks).orderBy(asc(napkinbetsPicks.sortOrder)),
-      db.select().from(napkinbetsNotifications).orderBy(asc(napkinbetsNotifications.createdAt)),
-      db.select().from(napkinbetsSettlements).orderBy(asc(napkinbetsSettlements.recordedAt)),
-    ],
-  )
+  let wagers: (typeof napkinbetsWagers.$inferSelect)[] = []
+
+  if (options.slug) {
+    wagers = await db
+      .select()
+      .from(napkinbetsWagers)
+      .where(eq(napkinbetsWagers.slug, options.slug))
+      .limit(1)
+  } else if (options.userId) {
+    const [ownedWagers, participantRows] = await Promise.all([
+      db
+        .select({ id: napkinbetsWagers.id })
+        .from(napkinbetsWagers)
+        .where(eq(napkinbetsWagers.ownerUserId, options.userId)),
+      db
+        .select({ wagerId: napkinbetsParticipants.wagerId })
+        .from(napkinbetsParticipants)
+        .where(eq(napkinbetsParticipants.userId, options.userId)),
+    ])
+
+    const wagerIds = [
+      ...new Set([
+        ...ownedWagers.map((wager) => wager.id),
+        ...participantRows.map((row) => row.wagerId),
+      ]),
+    ]
+
+    wagers =
+      wagerIds.length > 0
+        ? await db
+            .select()
+            .from(napkinbetsWagers)
+            .where(inArray(napkinbetsWagers.id, wagerIds))
+            .orderBy(asc(napkinbetsWagers.createdAt))
+        : []
+  } else {
+    wagers = await db.select().from(napkinbetsWagers).orderBy(asc(napkinbetsWagers.createdAt))
+  }
+
+  const wagerIds = wagers.map((wager) => wager.id)
+  const groupIds = [
+    ...new Set(wagers.map((wager) => wager.groupId).filter((id): id is string => Boolean(id))),
+  ]
+
+  const groups =
+    groupIds.length > 0
+      ? await db.select().from(napkinbetsGroups).where(inArray(napkinbetsGroups.id, groupIds))
+      : []
+  const [participants, pots, picks, notifications, settlements] =
+    wagerIds.length > 0
+      ? await Promise.all([
+          db
+            .select()
+            .from(napkinbetsParticipants)
+            .where(inArray(napkinbetsParticipants.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsParticipants.createdAt)),
+          db
+            .select()
+            .from(napkinbetsPots)
+            .where(inArray(napkinbetsPots.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsPots.sortOrder)),
+          db
+            .select()
+            .from(napkinbetsPicks)
+            .where(inArray(napkinbetsPicks.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsPicks.sortOrder)),
+          db
+            .select()
+            .from(napkinbetsNotifications)
+            .where(inArray(napkinbetsNotifications.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsNotifications.createdAt)),
+          db
+            .select()
+            .from(napkinbetsSettlements)
+            .where(inArray(napkinbetsSettlements.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsSettlements.recordedAt)),
+        ])
+      : [[], [], [], [], []]
+
   const groupNamesById = new Map(groups.map((group) => [group.id, group.name]))
 
   // Build userId → avatarUrl lookup from the users table
@@ -1140,41 +1207,6 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
 
   const featuredLiveGames =
     options.includeContext !== false ? await loadFeaturedLiveGames(event) : []
-
-  if (options.includeContext !== false) {
-    const weatherRequests = new Map<
-      string,
-      { latitude: string; longitude: string; label: string }
-    >()
-
-    for (const wager of wagers) {
-      const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
-      if (wager.latitude && wager.longitude) {
-        weatherRequests.set(weatherKey, {
-          latitude: wager.latitude,
-          longitude: wager.longitude,
-          label: wager.venueName ?? wager.title,
-        })
-      }
-    }
-
-    const weatherPromises: Array<Promise<readonly [string, NapkinbetsWeatherSnapshot | null]>> = []
-    for (const [weatherKey, request] of weatherRequests.entries()) {
-      weatherPromises.push(
-        getWeatherForecast(request.latitude, request.longitude, request.label).then(
-          (forecast) => [weatherKey, forecast] as const,
-        ),
-      )
-    }
-
-    const weatherResults = await Promise.all(weatherPromises)
-
-    for (const [weatherKey, forecast] of weatherResults) {
-      if (forecast) {
-        weatherSnapshots.set(weatherKey, forecast)
-      }
-    }
-  }
 
   const serializedWagers = []
   for (const wager of wagers) {

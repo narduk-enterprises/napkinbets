@@ -199,6 +199,32 @@ export interface NapkinbetsCachedEvent {
   odds?: NapkinbetsEventOdds | null
 }
 
+interface NapkinbetsCachedEventRow {
+  id: string
+  source: string
+  sport: string
+  sportLabel: string
+  contextKey: string
+  contextLabel: string
+  league: string
+  leagueLabel: string
+  eventTitle: string
+  summary: string
+  status: string
+  state: string
+  shortStatus: string
+  startTime: string
+  venueName: string
+  venueLocation: string
+  broadcast: string
+  homeTeamJson: string
+  awayTeamJson: string
+  leadersJson: string
+  ideasJson: string
+  lastSyncedAt: string
+  sourceUpdatedAt: string | null
+}
+
 interface NapkinbetsCreatePrefillQuery {
   source: string
   eventId: string
@@ -255,6 +281,31 @@ export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'next-8w
 
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 const EVENT_LOOKUP_BATCH_SIZE = 64
+const NAPKINBETS_CACHED_EVENT_SELECT = {
+  id: napkinbetsEvents.id,
+  source: napkinbetsEvents.source,
+  sport: napkinbetsEvents.sport,
+  sportLabel: napkinbetsEvents.sportLabel,
+  contextKey: napkinbetsEvents.contextKey,
+  contextLabel: napkinbetsEvents.contextLabel,
+  league: napkinbetsEvents.league,
+  leagueLabel: napkinbetsEvents.leagueLabel,
+  eventTitle: napkinbetsEvents.eventTitle,
+  summary: napkinbetsEvents.summary,
+  status: napkinbetsEvents.status,
+  state: napkinbetsEvents.state,
+  shortStatus: napkinbetsEvents.shortStatus,
+  startTime: napkinbetsEvents.startTime,
+  venueName: napkinbetsEvents.venueName,
+  venueLocation: napkinbetsEvents.venueLocation,
+  broadcast: napkinbetsEvents.broadcast,
+  homeTeamJson: napkinbetsEvents.homeTeamJson,
+  awayTeamJson: napkinbetsEvents.awayTeamJson,
+  leadersJson: napkinbetsEvents.leadersJson,
+  ideasJson: napkinbetsEvents.ideasJson,
+  lastSyncedAt: napkinbetsEvents.lastSyncedAt,
+  sourceUpdatedAt: napkinbetsEvents.sourceUpdatedAt,
+} as const
 const NAPKINBETS_EDITORIAL_IMAGE_PATHS = {
   auth: '/brand/imagery/auth-table-scene.webp',
   discovery: '/brand/imagery/discovery-paper-grid.webp',
@@ -992,14 +1043,6 @@ export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
   return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
 }
 
-function isDiscoverCacheOlderThan(freshestSync: string, maxAgeMs: number, nowMs = Date.now()) {
-  if (!freshestSync) {
-    return true
-  }
-
-  return nowMs - new Date(freshestSync).getTime() > maxAgeMs
-}
-
 async function fetchEspnJson<T>(url: string) {
   const response = await fetch(url, {
     headers: {
@@ -1366,7 +1409,7 @@ async function syncWagerScoresFromEvents(event: H3Event, events: NapkinbetsCache
   }
 }
 
-function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCachedEvent {
+function toCachedEvent(row: NapkinbetsCachedEventRow): NapkinbetsCachedEvent {
   return {
     id: row.id,
     source: row.source as 'espn',
@@ -1411,7 +1454,7 @@ function toCachedEvent(row: typeof napkinbetsEvents.$inferSelect): NapkinbetsCac
     ideas: parseJsonValue<CachedDiscoverEventIdea[]>(row.ideasJson, []),
     lastSyncedAt: row.lastSyncedAt,
     sourceUpdatedAt: row.sourceUpdatedAt ?? null,
-    rawPayload: parseJsonValue<Record<string, unknown> | null>(row.rawPayloadJson ?? '', null),
+    rawPayload: null,
     odds: null,
   }
 }
@@ -1746,6 +1789,7 @@ export function buildDiscoverSpotlights(events: NapkinbetsCachedEvent[], now = n
 export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTier = 'manual') {
   const syncedAt = nowIso()
   const windows = buildIngestWindows(tier)
+  const refreshedEvents = new Map<string, NapkinbetsCachedEvent>()
   const activeLeagues = (await loadNapkinbetsLeaguesFromStore(event, { eventBackedOnly: true }))
     .filter((config) => config.provider === 'espn')
     .filter((config) => isLeagueActive(config, windows))
@@ -1765,6 +1809,9 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
       const result = await fetchLeagueEvents(config, tier, syncedAt)
       await upsertLeagueEvents(event, result.events)
       await syncWagerScoresFromEvents(event, result.events)
+      for (const currentEvent of result.events) {
+        refreshedEvents.set(currentEvent.id, currentEvent)
+      }
       await finishIngestRun(event, runId, 'success', result.events.length)
 
       summaries.push({
@@ -1791,18 +1838,12 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }
 
   await pruneExpiredEvents(event)
+  await syncCachedOdds(event, [...refreshedEvents.values()])
 
   return {
     refreshedAt: syncedAt,
     runs: summaries,
   }
-}
-
-const ODDS_TTL_PRE_MS = 5 * 60 * 1000
-const ODDS_TTL_LIVE_MS = 2 * 60 * 1000
-
-function oddsTtlMs(state: string) {
-  return state === 'in' ? ODDS_TTL_LIVE_MS : ODDS_TTL_PRE_MS
 }
 
 function deserializeOddsRow(
@@ -1834,7 +1875,94 @@ type NapkinbetsEventOddsMarket = NapkinbetsEventOdds extends { moneyline: infer 
   ? NonNullable<M>
   : never
 
-async function loadCachedOddsOrFetch(
+async function syncCachedOdds(h3Event: H3Event, candidates: NapkinbetsCachedEvent[]) {
+  if (candidates.length === 0) {
+    return
+  }
+
+  const db = useAppDatabase(h3Event)
+  const nowMs = Date.now()
+  const candidateIds = candidates.map((candidate) => candidate.id)
+  const cachedRows =
+    candidateIds.length > 0
+      ? await db
+          .select()
+          .from(napkinbetsEventOdds)
+          .where(inArray(napkinbetsEventOdds.eventId, candidateIds))
+      : []
+
+  const cachedByEventId = new Map(cachedRows.map((row) => [row.eventId, row]))
+  const staleEvents: NapkinbetsCachedEvent[] = []
+
+  for (const candidate of candidates) {
+    const cached = cachedByEventId.get(candidate.id)
+    if (cached) {
+      const expiresMs = new Date(cached.expiresAt).getTime()
+      if (!Number.isNaN(expiresMs) && expiresMs > nowMs) {
+        continue
+      }
+    }
+
+    staleEvents.push(candidate)
+  }
+
+  if (staleEvents.length === 0) {
+    return
+  }
+
+  try {
+    const freshOdds = await enrichNapkinbetsEventsWithPolymarketOdds(staleEvents)
+
+    for (const [eventId, odds] of freshOdds) {
+      const candidate = staleEvents.find((entry) => entry.id === eventId)
+      const ttl = candidate?.state === 'in' ? 2 * 60 * 1000 : 5 * 60 * 1000
+      const expiresAt = new Date(nowMs + ttl).toISOString()
+      const fetchedAt = nowIso()
+      const rowId = `odds:${eventId}`
+
+      await db
+        .insert(napkinbetsEventOdds)
+        .values({
+          id: rowId,
+          eventId,
+          source: odds.source,
+          polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+          polymarketUrl: odds.url,
+          moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+          spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+          totalJson: odds.total ? JSON.stringify(odds.total) : null,
+          extraMarketsJson: JSON.stringify(odds.extraMarkets),
+          volume: odds.volume,
+          priceChange24h: odds.priceChange24h,
+          commentCount: odds.commentCount,
+          fetchedAt,
+          expiresAt,
+        })
+        .onConflictDoUpdate({
+          target: napkinbetsEventOdds.id,
+          set: {
+            polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+            polymarketUrl: odds.url,
+            moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+            spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+            totalJson: odds.total ? JSON.stringify(odds.total) : null,
+            extraMarketsJson: JSON.stringify(odds.extraMarkets),
+            volume: odds.volume,
+            priceChange24h: odds.priceChange24h,
+            commentCount: odds.commentCount,
+            fetchedAt,
+            expiresAt,
+            updatedAt: fetchedAt,
+          },
+        })
+        .run()
+    }
+  } catch {
+    // Odds enrichment should never block ingest or cached reads.
+  }
+}
+
+async function loadCachedOdds(
   h3Event: H3Event,
   candidates: NapkinbetsCachedEvent[],
 ): Promise<Map<string, NapkinbetsEventOdds>> {
@@ -1843,7 +1971,6 @@ async function loadCachedOddsOrFetch(
   }
 
   const db = useAppDatabase(h3Event)
-  const nowMs = Date.now()
   const result = new Map<string, NapkinbetsEventOdds>()
 
   const candidateIds = candidates.map((c) => c.id)
@@ -1857,76 +1984,15 @@ async function loadCachedOddsOrFetch(
 
   const cachedByEventId = new Map(cachedRows.map((row) => [row.eventId, row]))
 
-  const staleEvents: NapkinbetsCachedEvent[] = []
-
   for (const candidate of candidates) {
     const cached = cachedByEventId.get(candidate.id)
-    if (cached) {
-      const expiresMs = new Date(cached.expiresAt).getTime()
-      if (!Number.isNaN(expiresMs) && expiresMs > nowMs) {
-        const deserialized = deserializeOddsRow(cached)
-        if (deserialized) {
-          result.set(candidate.id, deserialized)
-          continue
-        }
-      }
+    if (!cached) {
+      continue
     }
 
-    staleEvents.push(candidate)
-  }
-
-  if (staleEvents.length > 0) {
-    const freshOdds = await enrichNapkinbetsEventsWithPolymarketOdds(staleEvents)
-
-    for (const [eventId, odds] of freshOdds) {
-      result.set(eventId, odds)
-
-      const candidate = staleEvents.find((c) => c.id === eventId)
-      const ttl = candidate ? oddsTtlMs(candidate.state) : ODDS_TTL_PRE_MS
-      const expiresAt = new Date(nowMs + ttl).toISOString()
-      const fetchedAt = nowIso()
-      const rowId = `odds:${eventId}`
-
-      try {
-        await db
-          .insert(napkinbetsEventOdds)
-          .values({
-            id: rowId,
-            eventId,
-            source: odds.source,
-            polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
-            polymarketUrl: odds.url,
-            moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
-            spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
-            totalJson: odds.total ? JSON.stringify(odds.total) : null,
-            extraMarketsJson: JSON.stringify(odds.extraMarkets),
-            volume: odds.volume,
-            priceChange24h: odds.priceChange24h,
-            commentCount: odds.commentCount,
-            fetchedAt,
-            expiresAt,
-          })
-          .onConflictDoUpdate({
-            target: napkinbetsEventOdds.id,
-            set: {
-              polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
-              polymarketUrl: odds.url,
-              moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
-              spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
-              totalJson: odds.total ? JSON.stringify(odds.total) : null,
-              extraMarketsJson: JSON.stringify(odds.extraMarkets),
-              volume: odds.volume,
-              priceChange24h: odds.priceChange24h,
-              commentCount: odds.commentCount,
-              fetchedAt,
-              expiresAt,
-              updatedAt: fetchedAt,
-            },
-          })
-          .run()
-      } catch {
-        // Non-critical — cache write failure should not block odds delivery
-      }
+    const deserialized = deserializeOddsRow(cached)
+    if (deserialized) {
+      result.set(candidate.id, deserialized)
     }
   }
 
@@ -1936,35 +2002,33 @@ async function loadCachedOddsOrFetch(
 export async function loadCachedDiscoverData(event: H3Event) {
   const db = useAppDatabase(event)
   const readSnapshot = async () => {
-    const [eventRows, latestRun] = await Promise.all([
-      db.select().from(napkinbetsEvents).orderBy(asc(napkinbetsEvents.startTime)),
-      db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(1),
+    const [eventRows, latestRun, latestEventSync] = await Promise.all([
+      db
+        .select(NAPKINBETS_CACHED_EVENT_SELECT)
+        .from(napkinbetsEvents)
+        .where(or(eq(napkinbetsEvents.state, 'in'), eq(napkinbetsEvents.state, 'pre')))
+        .orderBy(asc(napkinbetsEvents.state), asc(napkinbetsEvents.startTime)),
+      db
+        .select({ completedAt: napkinbetsIngestRuns.completedAt })
+        .from(napkinbetsIngestRuns)
+        .orderBy(desc(napkinbetsIngestRuns.startedAt))
+        .limit(1),
+      db
+        .select({ lastSyncedAt: napkinbetsEvents.lastSyncedAt })
+        .from(napkinbetsEvents)
+        .orderBy(desc(napkinbetsEvents.lastSyncedAt))
+        .limit(1),
     ])
 
     return {
       events: eventRows.map((row) => toCachedEvent(row)),
       latestRun: latestRun[0] ?? null,
+      latestSync: latestEventSync[0]?.lastSyncedAt ?? '',
     }
   }
 
-  let snapshot = await readSnapshot()
-  let freshestSync =
-    snapshot.events
-      .map((row) => row.lastSyncedAt)
-      .sort((left, right) => right.localeCompare(left))[0] ??
-    snapshot.latestRun?.completedAt ??
-    ''
-
-  if (isDiscoverCacheOlderThan(freshestSync, 5 * 60 * 1000)) {
-    await refreshDiscoverEventCache(event, 'live-window')
-    snapshot = await readSnapshot()
-    freshestSync =
-      snapshot.events
-        .map((row) => row.lastSyncedAt)
-        .sort((left, right) => right.localeCompare(left))[0] ??
-      snapshot.latestRun?.completedAt ??
-      ''
-  }
+  const snapshot = await readSnapshot()
+  const freshestSync = snapshot.latestSync || snapshot.latestRun?.completedAt || ''
 
   let sections = buildDiscoverSections(snapshot.events)
   const oddsCandidates = sections
@@ -1974,7 +2038,15 @@ export async function loadCachedDiscoverData(event: H3Event) {
         allEvents.findIndex((entry) => entry.id === cachedEvent.id) === index,
     )
 
-  const oddsByEventId = await loadCachedOddsOrFetch(event, oddsCandidates)
+  const [oddsByEventId, featuredBetRows] = await Promise.all([
+    loadCachedOdds(event, oddsCandidates),
+    db
+      .select()
+      .from(napkinbetsFeaturedBets)
+      .where(eq(napkinbetsFeaturedBets.isActive, true))
+      .orderBy(asc(napkinbetsFeaturedBets.sortOrder)),
+  ])
+
   sections = sections.map((section) => ({
     ...section,
     events: section.events.map((cachedEvent) => ({
@@ -1984,12 +2056,6 @@ export async function loadCachedDiscoverData(event: H3Event) {
   }))
 
   const spotlights = buildDiscoverSpotlights(snapshot.events)
-
-  const featuredBetRows = await db
-    .select()
-    .from(napkinbetsFeaturedBets)
-    .where(eq(napkinbetsFeaturedBets.isActive, true))
-    .orderBy(asc(napkinbetsFeaturedBets.sortOrder))
 
   const dbSpotlights: NapkinbetsDiscoverySpotlight[] = featuredBetRows.map((row) => {
     let prefill: NapkinbetsCreatePrefillQuery
@@ -2082,7 +2148,7 @@ export async function loadCachedEventsByIds(event: H3Event, eventIds: string[]) 
 
   const db = useAppDatabase(event)
   const rows = await db
-    .select()
+    .select(NAPKINBETS_CACHED_EVENT_SELECT)
     .from(napkinbetsEvents)
     .where(inArray(napkinbetsEvents.id, eventIds))
 
@@ -2091,21 +2157,11 @@ export async function loadCachedEventsByIds(event: H3Event, eventIds: string[]) 
 
 export async function loadFeaturedLiveGames(event: H3Event, limit = 6) {
   const db = useAppDatabase(event)
-  const latestEvent = await db
-    .select({ lastSyncedAt: napkinbetsEvents.lastSyncedAt })
-    .from(napkinbetsEvents)
-    .orderBy(desc(napkinbetsEvents.lastSyncedAt))
-    .limit(1)
-
-  if (isDiscoverCacheOlderThan(latestEvent[0]?.lastSyncedAt ?? '', 5 * 60 * 1000)) {
-    await refreshDiscoverEventCache(event, 'live-window')
-  }
-
   const rows = await db
-    .select()
+    .select(NAPKINBETS_CACHED_EVENT_SELECT)
     .from(napkinbetsEvents)
     .where(or(eq(napkinbetsEvents.state, 'in'), eq(napkinbetsEvents.state, 'pre')))
-    .orderBy(asc(napkinbetsEvents.startTime))
+    .orderBy(asc(napkinbetsEvents.state), asc(napkinbetsEvents.startTime))
 
   return rows
     .map((row) => toCachedEvent(row))
