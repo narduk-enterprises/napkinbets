@@ -44,17 +44,15 @@ function formatIsoLabel(value: string) {
               {{ event.state === 'in' ? 'Live' : 'Upcoming' }}
             </UBadge>
             <UBadge color="neutral" variant="subtle">{{ event.leagueLabel }}</UBadge>
-            <UBadge v-if="event.broadcast" color="warning" variant="soft">{{ event.broadcast }}</UBadge>
+            <UBadge v-if="event.broadcast" color="warning" variant="soft">{{
+              event.broadcast
+            }}</UBadge>
           </div>
           <h3 class="napkinbets-subsection-title">{{ event.eventTitle }}</h3>
           <p class="napkinbets-support-copy">{{ event.shortStatus }}</p>
         </div>
 
-        <UButton
-          :to="buildCreateLink()"
-          color="primary"
-          icon="i-lucide-ticket-plus"
-        >
+        <UButton :to="buildCreateLink()" color="primary" icon="i-lucide-ticket-plus">
           Create board
         </UButton>
       </div>
@@ -101,11 +99,7 @@ function formatIsoLabel(value: string) {
       <div class="space-y-2">
         <p class="napkinbets-surface-label">Suggested markets</p>
         <div class="space-y-2">
-          <div
-            v-for="idea in event.ideas"
-            :key="idea.title"
-            class="napkinbets-idea-row"
-          >
+          <div v-for="idea in event.ideas" :key="idea.title" class="napkinbets-idea-row">
             <div class="space-y-1">
               <p class="font-semibold text-default">{{ idea.title }}</p>
               <p class="text-sm text-muted">{{ idea.description }}</p>

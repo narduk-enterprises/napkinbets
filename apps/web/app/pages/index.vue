@@ -30,19 +30,17 @@ useWebPageSchema({
         <div class="space-y-6">
           <div class="space-y-4">
             <p class="napkinbets-kicker">Flagship fleet prototype</p>
-            <h1 class="napkinbets-hero-title">Friendly boards for live games, drafts, and side bets.</h1>
+            <h1 class="napkinbets-hero-title">
+              Friendly boards for live games, drafts, and side bets.
+            </h1>
             <p class="napkinbets-hero-lede">
-              Start from current sports context, lock the terms, and settle through Venmo, PayPal, Cash App, or Zelle when the result is final.
+              Start from current sports context, lock the terms, and settle through Venmo, PayPal,
+              Cash App, or Zelle when the result is final.
             </p>
           </div>
 
           <div class="napkinbets-hero-actions">
-            <UButton
-              to="/discover"
-              size="xl"
-              color="primary"
-              icon="i-lucide-calendar-range"
-            >
+            <UButton to="/discover" size="xl" color="primary" icon="i-lucide-calendar-range">
               Browse upcoming events
             </UButton>
             <UButton
@@ -75,9 +73,12 @@ useWebPageSchema({
         <div class="napkinbets-hero-stack">
           <div class="napkinbets-aside-note">
             <p class="napkinbets-kicker">Board count</p>
-            <p class="text-3xl font-display text-default">{{ dashboard.metrics[0]?.value || '0' }}</p>
+            <p class="text-3xl font-display text-default">
+              {{ dashboard.metrics[0]?.value || '0' }}
+            </p>
             <p class="napkinbets-support-copy">
-              Live, open, and settled boards all roll into one workspace instead of living in a group chat scrollback.
+              Live, open, and settled boards all roll into one workspace instead of living in a
+              group chat scrollback.
             </p>
           </div>
 
@@ -88,21 +89,27 @@ useWebPageSchema({
                 <span class="napkinbets-process-step">1</span>
                 <div>
                   <p class="font-semibold text-default">Pick the event</p>
-                  <p class="napkinbets-support-copy">Use discovery to turn a game, draft, or prop idea into a board.</p>
+                  <p class="napkinbets-support-copy">
+                    Use discovery to turn a game, draft, or prop idea into a board.
+                  </p>
                 </div>
               </div>
               <div class="napkinbets-process-item">
                 <span class="napkinbets-process-step">2</span>
                 <div>
                   <p class="font-semibold text-default">Run the board</p>
-                  <p class="napkinbets-support-copy">Track joins, draft order, picks, reminders, and side selection in one place.</p>
+                  <p class="napkinbets-support-copy">
+                    Track joins, draft order, picks, reminders, and side selection in one place.
+                  </p>
                 </div>
               </div>
               <div class="napkinbets-process-item">
                 <span class="napkinbets-process-step">3</span>
                 <div>
                   <p class="font-semibold text-default">Close it out</p>
-                  <p class="napkinbets-support-copy">Manual settlement proof and the Closeout Playbook keep payout cleanup organized.</p>
+                  <p class="napkinbets-support-copy">
+                    Manual settlement proof and the Closeout Playbook keep payout cleanup organized.
+                  </p>
                 </div>
               </div>
             </div>
@@ -134,16 +141,12 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Fast path</p>
           <h2 class="napkinbets-section-title">Discover. Board. Close out.</h2>
           <p class="napkinbets-support-copy">
-            The home screen stays short. Discovery handles event intake, board pages handle operations, and closeout handles settlement cleanup.
+            The home screen stays short. Discovery handles event intake, board pages handle
+            operations, and closeout handles settlement cleanup.
           </p>
         </div>
 
-        <UButton
-          to="/discover"
-          color="neutral"
-          variant="soft"
-          icon="i-lucide-arrow-right"
-        >
+        <UButton to="/discover" color="neutral" variant="soft" icon="i-lucide-arrow-right">
           Open discovery
         </UButton>
       </div>
@@ -153,7 +156,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">1. Discover</p>
           <h3 class="napkinbets-subsection-title">Upcoming and in-progress events</h3>
           <p class="napkinbets-support-copy">
-            ESPN-backed discovery will stay focused on sports that matter right now, with a small set of prop-style ideas layered in.
+            ESPN-backed discovery will stay focused on sports that matter right now, with a small
+            set of prop-style ideas layered in.
           </p>
         </div>
 
@@ -161,7 +165,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">2. Board</p>
           <h3 class="napkinbets-subsection-title">Participant and wager management</h3>
           <p class="napkinbets-support-copy">
-            Create boards, assign sides, randomize draft order, and keep reminders or payment status visible to the room.
+            Create boards, assign sides, randomize draft order, and keep reminders or payment status
+            visible to the room.
           </p>
         </div>
 
@@ -169,7 +174,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">3. Closeout</p>
           <h3 class="napkinbets-subsection-title">Manual settlement with proof</h3>
           <p class="napkinbets-support-copy">
-            Payment apps stay external. Napkinbets stores the preferred handles, proof, confirmation state, and payout checklist.
+            Payment apps stay external. Napkinbets stores the preferred handles, proof, confirmation
+            state, and payout checklist.
           </p>
         </div>
       </div>
@@ -181,7 +187,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Active boards</p>
           <h2 class="napkinbets-section-title">Open a real board, not a one-page demo.</h2>
           <p class="napkinbets-support-copy">
-            Registration, admin views, payment settings, and wager management now live behind navigation instead of piling everything onto one screen.
+            Registration, admin views, payment settings, and wager management now live behind
+            navigation instead of piling everything onto one screen.
           </p>
         </div>
 

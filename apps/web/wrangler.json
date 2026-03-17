@@ -6,9 +6,7 @@
     "directory": ".output/public"
   },
   "compatibility_date": "2026-03-03",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
   },
@@ -26,10 +24,6 @@
     }
   ],
   "triggers": {
-    "crons": [
-      "* * * * *",
-      "*/10 * * * *",
-      "7 */6 * * *"
-    ]
+    "crons": ["* * * * *", "*/10 * * * *", "7 */6 * * *"]
   }
 }

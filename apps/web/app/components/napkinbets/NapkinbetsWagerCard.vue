@@ -73,11 +73,17 @@ const participantOptions = computed(() =>
 )
 
 const participantNames = computed(
-  () => new Map(props.wager.participants.map((participant) => [participant.id, participant.displayName])),
+  () =>
+    new Map(
+      props.wager.participants.map((participant) => [participant.id, participant.displayName]),
+    ),
 )
 
 const selectedSettlementParticipant = computed(
-  () => props.wager.participants.find((participant) => participant.id === settlementState.participantId) ?? null,
+  () =>
+    props.wager.participants.find(
+      (participant) => participant.id === settlementState.participantId,
+    ) ?? null,
 )
 
 const paymentNote = computed(() =>
@@ -165,7 +171,8 @@ function submitSettlement() {
 
   emit('recordSettlement', props.wager.id, {
     participantId: settlementState.participantId,
-    participantName: selectedSettlementParticipant.value?.displayName || settlementState.participantName.trim(),
+    participantName:
+      selectedSettlementParticipant.value?.displayName || settlementState.participantName.trim(),
     amountDollars: settlementState.amountDollars,
     method: settlementState.method.trim(),
     handle: settlementState.handle.trim(),
@@ -251,28 +258,20 @@ function submitSettlement() {
           <div class="napkinbets-surface">
             <p class="napkinbets-surface-label">Total pot</p>
             <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
-            <p class="napkinbets-support-copy">
-              {{ wager.pots.length }} side pots tracked
-            </p>
+            <p class="napkinbets-support-copy">{{ wager.pots.length }} side pots tracked</p>
           </div>
 
           <div class="napkinbets-surface">
             <p class="napkinbets-surface-label">Board state</p>
             <p class="napkinbets-surface-value">{{ wager.participants.length }} seats</p>
-            <p class="napkinbets-support-copy">
-              {{ wager.notifications.length }} recent reminders
-            </p>
+            <p class="napkinbets-support-copy">{{ wager.notifications.length }} recent reminders</p>
           </div>
         </div>
 
         <div class="space-y-3">
           <h3 class="napkinbets-subsection-title">Pot breakdown</h3>
           <div class="napkinbets-chip-grid">
-            <div
-              v-for="pot in wager.pots"
-              :key="pot.id"
-              class="napkinbets-chip-card"
-            >
+            <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
               <span class="font-semibold text-default">{{ pot.label }}</span>
               <span class="text-sm text-muted">{{ formatCurrency(pot.amountCents) }}</span>
             </div>
@@ -319,9 +318,7 @@ function submitSettlement() {
               >
                 <div>
                   <p class="font-semibold text-default">{{ row.displayName }}</p>
-                  <p class="text-sm text-muted">
-                    {{ row.sideLabel }} • {{ row.pickCount }} picks
-                  </p>
+                  <p class="text-sm text-muted">{{ row.sideLabel }} • {{ row.pickCount }} picks</p>
                 </div>
                 <div class="text-right">
                   <p class="font-semibold text-default">{{ row.score }} pts</p>
@@ -440,7 +437,11 @@ function submitSettlement() {
             <h3 class="napkinbets-subsection-title">Confirm settlement</h3>
             <UForm :state="settlementState" class="space-y-3" @submit.prevent="submitSettlement">
               <UFormField name="participantId" label="Participant">
-                <USelect v-model="settlementState.participantId" :items="participantOptions" class="w-full" />
+                <USelect
+                  v-model="settlementState.participantId"
+                  :items="participantOptions"
+                  class="w-full"
+                />
               </UFormField>
               <UFormField name="amountDollars" label="Amount ($)">
                 <UInput v-model="settlementState.amountDollars" type="number" class="w-full" />
@@ -488,9 +489,14 @@ function submitSettlement() {
             <div class="napkinbets-list-row">
               <div>
                 <p class="font-semibold text-default">Collector</p>
-                <p class="text-sm text-muted">{{ wager.paymentService }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</p>
+                <p class="text-sm text-muted">
+                  {{ wager.paymentService
+                  }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
+                </p>
               </div>
-              <p class="font-semibold text-default">{{ formatCurrency(Math.round(settlementState.amountDollars * 100)) }}</p>
+              <p class="font-semibold text-default">
+                {{ formatCurrency(Math.round(settlementState.amountDollars * 100)) }}
+              </p>
             </div>
             <div class="napkinbets-note-row">
               <div>
@@ -515,7 +521,8 @@ function submitSettlement() {
           </div>
 
           <p class="napkinbets-support-copy">
-            Some providers only support partial prefill. Napkinbets always shows the handle, amount, and note together so the last mile can be copied cleanly.
+            Some providers only support partial prefill. Napkinbets always shows the handle, amount,
+            and note together so the last mile can be copied cleanly.
           </p>
         </div>
 
@@ -564,7 +571,12 @@ function submitSettlement() {
                   {{ participantNames.get(settlement.participantId) || settlement.method }}
                 </p>
                 <p class="text-sm text-muted">
-                  {{ settlement.method }} • {{ settlement.confirmationCode || settlement.handle || 'Manual confirmation pending' }}
+                  {{ settlement.method }} •
+                  {{
+                    settlement.confirmationCode ||
+                    settlement.handle ||
+                    'Manual confirmation pending'
+                  }}
                 </p>
                 <p v-if="settlement.rejectionNote" class="text-sm text-muted">
                   {{ settlement.rejectionNote }}
@@ -574,7 +586,9 @@ function submitSettlement() {
                 <UBadge :color="settlementBadgeColor(settlement.verificationStatus)" variant="soft">
                   {{ settlement.verificationStatus }}
                 </UBadge>
-                <p class="font-semibold text-default">{{ formatCurrency(settlement.amountCents) }}</p>
+                <p class="font-semibold text-default">
+                  {{ formatCurrency(settlement.amountCents) }}
+                </p>
                 <UButton
                   v-if="canManage && settlement.verificationStatus !== 'confirmed'"
                   color="success"

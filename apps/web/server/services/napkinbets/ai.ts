@@ -3,10 +3,7 @@ import { createError } from 'h3'
 import { loadNapkinbetsAiSettings } from '#server/services/napkinbets/settings'
 import { grokChat } from '#server/utils/grok'
 
-async function requireAi(
-  event: H3Event,
-  capability: 'terms' | 'closeout',
-) {
+async function requireAi(event: H3Event, capability: 'terms' | 'closeout') {
   const config = useRuntimeConfig(event)
   const settings = await loadNapkinbetsAiSettings(event)
 

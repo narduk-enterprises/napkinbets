@@ -12,9 +12,8 @@ const ai = useNapkinbetsAi()
 
 const wager = computed(() => wagerState.data.value.wager)
 
-const canManage = computed(
-  () =>
-    Boolean(wager.value && (user.value?.isAdmin || wager.value.ownerUserId === user.value?.id)),
+const canManage = computed(() =>
+  Boolean(wager.value && (user.value?.isAdmin || wager.value.ownerUserId === user.value?.id)),
 )
 
 watchEffect(async () => {
@@ -25,25 +24,34 @@ watchEffect(async () => {
 
 const participantById = computed(
   () =>
-    new Map(
-      (wager.value?.participants ?? []).map((participant) => [participant.id, participant]),
-    ),
+    new Map((wager.value?.participants ?? []).map((participant) => [participant.id, participant])),
 )
 
 const pendingParticipants = computed(
-  () => wager.value?.participants.filter((participant) => participant.paymentStatus === 'pending') ?? [],
+  () =>
+    wager.value?.participants.filter((participant) => participant.paymentStatus === 'pending') ??
+    [],
 )
 const submittedParticipants = computed(
-  () => wager.value?.participants.filter((participant) => participant.paymentStatus === 'submitted') ?? [],
+  () =>
+    wager.value?.participants.filter((participant) => participant.paymentStatus === 'submitted') ??
+    [],
 )
 const confirmedParticipants = computed(
-  () => wager.value?.participants.filter((participant) => participant.paymentStatus === 'confirmed') ?? [],
+  () =>
+    wager.value?.participants.filter((participant) => participant.paymentStatus === 'confirmed') ??
+    [],
 )
 const rejectedSettlements = computed(
-  () => wager.value?.settlements.filter((settlement) => settlement.verificationStatus === 'rejected') ?? [],
+  () =>
+    wager.value?.settlements.filter((settlement) => settlement.verificationStatus === 'rejected') ??
+    [],
 )
 const submittedSettlements = computed(
-  () => wager.value?.settlements.filter((settlement) => settlement.verificationStatus === 'submitted') ?? [],
+  () =>
+    wager.value?.settlements.filter(
+      (settlement) => settlement.verificationStatus === 'submitted',
+    ) ?? [],
 )
 
 const rejectionNotes = reactive<Record<string, string>>({})
@@ -52,9 +60,7 @@ const aiSummaryPending = ref(false)
 const aiSummaryError = ref('')
 
 const paymentNote = computed(() =>
-  wager.value
-    ? buildPaymentNote(wager.value.slug, 'entry', wager.value.entryFeeCents / 100)
-    : '',
+  wager.value ? buildPaymentNote(wager.value.slug, 'entry', wager.value.entryFeeCents / 100) : '',
 )
 
 const paymentLinks = computed(() =>
@@ -121,8 +127,7 @@ async function draftCloseoutSummary() {
 
     aiSummary.value = result.summary
   } catch (error) {
-    aiSummaryError.value =
-      error instanceof Error ? error.message : 'AI closeout summary failed.'
+    aiSummaryError.value = error instanceof Error ? error.message : 'AI closeout summary failed.'
   } finally {
     aiSummaryPending.value = false
   }
@@ -152,8 +157,14 @@ useWebPageSchema({
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
       variant="soft"
-      :icon="actions.feedback.value.type === 'success' ? 'i-lucide-check-circle-2' : 'i-lucide-circle-alert'"
-      :title="actions.feedback.value.type === 'success' ? 'Closeout updated' : 'Closeout action failed'"
+      :icon="
+        actions.feedback.value.type === 'success'
+          ? 'i-lucide-check-circle-2'
+          : 'i-lucide-circle-alert'
+      "
+      :title="
+        actions.feedback.value.type === 'success' ? 'Closeout updated' : 'Closeout action failed'
+      "
       :description="actions.feedback.value.text"
     />
 
@@ -173,11 +184,17 @@ useWebPageSchema({
             <p class="napkinbets-kicker">Closeout playbook</p>
             <h1 class="napkinbets-section-title">{{ wager.title }}</h1>
             <p class="napkinbets-hero-lede">
-              Run the final pass here: verify entry proof, push back bad submissions, and work from one payout preview instead of a loose chat thread.
+              Run the final pass here: verify entry proof, push back bad submissions, and work from
+              one payout preview instead of a loose chat thread.
             </p>
 
             <div class="napkinbets-card-actions">
-              <UButton :to="`/wagers/${wager.slug}`" color="neutral" variant="soft" icon="i-lucide-arrow-left">
+              <UButton
+                :to="`/wagers/${wager.slug}`"
+                color="neutral"
+                variant="soft"
+                icon="i-lucide-arrow-left"
+              >
                 Back to board
               </UButton>
             </div>
@@ -190,7 +207,9 @@ useWebPageSchema({
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Handle</p>
                   <p class="napkinbets-surface-value">{{ wager.paymentService }}</p>
-                  <p class="napkinbets-support-copy">{{ wager.paymentHandle || 'One-off handle' }}</p>
+                  <p class="napkinbets-support-copy">
+                    {{ wager.paymentHandle || 'One-off handle' }}
+                  </p>
                 </div>
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Entry</p>
@@ -231,28 +250,38 @@ useWebPageSchema({
                   <span class="napkinbets-process-step">1</span>
                   <div>
                     <p class="font-semibold text-default">Verify the collection rail</p>
-                    <p class="napkinbets-support-copy">Use the payment pack above so everyone pays the same destination with the same note shape.</p>
+                    <p class="napkinbets-support-copy">
+                      Use the payment pack above so everyone pays the same destination with the same
+                      note shape.
+                    </p>
                   </div>
                 </div>
                 <div class="napkinbets-process-item">
                   <span class="napkinbets-process-step">2</span>
                   <div>
                     <p class="font-semibold text-default">Review submitted proof</p>
-                    <p class="napkinbets-support-copy">Confirm clean entries and reject anything ambiguous before you lock closeout.</p>
+                    <p class="napkinbets-support-copy">
+                      Confirm clean entries and reject anything ambiguous before you lock closeout.
+                    </p>
                   </div>
                 </div>
                 <div class="napkinbets-process-item">
                   <span class="napkinbets-process-step">3</span>
                   <div>
                     <p class="font-semibold text-default">Check payout preview</p>
-                    <p class="napkinbets-support-copy">Make sure the leaderboard and pot math still reflect what the group agreed to.</p>
+                    <p class="napkinbets-support-copy">
+                      Make sure the leaderboard and pot math still reflect what the group agreed to.
+                    </p>
                   </div>
                 </div>
                 <div class="napkinbets-process-item">
                   <span class="napkinbets-process-step">4</span>
                   <div>
                     <p class="font-semibold text-default">Settle and archive</p>
-                    <p class="napkinbets-support-copy">Once manual payouts are done, move the board to its final state and keep the ledger intact.</p>
+                    <p class="napkinbets-support-copy">
+                      Once manual payouts are done, move the board to its final state and keep the
+                      ledger intact.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -275,7 +304,9 @@ useWebPageSchema({
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Submitted</p>
                   <p class="napkinbets-surface-value">{{ submittedParticipants.length }}</p>
-                  <p class="napkinbets-support-copy">Participant says paid, owner review still needed</p>
+                  <p class="napkinbets-support-copy">
+                    Participant says paid, owner review still needed
+                  </p>
                 </div>
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Confirmed</p>
@@ -312,10 +343,15 @@ useWebPageSchema({
                 >
                   <div class="space-y-2">
                     <p class="font-semibold text-default">
-                      {{ participantById.get(settlement.participantId)?.displayName || 'Participant' }}
+                      {{
+                        participantById.get(settlement.participantId)?.displayName || 'Participant'
+                      }}
                     </p>
                     <p class="text-sm text-muted">
-                      {{ settlement.method }} • {{ formatCurrency(settlement.amountCents) }} • {{ settlement.confirmationCode || settlement.handle || 'No reference provided' }}
+                      {{ settlement.method }} • {{ formatCurrency(settlement.amountCents) }} •
+                      {{
+                        settlement.confirmationCode || settlement.handle || 'No reference provided'
+                      }}
                     </p>
                     <p v-if="settlement.note" class="text-sm text-muted">
                       {{ settlement.note }}
@@ -335,7 +371,9 @@ useWebPageSchema({
                     <UButton
                       color="success"
                       variant="soft"
-                      :loading="actions.activeAction.value === `settlement-confirm:${settlement.id}`"
+                      :loading="
+                        actions.activeAction.value === `settlement-confirm:${settlement.id}`
+                      "
                       @click="handleConfirm(settlement.id)"
                     >
                       Confirm proof
@@ -419,7 +457,8 @@ useWebPageSchema({
                 :description="aiSummaryError"
               />
               <p v-else class="napkinbets-support-copy">
-                Use this when you want a concise operator summary of what still needs to happen before archive.
+                Use this when you want a concise operator summary of what still needs to happen
+                before archive.
               </p>
             </div>
           </UCard>

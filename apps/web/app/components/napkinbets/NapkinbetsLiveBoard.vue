@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import type {
-  NapkinbetsLiveGame,
-  NapkinbetsWeatherSnapshot,
-} from '../../../types/napkinbets'
+import type { NapkinbetsLiveGame, NapkinbetsWeatherSnapshot } from '../../../types/napkinbets'
 
 defineProps<{
   liveGames: NapkinbetsLiveGame[]
@@ -39,9 +36,7 @@ function weatherLow(value: NapkinbetsWeatherSnapshot) {
         <p class="napkinbets-kicker">Live context</p>
         <h2 class="napkinbets-section-title">ESPN slates and weather snapshots</h2>
       </div>
-      <p class="napkinbets-support-copy">
-        Refreshed {{ formatRefresh(refreshedAt) }}
-      </p>
+      <p class="napkinbets-support-copy">Refreshed {{ formatRefresh(refreshedAt) }}</p>
     </div>
 
     <div class="napkinbets-live-grid">
@@ -50,22 +45,14 @@ function weatherLow(value: NapkinbetsWeatherSnapshot) {
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="napkinbets-subsection-title">Scoreboard</p>
-              <p class="napkinbets-support-copy">
-                Sports context for wagers tied to a live slate.
-              </p>
+              <p class="napkinbets-support-copy">Sports context for wagers tied to a live slate.</p>
             </div>
-            <UBadge color="primary" variant="soft" icon="i-lucide-radio-tower">
-              ESPN
-            </UBadge>
+            <UBadge color="primary" variant="soft" icon="i-lucide-radio-tower"> ESPN </UBadge>
           </div>
         </template>
 
         <div class="space-y-3">
-          <div
-            v-for="game in liveGames"
-            :key="game.id"
-            class="napkinbets-live-game"
-          >
+          <div v-for="game in liveGames" :key="game.id" class="napkinbets-live-game">
             <div class="flex items-center justify-between gap-3">
               <div>
                 <p class="font-semibold text-default">
@@ -114,9 +101,7 @@ function weatherLow(value: NapkinbetsWeatherSnapshot) {
                 Pulled from Open-Meteo for golf rounds and outdoor boards.
               </p>
             </div>
-            <UBadge color="info" variant="soft" icon="i-lucide-cloud-sun">
-              Forecast
-            </UBadge>
+            <UBadge color="info" variant="soft" icon="i-lucide-cloud-sun"> Forecast </UBadge>
           </div>
         </template>
 
@@ -136,12 +121,8 @@ function weatherLow(value: NapkinbetsWeatherSnapshot) {
                 </p>
               </div>
               <div class="text-right">
-                <p class="text-2xl font-display text-default">
-                  {{ forecast.temperatureF }}°
-                </p>
-                <p class="text-sm text-muted">
-                  Feels like {{ forecast.feelsLikeF }}°
-                </p>
+                <p class="text-2xl font-display text-default">{{ forecast.temperatureF }}°</p>
+                <p class="text-sm text-muted">Feels like {{ forecast.feelsLikeF }}°</p>
               </div>
             </div>
 

@@ -79,10 +79,7 @@ const WEATHER_CODES: Record<number, string> = {
   95: 'Thunderstorm',
 }
 
-export async function getESPNScores(
-  sport: string,
-  league: string,
-): Promise<NapkinbetsLiveGame[]> {
+export async function getESPNScores(sport: string, league: string): Promise<NapkinbetsLiveGame[]> {
   if (!sport || !league) {
     return []
   }

@@ -53,8 +53,7 @@ useSeo({
 
 useWebPageSchema({
   name: 'Napkinbets Payment Profiles',
-  description:
-    'An authenticated settings page for managing user payment profiles on Napkinbets.',
+  description: 'An authenticated settings page for managing user payment profiles on Napkinbets.',
 })
 </script>
 
@@ -63,9 +62,12 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">Payments</p>
-        <h1 class="napkinbets-section-title">Saved handles for smoother board collection and closeout.</h1>
+        <h1 class="napkinbets-section-title">
+          Saved handles for smoother board collection and closeout.
+        </h1>
         <p class="napkinbets-hero-lede">
-          Store non-sensitive payment identities only. Napkinbets uses them to prefill collection rails and link users out to the right provider.
+          Store non-sensitive payment identities only. Napkinbets uses them to prefill collection
+          rails and link users out to the right provider.
         </p>
       </div>
     </div>
@@ -74,8 +76,16 @@ useWebPageSchema({
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
       variant="soft"
-      :icon="actions.feedback.value.type === 'success' ? 'i-lucide-check-circle-2' : 'i-lucide-circle-alert'"
-      :title="actions.feedback.value.type === 'success' ? 'Payment settings updated' : 'Payment settings failed'"
+      :icon="
+        actions.feedback.value.type === 'success'
+          ? 'i-lucide-check-circle-2'
+          : 'i-lucide-circle-alert'
+      "
+      :title="
+        actions.feedback.value.type === 'success'
+          ? 'Payment settings updated'
+          : 'Payment settings failed'
+      "
       :description="actions.feedback.value.text"
     />
 
@@ -93,16 +103,27 @@ useWebPageSchema({
             </UFormField>
 
             <UFormField name="handle" label="Handle or account">
-              <UInput v-model="formState.handle" class="w-full" placeholder="@yourname or paypal.me/yourname" />
+              <UInput
+                v-model="formState.handle"
+                class="w-full"
+                placeholder="@yourname or paypal.me/yourname"
+              />
             </UFormField>
 
             <UFormField name="displayLabel" label="Label">
-              <UInput v-model="formState.displayLabel" class="w-full" placeholder="Personal Venmo" />
+              <UInput
+                v-model="formState.displayLabel"
+                class="w-full"
+                placeholder="Personal Venmo"
+              />
             </UFormField>
 
             <div class="space-y-3">
               <UCheckbox v-model="formState.isDefault" label="Use as default payment profile" />
-              <UCheckbox v-model="formState.isPublicOnBoards" label="Show this handle on shared board views" />
+              <UCheckbox
+                v-model="formState.isPublicOnBoards"
+                label="Show this handle on shared board views"
+              />
             </div>
 
             <UButton
@@ -132,9 +153,13 @@ useWebPageSchema({
             >
               <div>
                 <div class="flex flex-wrap items-center gap-2">
-                  <p class="font-semibold text-default">{{ profile.displayLabel || profile.provider }}</p>
+                  <p class="font-semibold text-default">
+                    {{ profile.displayLabel || profile.provider }}
+                  </p>
                   <UBadge v-if="profile.isDefault" color="success" variant="soft">Default</UBadge>
-                  <UBadge v-if="profile.isPublicOnBoards" color="info" variant="soft">Public on boards</UBadge>
+                  <UBadge v-if="profile.isPublicOnBoards" color="info" variant="soft"
+                    >Public on boards</UBadge
+                  >
                 </div>
                 <p class="text-sm text-muted">{{ profile.provider }} • {{ profile.handle }}</p>
               </div>

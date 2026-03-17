@@ -54,8 +54,10 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       feedback.value = null
     },
     createWager(payload: CreateWagerInput) {
-      return runAction('create-wager', 'Wager board created and seeded with a randomized draft order.', () =>
-        api.createWager(payload),
+      return runAction(
+        'create-wager',
+        'Wager board created and seeded with a randomized draft order.',
+        () => api.createWager(payload),
       )
     },
     joinWager(wagerId: string, payload: JoinWagerInput) {
@@ -78,13 +80,11 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         api.confirmSettlement(wagerId, settlementId),
       )
     },
-    rejectSettlement(
-      wagerId: string,
-      settlementId: string,
-      payload: WagerSettlementReviewInput,
-    ) {
-      return runAction(`settlement-reject:${settlementId}`, 'Settlement proof sent back for correction.', () =>
-        api.rejectSettlement(wagerId, settlementId, payload),
+    rejectSettlement(wagerId: string, settlementId: string, payload: WagerSettlementReviewInput) {
+      return runAction(
+        `settlement-reject:${settlementId}`,
+        'Settlement proof sent back for correction.',
+        () => api.rejectSettlement(wagerId, settlementId, payload),
       )
     },
     shuffleDraftOrder(wagerId: string) {
@@ -133,8 +133,10 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
       )
     },
     setDefaultPaymentProfile(profileId: string) {
-      return runAction(`payment-profile:default:${profileId}`, 'Default payment profile updated.', () =>
-        api.setDefaultPaymentProfile(profileId),
+      return runAction(
+        `payment-profile:default:${profileId}`,
+        'Default payment profile updated.',
+        () => api.setDefaultPaymentProfile(profileId),
       )
     },
   }

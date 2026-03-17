@@ -13,7 +13,9 @@ const {
   hasFilteredResults,
 } = useNapkinbetsDiscoverPresentation(discover)
 const refreshedAtLabel = computed(() =>
-  discover.value.refreshedAt ? discover.value.refreshedAt.replace('T', ' ').replace('Z', ' UTC') : '',
+  discover.value.refreshedAt
+    ? discover.value.refreshedAt.replace('T', ' ').replace('Z', ' UTC')
+    : '',
 )
 
 useNapkinbetsAutoRefresh(discoverState.refresh)
@@ -43,13 +45,23 @@ useWebPageSchema({
         <p class="napkinbets-kicker">Discovery</p>
         <h1 class="napkinbets-section-title">Start from current and upcoming sports events.</h1>
         <p class="napkinbets-hero-lede">
-          ESPN-backed event cache first, then fast board setup. The board ideas stay social and human-readable instead of feeling like sportsbook sludge.
+          ESPN-backed event cache first, then fast board setup. The board ideas stay social and
+          human-readable instead of feeling like sportsbook sludge.
         </p>
         <div class="napkinbets-card-actions">
-          <UButton to="/wagers/create?createMode=manual" color="primary" icon="i-lucide-ticket-plus">
+          <UButton
+            to="/wagers/create?createMode=manual"
+            color="primary"
+            icon="i-lucide-ticket-plus"
+          >
             Create manual board
           </UButton>
-          <UButton to="/settings/payments" color="neutral" variant="soft" icon="i-lucide-wallet-cards">
+          <UButton
+            to="/settings/payments"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-wallet-cards"
+          >
             Payment rails
           </UButton>
         </div>
@@ -71,15 +83,15 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-timer-reset"
       title="Showing the latest cached slate"
-      :description="refreshedAtLabel ? `The event cache last refreshed at ${refreshedAtLabel}.` : 'The event cache has not refreshed yet.'"
+      :description="
+        refreshedAtLabel
+          ? `The event cache last refreshed at ${refreshedAtLabel}.`
+          : 'The event cache has not refreshed yet.'
+      "
     />
 
     <div class="napkinbets-metric-grid">
-      <NapkinbetsMetricCard
-        v-for="metric in metrics"
-        :key="metric.label"
-        :metric="metric"
-      />
+      <NapkinbetsMetricCard v-for="metric in metrics" :key="metric.label" :metric="metric" />
     </div>
 
     <UCard class="napkinbets-panel">
@@ -118,11 +130,7 @@ useWebPageSchema({
           </div>
 
           <div class="napkinbets-live-grid">
-            <NapkinbetsEventCard
-              v-for="event in section.events"
-              :key="event.id"
-              :event="event"
-            />
+            <NapkinbetsEventCard v-for="event in section.events" :key="event.id" :event="event" />
           </div>
         </div>
 
@@ -142,7 +150,8 @@ useWebPageSchema({
             <p class="napkinbets-kicker">Prop flavors</p>
             <h2 class="napkinbets-subsection-title">Ideas beyond a straight game winner</h2>
             <p class="napkinbets-support-copy">
-              Keep these as secondary prompts. Discovery should start from the real event, then layer on one or two social side markets.
+              Keep these as secondary prompts. Discovery should start from the real event, then
+              layer on one or two social side markets.
             </p>
           </div>
 

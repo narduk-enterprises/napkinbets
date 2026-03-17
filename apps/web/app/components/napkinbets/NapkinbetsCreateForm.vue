@@ -142,17 +142,23 @@ function submit() {
         <div class="napkinbets-surface space-y-2">
           <p class="napkinbets-surface-label">Attached event</p>
           <p class="font-semibold text-default">
-            {{ eventPreview.awayTeamName && eventPreview.homeTeamName ? `${eventPreview.awayTeamName} at ${eventPreview.homeTeamName}` : eventPreview.title }}
+            {{
+              eventPreview.awayTeamName && eventPreview.homeTeamName
+                ? `${eventPreview.awayTeamName} at ${eventPreview.homeTeamName}`
+                : eventPreview.title
+            }}
           </p>
           <p class="text-sm text-muted">
-            {{ eventPreview.status || 'Scheduled' }} • {{ eventPreview.venueName || 'Venue pending' }}
+            {{ eventPreview.status || 'Scheduled' }} •
+            {{ eventPreview.venueName || 'Venue pending' }}
           </p>
         </div>
 
         <div class="napkinbets-surface space-y-2">
           <p class="napkinbets-surface-label">Board shape</p>
           <p class="text-sm text-muted">
-            Napkinbets already has the sport, league, and suggested market angle. You are mostly deciding the stake, the seat list, and the closeout rules.
+            Napkinbets already has the sport, league, and suggested market angle. You are mostly
+            deciding the stake, the seat list, and the closeout rules.
           </p>
         </div>
       </div>

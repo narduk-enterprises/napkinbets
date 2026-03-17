@@ -14,11 +14,7 @@ function parseXaiError(body: string) {
   }
 }
 
-export async function grokChat(
-  apiKey: string,
-  messages: GrokChatMessage[],
-  model: string,
-) {
+export async function grokChat(apiKey: string, messages: GrokChatMessage[], model: string) {
   const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {

@@ -12,13 +12,12 @@ const wagerState = await useNapkinbetsWager(() => String(route.params.slug || ''
 const actions = useNapkinbetsActions(wagerState.refresh)
 
 const wager = computed(() => wagerState.data.value.wager)
-const canManage = computed(
-  () =>
-    Boolean(
-      loggedIn.value &&
-        wager.value &&
-        (user.value?.isAdmin || wager.value.ownerUserId === user.value?.id),
-    ),
+const canManage = computed(() =>
+  Boolean(
+    loggedIn.value &&
+    wager.value &&
+    (user.value?.isAdmin || wager.value.ownerUserId === user.value?.id),
+  ),
 )
 
 useNapkinbetsAutoRefresh(wagerState.refresh)
@@ -41,10 +40,7 @@ async function handlePick(wagerId: string, payload: WagerPickInput) {
   await actions.addPick(wagerId, payload)
 }
 
-async function handleSettlement(
-  wagerId: string,
-  payload: WagerSettlementInput,
-) {
+async function handleSettlement(wagerId: string, payload: WagerSettlementInput) {
   if (!loggedIn.value) {
     await navigateTo('/register')
     return
@@ -103,7 +99,11 @@ useWebPageSchema({
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
       variant="soft"
-      :icon="actions.feedback.value.type === 'success' ? 'i-lucide-check-circle-2' : 'i-lucide-circle-alert'"
+      :icon="
+        actions.feedback.value.type === 'success'
+          ? 'i-lucide-check-circle-2'
+          : 'i-lucide-circle-alert'
+      "
       :title="actions.feedback.value.type === 'success' ? 'Board updated' : 'Board action failed'"
       :description="actions.feedback.value.text"
     />
@@ -126,7 +126,9 @@ useWebPageSchema({
                 {{ wager.status }}
               </UBadge>
               <UBadge color="neutral" variant="subtle">{{ wager.format }}</UBadge>
-              <UBadge v-if="wager.league" color="warning" variant="soft">{{ wager.league.toUpperCase() }}</UBadge>
+              <UBadge v-if="wager.league" color="warning" variant="soft">{{
+                wager.league.toUpperCase()
+              }}</UBadge>
             </div>
 
             <div class="space-y-3">
@@ -137,12 +139,20 @@ useWebPageSchema({
 
             <div class="napkinbets-hero-pills">
               <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom board' }}</span>
-              <span class="napkinbets-hero-pill">{{ wager.paymentService }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</span>
+              <span class="napkinbets-hero-pill"
+                >{{ wager.paymentService
+                }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</span
+              >
               <span class="napkinbets-hero-pill">{{ wager.venueName || 'Remote group' }}</span>
             </div>
 
             <div v-if="canManage" class="napkinbets-card-actions">
-              <UButton :to="`/wagers/${wager.slug}/closeout`" color="primary" variant="soft" icon="i-lucide-clipboard-list">
+              <UButton
+                :to="`/wagers/${wager.slug}/closeout`"
+                color="primary"
+                variant="soft"
+                icon="i-lucide-clipboard-list"
+              >
                 Open Closeout Playbook
               </UButton>
             </div>

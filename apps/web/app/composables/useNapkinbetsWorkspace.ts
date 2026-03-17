@@ -12,7 +12,11 @@ const EMPTY_WORKSPACE: NapkinbetsWorkspaceResponse = {
 export function useNapkinbetsWorkspace() {
   const api = useNapkinbetsApi()
 
-  return useAsyncData<NapkinbetsWorkspaceResponse>('napkinbets-workspace', () => api.getWorkspace(), {
-    default: () => EMPTY_WORKSPACE,
-  })
+  return useAsyncData<NapkinbetsWorkspaceResponse>(
+    'napkinbets-workspace',
+    () => api.getWorkspace(),
+    {
+      default: () => EMPTY_WORKSPACE,
+    },
+  )
 }

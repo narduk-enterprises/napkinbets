@@ -14,10 +14,7 @@ import {
   getWeatherForecast,
   type NapkinbetsWeatherSnapshot,
 } from '#server/services/napkinbets/live'
-import {
-  loadCachedEventsByIds,
-  loadFeaturedLiveGames,
-} from '#server/services/napkinbets/events'
+import { loadCachedEventsByIds, loadFeaturedLiveGames } from '#server/services/napkinbets/events'
 import { useAppDatabase } from '#server/utils/database'
 
 interface SavePoolDataInput {
@@ -262,7 +259,9 @@ function computeLeaderboard(
   settlements: Array<typeof napkinbetsSettlements.$inferSelect>,
 ) {
   const totalPotCents = pots.reduce((sum, pot) => sum + pot.amountCents, 0)
-  const acceptedParticipants = participants.filter((participant) => participant.joinStatus !== 'pending')
+  const acceptedParticipants = participants.filter(
+    (participant) => participant.joinStatus !== 'pending',
+  )
 
   const rows: SerializedLeaderboardRow[] = []
   let totalScore = 0
@@ -306,7 +305,9 @@ function computeLeaderboard(
       totalScore > 0 ? Math.round(totalPotCents * (row.score / totalScore)) : fallbackSplit
   }
 
-  rows.sort((left, right) => right.score - left.score || left.displayName.localeCompare(right.displayName))
+  rows.sort(
+    (left, right) => right.score - left.score || left.displayName.localeCompare(right.displayName),
+  )
   return rows
 }
 
@@ -335,7 +336,11 @@ async function createNotification(
 
 async function getWagerOrThrow(event: H3Event, wagerId: string) {
   const db = useAppDatabase(event)
-  const [wager] = await db.select().from(napkinbetsWagers).where(eq(napkinbetsWagers.id, wagerId)).limit(1)
+  const [wager] = await db
+    .select()
+    .from(napkinbetsWagers)
+    .where(eq(napkinbetsWagers.id, wagerId))
+    .limit(1)
 
   if (!wager) {
     throw createError({ statusCode: 404, message: 'Wager not found.' })
@@ -579,12 +584,48 @@ export async function ensureSeedData(event: H3Event) {
   ])
 
   await db.insert(napkinbetsPots).values([
-    { id: crypto.randomUUID(), wagerId: sportsWagerId, label: 'Winner', amountCents: 6000, sortOrder: 0 },
-    { id: crypto.randomUUID(), wagerId: sportsWagerId, label: 'Prop bonus', amountCents: 2500, sortOrder: 1 },
-    { id: crypto.randomUUID(), wagerId: sportsWagerId, label: 'Late cover hedge', amountCents: 1500, sortOrder: 2 },
-    { id: crypto.randomUUID(), wagerId: golfWagerId, label: 'Draft winner', amountCents: 3000, sortOrder: 0 },
-    { id: crypto.randomUUID(), wagerId: golfWagerId, label: 'Low round', amountCents: 2000, sortOrder: 1 },
-    { id: crypto.randomUUID(), wagerId: golfWagerId, label: 'Closest pin', amountCents: 1000, sortOrder: 2 },
+    {
+      id: crypto.randomUUID(),
+      wagerId: sportsWagerId,
+      label: 'Winner',
+      amountCents: 6000,
+      sortOrder: 0,
+    },
+    {
+      id: crypto.randomUUID(),
+      wagerId: sportsWagerId,
+      label: 'Prop bonus',
+      amountCents: 2500,
+      sortOrder: 1,
+    },
+    {
+      id: crypto.randomUUID(),
+      wagerId: sportsWagerId,
+      label: 'Late cover hedge',
+      amountCents: 1500,
+      sortOrder: 2,
+    },
+    {
+      id: crypto.randomUUID(),
+      wagerId: golfWagerId,
+      label: 'Draft winner',
+      amountCents: 3000,
+      sortOrder: 0,
+    },
+    {
+      id: crypto.randomUUID(),
+      wagerId: golfWagerId,
+      label: 'Low round',
+      amountCents: 2000,
+      sortOrder: 1,
+    },
+    {
+      id: crypto.randomUUID(),
+      wagerId: golfWagerId,
+      label: 'Closest pin',
+      amountCents: 1000,
+      sortOrder: 2,
+    },
   ])
 
   await db.insert(napkinbetsPicks).values([
@@ -782,15 +823,12 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       }
     }
 
-    const weatherPromises: Array<
-      Promise<readonly [string, NapkinbetsWeatherSnapshot | null]>
-    > = []
+    const weatherPromises: Array<Promise<readonly [string, NapkinbetsWeatherSnapshot | null]>> = []
     for (const [weatherKey, request] of weatherRequests.entries()) {
       weatherPromises.push(
-        getWeatherForecast(request.latitude, request.longitude, request.label).then((forecast) => [
-          weatherKey,
-          forecast,
-        ] as const),
+        getWeatherForecast(request.latitude, request.longitude, request.label).then(
+          (forecast) => [weatherKey, forecast] as const,
+        ),
       )
     }
 
@@ -824,7 +862,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       wagerSettlements,
     )
     const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
-    const eventContext = wager.eventId ? cachedEventsById.get(wager.eventId) ?? null : null
+    const eventContext = wager.eventId ? (cachedEventsById.get(wager.eventId) ?? null) : null
 
     serializedWagers.push({
       id: wager.id,
@@ -915,7 +953,9 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
   const sideOptions = parseSideOptions(input.sideOptions)
   const creatorName = input.creatorName.trim() || authUser.name || authUser.email
   const participantNames = normalizeList(input.participantNames)
-  if (!participantNames.some((participant) => participant.toLowerCase() === creatorName.toLowerCase())) {
+  if (
+    !participantNames.some((participant) => participant.toLowerCase() === creatorName.toLowerCase())
+  ) {
     participantNames.unshift(creatorName)
   }
 
@@ -967,7 +1007,8 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
       sideLabel: sideOptions[index % sideOptions.length] ?? sideOptions[0] ?? 'Open side',
       joinStatus: 'accepted',
       draftOrder: index + 1,
-      paymentStatus: displayName.toLowerCase() === creatorName.toLowerCase() ? 'confirmed' : 'pending',
+      paymentStatus:
+        displayName.toLowerCase() === creatorName.toLowerCase() ? 'confirmed' : 'pending',
       paymentReference: null,
       createdAt,
       updatedAt: createdAt,
@@ -1167,7 +1208,8 @@ export async function recordSettlement(event: H3Event, wagerId: string, input: S
   const participant = input.participantId
     ? participants.find((row) => row.id === input.participantId)
     : participants.find(
-        (row) => row.displayName.trim().toLowerCase() === input.participantName.trim().toLowerCase(),
+        (row) =>
+          row.displayName.trim().toLowerCase() === input.participantName.trim().toLowerCase(),
       )
 
   if (!participant) {
@@ -1280,7 +1322,8 @@ export async function rejectSettlement(
 
   const rejectedAt = nowIso()
   const rejectionNote =
-    note.trim() || 'Proof needs a clearer handle, amount, or confirmation reference before closeout.'
+    note.trim() ||
+    'Proof needs a clearer handle, amount, or confirmation reference before closeout.'
 
   await db
     .update(napkinbetsSettlements)

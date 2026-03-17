@@ -19,12 +19,14 @@ export default defineEventHandler(async (event) => {
     .slice(0, 8)
 
   const openSettlements =
-    ownedWagers.flatMap((wager) => wager.participants).filter((participant) => participant.paymentStatus !== 'confirmed')
-      .length +
+    ownedWagers
+      .flatMap((wager) => wager.participants)
+      .filter((participant) => participant.paymentStatus !== 'confirmed').length +
     joinedWagers
       .flatMap((wager) => wager.participants)
       .filter(
-        (participant) => participant.userId === user.id && participant.paymentStatus !== 'confirmed',
+        (participant) =>
+          participant.userId === user.id && participant.paymentStatus !== 'confirmed',
       ).length
 
   return {

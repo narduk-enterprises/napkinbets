@@ -91,11 +91,7 @@ export function useNapkinbetsApi() {
         method: 'POST',
       })
     },
-    rejectSettlement(
-      wagerId: string,
-      settlementId: string,
-      payload: WagerSettlementReviewInput,
-    ) {
+    rejectSettlement(wagerId: string, settlementId: string, payload: WagerSettlementReviewInput) {
       return fetch(`/api/napkinbets/wagers/${wagerId}/settlements/${settlementId}/reject`, {
         method: 'POST',
         body: payload,

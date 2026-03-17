@@ -61,19 +61,22 @@ const aiControlRows = computed(() => [
   {
     key: 'aiPropSuggestionsEnabled' as const,
     label: 'Prop suggestion assists',
-    description: 'Lets discovery and create flows ask for grounded prop variants from cached event context.',
+    description:
+      'Lets discovery and create flows ask for grounded prop variants from cached event context.',
     enabled: admin.value.aiSettings.aiPropSuggestionsEnabled,
   },
   {
     key: 'aiTermsAssistEnabled' as const,
     label: 'Terms rewrite assists',
-    description: 'Lets board owners tighten house rules and settlement wording without changing the stake logic.',
+    description:
+      'Lets board owners tighten house rules and settlement wording without changing the stake logic.',
     enabled: admin.value.aiSettings.aiTermsAssistEnabled,
   },
   {
     key: 'aiCloseoutAssistEnabled' as const,
     label: 'Closeout summary assists',
-    description: 'Lets owners generate a cleaner reconciliation summary once proof and outcomes are in.',
+    description:
+      'Lets owners generate a cleaner reconciliation summary once proof and outcomes are in.',
     enabled: admin.value.aiSettings.aiCloseoutAssistEnabled,
   },
 ])
@@ -103,7 +106,8 @@ useWebPageSchema({
         <p class="napkinbets-kicker">Admin</p>
         <h1 class="napkinbets-section-title">Run the prototype, not just the boards.</h1>
         <p class="napkinbets-hero-lede">
-          This route now covers users, wager states, cached event health, and operator-controlled AI toggles so product behavior stays explicit.
+          This route now covers users, wager states, cached event health, and operator-controlled AI
+          toggles so product behavior stays explicit.
         </p>
       </div>
     </div>
@@ -112,17 +116,19 @@ useWebPageSchema({
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
       variant="soft"
-      :icon="actions.feedback.value.type === 'success' ? 'i-lucide-check-circle-2' : 'i-lucide-circle-alert'"
-      :title="actions.feedback.value.type === 'success' ? 'Admin update applied' : 'Admin action failed'"
+      :icon="
+        actions.feedback.value.type === 'success'
+          ? 'i-lucide-check-circle-2'
+          : 'i-lucide-circle-alert'
+      "
+      :title="
+        actions.feedback.value.type === 'success' ? 'Admin update applied' : 'Admin action failed'
+      "
       :description="actions.feedback.value.text"
     />
 
     <div class="napkinbets-metric-grid">
-      <NapkinbetsMetricCard
-        v-for="metric in admin.metrics"
-        :key="metric.label"
-        :metric="metric"
-      />
+      <NapkinbetsMetricCard v-for="metric in admin.metrics" :key="metric.label" :metric="metric" />
     </div>
 
     <div class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -162,11 +168,7 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-3">
-              <div
-                v-for="run in admin.ingestRuns"
-                :key="run.id"
-                class="napkinbets-note-row"
-              >
+              <div v-for="run in admin.ingestRuns" :key="run.id" class="napkinbets-note-row">
                 <div class="space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
                     <UBadge
@@ -203,16 +205,20 @@ useWebPageSchema({
               :color="admin.aiSettings.xaiConfigured ? 'success' : 'warning'"
               variant="soft"
               :icon="admin.aiSettings.xaiConfigured ? 'i-lucide-bot' : 'i-lucide-key-round'"
-              :title="admin.aiSettings.xaiConfigured ? 'Grok provider configured' : 'XAI_API_KEY not configured'"
-              :description="admin.aiSettings.xaiConfigured ? 'UI flags can safely control what becomes visible to users.' : 'Keep all AI flags off until the provider key is available in Doppler.'"
+              :title="
+                admin.aiSettings.xaiConfigured
+                  ? 'Grok provider configured'
+                  : 'XAI_API_KEY not configured'
+              "
+              :description="
+                admin.aiSettings.xaiConfigured
+                  ? 'UI flags can safely control what becomes visible to users.'
+                  : 'Keep all AI flags off until the provider key is available in Doppler.'
+              "
             />
 
             <div class="space-y-3">
-              <div
-                v-for="control in aiControlRows"
-                :key="control.key"
-                class="napkinbets-note-row"
-              >
+              <div v-for="control in aiControlRows" :key="control.key" class="napkinbets-note-row">
                 <div class="space-y-1">
                   <p class="font-semibold text-default">{{ control.label }}</p>
                   <p class="text-sm text-muted">{{ control.description }}</p>
@@ -241,15 +247,12 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-3">
-              <div
-                v-for="adminUser in admin.users"
-                :key="adminUser.id"
-                class="napkinbets-note-row"
-              >
+              <div v-for="adminUser in admin.users" :key="adminUser.id" class="napkinbets-note-row">
                 <div>
                   <p class="font-semibold text-default">{{ adminUser.name || adminUser.email }}</p>
                   <p class="text-sm text-muted">
-                    {{ adminUser.email }} • {{ adminUser.ownedWagerCount }} owned • {{ adminUser.joinedWagerCount }} joined
+                    {{ adminUser.email }} • {{ adminUser.ownedWagerCount }} owned •
+                    {{ adminUser.joinedWagerCount }} joined
                   </p>
                 </div>
 
@@ -275,19 +278,19 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-4">
-              <div
-                v-for="wager in admin.wagers"
-                :key="wager.id"
-                class="napkinbets-admin-board"
-              >
+              <div v-for="wager in admin.wagers" :key="wager.id" class="napkinbets-admin-board">
                 <div class="space-y-2">
                   <div class="flex flex-wrap items-center gap-2">
                     <UBadge color="neutral" variant="subtle">{{ wager.status }}</UBadge>
-                    <UBadge v-if="wager.league" color="warning" variant="soft">{{ wager.league.toUpperCase() }}</UBadge>
+                    <UBadge v-if="wager.league" color="warning" variant="soft">{{
+                      wager.league.toUpperCase()
+                    }}</UBadge>
                   </div>
                   <p class="font-semibold text-default">{{ wager.title }}</p>
                   <p class="text-sm text-muted">
-                    {{ wager.ownerEmail || wager.creatorName }} • {{ wager.participantCount }} participants • {{ wager.openSettlementCount }} open settlements
+                    {{ wager.ownerEmail || wager.creatorName }} •
+                    {{ wager.participantCount }} participants • {{ wager.openSettlementCount }} open
+                    settlements
                   </p>
                 </div>
 

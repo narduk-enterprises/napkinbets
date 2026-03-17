@@ -25,7 +25,8 @@
         <div class="space-y-2">
           <p class="napkinbets-kicker">Friendly wagers only</p>
           <p class="napkinbets-support-copy">
-            Napkinbets tracks agreements, reminders, and proof of settlement. It does not process money or automate gambling transactions.
+            Napkinbets tracks agreements, reminders, and proof of settlement. It does not process
+            money or automate gambling transactions.
           </p>
         </div>
 

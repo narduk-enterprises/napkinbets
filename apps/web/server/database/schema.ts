@@ -130,9 +130,13 @@ export const napkinbetsSettlements = sqliteTable('napkinbets_settlements', {
   confirmationCode: text('confirmation_code'),
   note: text('note'),
   verificationStatus: text('verification_status').notNull().default('submitted'),
-  verifiedByUserId: text('verified_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+  verifiedByUserId: text('verified_by_user_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
   verifiedAt: text('verified_at'),
-  rejectedByUserId: text('rejected_by_user_id').references(() => users.id, { onDelete: 'set null' }),
+  rejectedByUserId: text('rejected_by_user_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
   rejectedAt: text('rejected_at'),
   rejectionNote: text('rejection_note'),
   recordedAt: text('recorded_at')

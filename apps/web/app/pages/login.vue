@@ -29,7 +29,8 @@ useWebPageSchema({
           <p class="napkinbets-kicker">Sign in</p>
           <h1 class="napkinbets-hero-title napkinbets-auth-title">Welcome back to the board.</h1>
           <p class="napkinbets-hero-lede">
-            Use your account to manage owned wagers, join shared boards, and confirm settlement proof.
+            Use your account to manage owned wagers, join shared boards, and confirm settlement
+            proof.
           </p>
         </div>
       </div>

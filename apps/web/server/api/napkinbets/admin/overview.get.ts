@@ -29,7 +29,10 @@ export default defineEventHandler(async (event) => {
         continue
       }
 
-      joinedCountByUser.set(participant.userId, (joinedCountByUser.get(participant.userId) ?? 0) + 1)
+      joinedCountByUser.set(
+        participant.userId,
+        (joinedCountByUser.get(participant.userId) ?? 0) + 1,
+      )
     }
   }
 
@@ -58,8 +61,9 @@ export default defineEventHandler(async (event) => {
       {
         label: 'Awaiting settlements',
         value: String(
-          dashboard.wagers.flatMap((wager) => wager.participants).filter((participant) => participant.paymentStatus !== 'confirmed')
-            .length,
+          dashboard.wagers
+            .flatMap((wager) => wager.participants)
+            .filter((participant) => participant.paymentStatus !== 'confirmed').length,
         ),
         hint: 'participants still missing proof',
         icon: 'i-lucide-wallet',
@@ -87,11 +91,13 @@ export default defineEventHandler(async (event) => {
       status: wager.status,
       creatorName: wager.creatorName,
       ownerUserId: wager.ownerUserId,
-      ownerEmail: wager.ownerUserId ? userById.get(wager.ownerUserId)?.email ?? null : null,
+      ownerEmail: wager.ownerUserId ? (userById.get(wager.ownerUserId)?.email ?? null) : null,
       league: wager.league,
       eventTitle: wager.eventTitle,
       participantCount: wager.participants.length,
-      openSettlementCount: wager.participants.filter((participant) => participant.paymentStatus !== 'confirmed').length,
+      openSettlementCount: wager.participants.filter(
+        (participant) => participant.paymentStatus !== 'confirmed',
+      ).length,
       createdAt: wager.notifications[0]?.createdAt || wager.eventStartsAt || dashboard.refreshedAt,
     })),
     totalCachedEvents: ingestHealth.totalCachedEvents,

@@ -17,11 +17,7 @@ defineProps<{
       </div>
 
       <div v-if="reminders.length" class="space-y-3">
-        <div
-          v-for="reminder in reminders"
-          :key="reminder.id"
-          class="napkinbets-note-row"
-        >
+        <div v-for="reminder in reminders" :key="reminder.id" class="napkinbets-note-row">
           <div>
             <p class="font-semibold text-default">{{ reminder.title }}</p>
             <p class="text-sm text-muted">{{ reminder.body }}</p>

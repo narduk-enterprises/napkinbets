@@ -237,7 +237,8 @@ export const NAPKINBETS_PROP_IDEAS = [
       'Will the acceptance speech run over 45 seconds?',
       'Which trailer drops before the main event starts?',
     ],
-    settlementHint: 'Only use prompts with clear public outcomes that the group can verify together.',
+    settlementHint:
+      'Only use prompts with clear public outcomes that the group can verify together.',
   },
 ] as const
 
@@ -285,20 +286,32 @@ function isLeagueActive(config: (typeof LEAGUES)[number], now = new Date()) {
   return (config.activeMonths as readonly number[]).includes(now.getMonth() + 1)
 }
 
-function getLeagueIdeas(sport: string, homeTeam: string, awayTeam: string): CachedDiscoverEventIdea[] {
+function getLeagueIdeas(
+  sport: string,
+  homeTeam: string,
+  awayTeam: string,
+): CachedDiscoverEventIdea[] {
   switch (sport) {
     case 'basketball':
       return [
         {
           title: 'Race market',
           description: `Turn ${awayTeam} vs ${homeTeam} into a simple run-race board.`,
-          sideOptions: ['First to 25 points', 'First to 50 points', 'Winning margin 1-5 / 6-10 / 11+'],
+          sideOptions: [
+            'First to 25 points',
+            'First to 50 points',
+            'Winning margin 1-5 / 6-10 / 11+',
+          ],
           format: 'sports-race',
         },
         {
           title: 'Closer call',
           description: 'Give the room one late-game prop that settles cleanly off the broadcast.',
-          sideOptions: ['Game goes to overtime', 'Home team covers final spread band', 'Last made three-pointer team'],
+          sideOptions: [
+            'Game goes to overtime',
+            'Home team covers final spread band',
+            'Last made three-pointer team',
+          ],
           format: 'sports-prop',
         },
       ]
@@ -307,7 +320,11 @@ function getLeagueIdeas(sport: string, homeTeam: string, awayTeam: string): Cach
         {
           title: 'Drive finish board',
           description: `Keep ${awayTeam} vs ${homeTeam} focused on clean, free-to-track football swings.`,
-          sideOptions: ['Next scoring team', 'First turnover of the half', 'One-score game in the fourth quarter'],
+          sideOptions: [
+            'Next scoring team',
+            'First turnover of the half',
+            'One-score game in the fourth quarter',
+          ],
           format: 'sports-prop',
         },
       ]
@@ -331,7 +348,11 @@ function getLeagueIdeas(sport: string, homeTeam: string, awayTeam: string): Cach
         {
           title: 'Early innings board',
           description: 'Lean into clean, free-to-track inning outcomes.',
-          sideOptions: ['First team to score', 'Lead after 3 innings', 'Total runs over 2.5 by the 5th'],
+          sideOptions: [
+            'First team to score',
+            'Lead after 3 innings',
+            'Total runs over 2.5 by the 5th',
+          ],
           format: 'sports-prop',
         },
       ]
@@ -518,9 +539,7 @@ function normalizeEspnEvent(
 }
 
 function eventNeedsSnapshot(
-  existing:
-    | typeof napkinbetsEvents.$inferSelect
-    | undefined,
+  existing: typeof napkinbetsEvents.$inferSelect | undefined,
   nextEvent: NapkinbetsCachedEvent,
   hasSnapshot: boolean,
 ) {
@@ -602,20 +621,23 @@ async function recordIngestRunStart(
   const db = useAppDatabase(event)
   const runId = crypto.randomUUID()
 
-  await db.insert(napkinbetsIngestRuns).values({
-    id: runId,
-    source: 'espn',
-    sport: config.sport,
-    league: config.league,
-    tier,
-    windowStartsAt: window.start.toISOString(),
-    windowEndsAt: window.end.toISOString(),
-    eventCount: 0,
-    status: 'running',
-    errorMessage: null,
-    startedAt: nowIso(),
-    completedAt: null,
-  }).run()
+  await db
+    .insert(napkinbetsIngestRuns)
+    .values({
+      id: runId,
+      source: 'espn',
+      sport: config.sport,
+      league: config.league,
+      tier,
+      windowStartsAt: window.start.toISOString(),
+      windowEndsAt: window.end.toISOString(),
+      eventCount: 0,
+      status: 'running',
+      errorMessage: null,
+      startedAt: nowIso(),
+      completedAt: null,
+    })
+    .run()
 
   return runId
 }
@@ -641,10 +663,7 @@ async function finishIngestRun(
     .run()
 }
 
-async function upsertLeagueEvents(
-  event: H3Event,
-  events: NapkinbetsCachedEvent[],
-) {
+async function upsertLeagueEvents(event: H3Event, events: NapkinbetsCachedEvent[]) {
   if (events.length === 0) {
     return
   }
@@ -848,14 +867,15 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
     .filter((event) => event.state === 'pre')
     .sort((left, right) => left.startTime.localeCompare(right.startTime))
 
-  const startingSoon = upcoming.filter((event) => isWithinHours(new Date(event.startTime), 4, now)).slice(0, 8)
+  const startingSoon = upcoming
+    .filter((event) => isWithinHours(new Date(event.startTime), 4, now))
+    .slice(0, 8)
   const startingSoonIds = new Set(startingSoon.map((event) => event.id))
 
   const today = upcoming
     .filter(
       (event) =>
-        !startingSoonIds.has(event.id) &&
-        isWithinHours(new Date(event.startTime), 24, now),
+        !startingSoonIds.has(event.id) && isWithinHours(new Date(event.startTime), 24, now),
     )
     .slice(0, 10)
   const todayIds = new Set(today.map((event) => event.id))
@@ -902,11 +922,7 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
     leagueMap.set(event.league, event.leagueLabel)
     stateMap.set(
       event.state,
-      event.state === 'in'
-        ? 'Live'
-        : event.state === 'pre'
-          ? 'Upcoming'
-          : 'Final',
+      event.state === 'in' ? 'Live' : event.state === 'pre' ? 'Upcoming' : 'Final',
     )
   }
 
@@ -984,9 +1000,10 @@ export async function loadCachedDiscoverData(event: H3Event) {
 
   const events = eventRows.map((row) => toCachedEvent(row))
   const sections = buildDiscoverSections(events)
-  const freshestSync = eventRows
-    .map((row) => row.lastSyncedAt)
-    .sort((left, right) => right.localeCompare(left))[0] ?? latestRun[0]?.completedAt ?? ''
+  const freshestSync =
+    eventRows.map((row) => row.lastSyncedAt).sort((left, right) => right.localeCompare(left))[0] ??
+    latestRun[0]?.completedAt ??
+    ''
 
   const stale = !freshestSync || Date.now() - new Date(freshestSync).getTime() > 30 * 60 * 1000
 

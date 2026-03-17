@@ -31,7 +31,10 @@ export async function loadUserPaymentProfiles(event: Parameters<typeof requireAu
     .select()
     .from(napkinbetsUserPaymentProfiles)
     .where(eq(napkinbetsUserPaymentProfiles.userId, user.id))
-    .orderBy(desc(napkinbetsUserPaymentProfiles.isDefault), desc(napkinbetsUserPaymentProfiles.updatedAt))
+    .orderBy(
+      desc(napkinbetsUserPaymentProfiles.isDefault),
+      desc(napkinbetsUserPaymentProfiles.updatedAt),
+    )
 
   return {
     profiles: rows.map((row) => ({

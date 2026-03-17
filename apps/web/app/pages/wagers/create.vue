@@ -86,9 +86,13 @@ useWebPageSchema({
       <div class="napkinbets-hero-grid xl:grid-cols-[1.05fr_0.95fr]">
         <div class="space-y-4">
           <p class="napkinbets-kicker">Create</p>
-          <h1 class="napkinbets-section-title">Build the board from a live event or start one from scratch.</h1>
+          <h1 class="napkinbets-section-title">
+            Build the board from a live event or start one from scratch.
+          </h1>
           <p class="napkinbets-hero-lede">
-            Napkinbets keeps the create flow down to two paths: event-backed boards when discovery already has the matchup, or a manual board for golf drafts, entertainment nights, and room-specific props.
+            Napkinbets keeps the create flow down to two paths: event-backed boards when discovery
+            already has the matchup, or a manual board for golf drafts, entertainment nights, and
+            room-specific props.
           </p>
         </div>
 
@@ -121,7 +125,9 @@ useWebPageSchema({
                 @click="selectedMode = 'manual'"
               >
                 <span class="napkinbets-surface-label">Manual board</span>
-                <span class="font-semibold text-default">Golf drafts, watch parties, or custom prompts</span>
+                <span class="font-semibold text-default"
+                  >Golf drafts, watch parties, or custom prompts</span
+                >
                 <span class="text-sm text-muted">
                   Use this when the board should not depend on a discovery event.
                 </span>
@@ -136,7 +142,11 @@ useWebPageSchema({
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
       variant="soft"
-      :icon="actions.feedback.value.type === 'success' ? 'i-lucide-check-circle-2' : 'i-lucide-circle-alert'"
+      :icon="
+        actions.feedback.value.type === 'success'
+          ? 'i-lucide-check-circle-2'
+          : 'i-lucide-circle-alert'
+      "
       :title="actions.feedback.value.type === 'success' ? 'Board created' : 'Board creation failed'"
       :description="actions.feedback.value.text"
     />

@@ -41,7 +41,10 @@ export function useNapkinbetsNavLinks() {
   const publicLinks = computed(() =>
     BASE_NAV_LINKS.filter((link) => !link.requiresAuth && !link.adminOnly).map((link) => ({
       ...link,
-      active: link.to === '/' ? route.path === '/' : route.path === link.to || route.path.startsWith(`${link.to}/`),
+      active:
+        link.to === '/'
+          ? route.path === '/'
+          : route.path === link.to || route.path.startsWith(`${link.to}/`),
     })),
   )
 
@@ -58,7 +61,10 @@ export function useNapkinbetsNavLinks() {
       return true
     }).map((link) => ({
       ...link,
-      active: link.to === '/' ? route.path === '/' : route.path === link.to || route.path.startsWith(`${link.to}/`),
+      active:
+        link.to === '/'
+          ? route.path === '/'
+          : route.path === link.to || route.path.startsWith(`${link.to}/`),
     })),
   )
 

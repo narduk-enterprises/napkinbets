@@ -13,7 +13,9 @@ test.describe('web smoke', () => {
   test('home and discovery routes render the new Napkinbets flow', async ({ page }) => {
     await page.goto('/')
     await waitForHydration(page)
-    await expect(page.getByText('Friendly boards for live games, drafts, and side bets.')).toBeVisible()
+    await expect(
+      page.getByText('Friendly boards for live games, drafts, and side bets.'),
+    ).toBeVisible()
     await expect(page.getByText('Discover. Board. Close out.')).toBeVisible()
     await expect(page.getByText('Tracked board').first()).toBeVisible()
     await expect(page).toHaveTitle(/Friendly wager boards for sports nights/)

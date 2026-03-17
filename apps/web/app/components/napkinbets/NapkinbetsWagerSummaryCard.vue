@@ -27,7 +27,9 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
           {{ wager.status }}
         </UBadge>
         <UBadge color="neutral" variant="subtle">{{ wager.format }}</UBadge>
-        <UBadge v-if="wager.league" color="warning" variant="soft">{{ wager.league.toUpperCase() }}</UBadge>
+        <UBadge v-if="wager.league" color="warning" variant="soft">{{
+          wager.league.toUpperCase()
+        }}</UBadge>
       </div>
 
       <div class="space-y-2">
@@ -40,7 +42,9 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
         <div class="napkinbets-surface">
           <p class="napkinbets-surface-label">Entry</p>
           <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
-          <p class="napkinbets-support-copy">{{ wager.paymentService }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</p>
+          <p class="napkinbets-support-copy">
+            {{ wager.paymentService }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
+          </p>
         </div>
 
         <div class="napkinbets-surface">
@@ -53,7 +57,11 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
           <p class="napkinbets-surface-label">Leader</p>
           <p class="napkinbets-surface-value">{{ leadingRow?.displayName || 'Open' }}</p>
           <p class="napkinbets-support-copy">
-            {{ leadingRow ? `${leadingRow.score} pts • ${formatCurrency(leadingRow.projectedPayoutCents)} projected` : 'No picks logged yet' }}
+            {{
+              leadingRow
+                ? `${leadingRow.score} pts • ${formatCurrency(leadingRow.projectedPayoutCents)} projected`
+                : 'No picks logged yet'
+            }}
           </p>
         </div>
       </div>
@@ -64,11 +72,7 @@ const leadingRow = computed(() => props.wager.leaderboard[0] ?? null)
           <span>{{ wager.venueName || 'Remote group' }}</span>
         </div>
 
-        <UButton
-          :to="`/wagers/${wager.slug}`"
-          color="primary"
-          icon="i-lucide-arrow-right"
-        >
+        <UButton :to="`/wagers/${wager.slug}`" color="primary" icon="i-lucide-arrow-right">
           {{ actionLabel || 'Open board' }}
         </UButton>
       </div>

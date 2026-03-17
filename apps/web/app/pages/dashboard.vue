@@ -29,9 +29,12 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-4">
         <p class="napkinbets-kicker">Your workspace</p>
-        <h1 class="napkinbets-section-title">Welcome back to the boards you own, the ones you joined, and what still needs attention.</h1>
+        <h1 class="napkinbets-section-title">
+          Welcome back to the boards you own, the ones you joined, and what still needs attention.
+        </h1>
         <p class="napkinbets-hero-lede">
-          Wager creation, participant follow-up, and settlement proof all move through the dashboard instead of being buried in a single public page.
+          Wager creation, participant follow-up, and settlement proof all move through the dashboard
+          instead of being buried in a single public page.
         </p>
       </div>
     </div>
@@ -72,7 +75,12 @@ useWebPageSchema({
                 <h2 class="napkinbets-subsection-title">You manage these</h2>
               </div>
 
-              <UButton to="/wagers/create" color="primary" variant="soft" icon="i-lucide-ticket-plus">
+              <UButton
+                to="/wagers/create"
+                color="primary"
+                variant="soft"
+                icon="i-lucide-ticket-plus"
+              >
                 New board
               </UButton>
             </div>
