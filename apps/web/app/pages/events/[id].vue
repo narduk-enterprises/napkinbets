@@ -119,8 +119,10 @@ defineOgImage({
   /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
   homeLogo: eventDetail.value?.homeTeam?.logo || '',
   awayLogo: eventDetail.value?.awayTeam?.logo || '',
-  homeLabel: eventDetail.value?.homeTeam?.abbreviation || eventDetail.value?.homeTeam?.shortName || '',
-  awayLabel: eventDetail.value?.awayTeam?.abbreviation || eventDetail.value?.awayTeam?.shortName || '',
+  homeLabel:
+    eventDetail.value?.homeTeam?.abbreviation || eventDetail.value?.homeTeam?.shortName || '',
+  awayLabel:
+    eventDetail.value?.awayTeam?.abbreviation || eventDetail.value?.awayTeam?.shortName || '',
   meta: [
     eventDetail.value?.startTime
       ? new Date(eventDetail.value.startTime).toLocaleString('en-US', {
@@ -134,7 +136,9 @@ defineOgImage({
       : '',
     eventDetail.value?.broadcast || '',
     eventDetail.value?.venueName || '',
-  ].filter(Boolean).join(' · '),
+  ]
+    .filter(Boolean)
+    .join(' · '),
 })
 
 useWebPageSchema({

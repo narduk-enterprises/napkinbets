@@ -160,10 +160,10 @@ defineOgImage({
     wager.value?.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool',
     (wager.value?.status || 'open').charAt(0).toUpperCase() +
       (wager.value?.status || 'open').slice(1),
-    wager.value?.participants?.length
-      ? `${wager.value.participants.length} players`
-      : '',
-  ].filter(Boolean).join(' · '),
+    wager.value?.participants?.length ? `${wager.value.participants.length} players` : '',
+  ]
+    .filter(Boolean)
+    .join(' · '),
   /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
   tagColor:
     wager.value?.status === 'settled'
@@ -182,7 +182,9 @@ defineOgImage({
       ? `$${(wager.value.totalPotCents / 100).toFixed(0)} pot`
       : '',
     wager.value?.eventTitle || '',
-  ].filter(Boolean).join(' · '),
+  ]
+    .filter(Boolean)
+    .join(' · '),
 })
 
 useWebPageSchema({

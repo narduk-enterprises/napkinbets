@@ -15,7 +15,7 @@ withDefaults(
     /** Contextual metadata badge — rendered above the title */
     tag?: string
     /** Badge accent color hex */
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image prop default
+
     tagColor?: string
     siteName?: string
     /** Extra metadata line (e.g. "Mar 19 · 7:00 PM ET · TNT") */

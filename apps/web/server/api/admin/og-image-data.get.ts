@@ -43,8 +43,7 @@ interface TeamJson {
 function parseTeamJson(json: string): TeamJson {
   try {
     return JSON.parse(json) as TeamJson
-  }
-  catch {
+  } catch {
     return {}
   }
 }
@@ -61,8 +60,7 @@ function formatStartTime(iso: string): string {
       timeZone: 'America/New_York',
     })
     return `${month} ${day} · ${time} ET`
-  }
-  catch {
+  } catch {
     return ''
   }
 }
@@ -72,44 +70,50 @@ export default defineEventHandler(async (event) => {
   const db = useAppDatabase(event)
 
   const [wagers, groups, events] = await Promise.all([
-    db.select({
-      slug: napkinbetsWagers.slug,
-      title: napkinbetsWagers.title,
-      description: napkinbetsWagers.description,
-      status: napkinbetsWagers.status,
-      napkinType: napkinbetsWagers.napkinType,
-      sport: napkinbetsWagers.sport,
-      category: napkinbetsWagers.category,
-      stakeCents: napkinbetsWagers.stakeCents,
-    })
+    db
+      .select({
+        slug: napkinbetsWagers.slug,
+        title: napkinbetsWagers.title,
+        description: napkinbetsWagers.description,
+        status: napkinbetsWagers.status,
+        napkinType: napkinbetsWagers.napkinType,
+        sport: napkinbetsWagers.sport,
+        category: napkinbetsWagers.category,
+        stakeCents: napkinbetsWagers.stakeCents,
+      })
       .from(napkinbetsWagers)
       .orderBy(desc(napkinbetsWagers.createdAt))
       .limit(6),
 
-    db.select({
-      slug: napkinbetsGroups.slug,
-      name: napkinbetsGroups.name,
-      description: napkinbetsGroups.description,
-      memberCount: sql<number>`(SELECT COUNT(*) FROM napkinbets_group_members WHERE group_id = ${napkinbetsGroups.id})`.as('member_count'),
-    })
+    db
+      .select({
+        slug: napkinbetsGroups.slug,
+        name: napkinbetsGroups.name,
+        description: napkinbetsGroups.description,
+        memberCount:
+          sql<number>`(SELECT COUNT(*) FROM napkinbets_group_members WHERE group_id = ${napkinbetsGroups.id})`.as(
+            'member_count',
+          ),
+      })
       .from(napkinbetsGroups)
       .orderBy(desc(napkinbetsGroups.createdAt))
       .limit(4),
 
-    db.select({
-      id: napkinbetsEvents.id,
-      eventTitle: napkinbetsEvents.eventTitle,
-      summary: napkinbetsEvents.summary,
-      sport: napkinbetsEvents.sport,
-      sportLabel: napkinbetsEvents.sportLabel,
-      leagueLabel: napkinbetsEvents.leagueLabel,
-      state: napkinbetsEvents.state,
-      startTime: napkinbetsEvents.startTime,
-      venueName: napkinbetsEvents.venueName,
-      broadcast: napkinbetsEvents.broadcast,
-      homeTeamJson: napkinbetsEvents.homeTeamJson,
-      awayTeamJson: napkinbetsEvents.awayTeamJson,
-    })
+    db
+      .select({
+        id: napkinbetsEvents.id,
+        eventTitle: napkinbetsEvents.eventTitle,
+        summary: napkinbetsEvents.summary,
+        sport: napkinbetsEvents.sport,
+        sportLabel: napkinbetsEvents.sportLabel,
+        leagueLabel: napkinbetsEvents.leagueLabel,
+        state: napkinbetsEvents.state,
+        startTime: napkinbetsEvents.startTime,
+        venueName: napkinbetsEvents.venueName,
+        broadcast: napkinbetsEvents.broadcast,
+        homeTeamJson: napkinbetsEvents.homeTeamJson,
+        awayTeamJson: napkinbetsEvents.awayTeamJson,
+      })
       .from(napkinbetsEvents)
       .where(eq(napkinbetsEvents.state, 'pre'))
       .orderBy(desc(napkinbetsEvents.startTime))
@@ -117,27 +121,39 @@ export default defineEventHandler(async (event) => {
   ])
 
   // Get participant counts for wagers
-  const wagerSlugs = wagers.map(w => w.slug)
+  const wagerSlugs = wagers.map((w) => w.slug)
   const participantCounts: Record<string, number> = {}
   if (wagerSlugs.length > 0) {
-    const wagerRows = await db.select({
-      slug: napkinbetsWagers.slug,
-      id: napkinbetsWagers.id,
-    })
+    const wagerRows = await db
+      .select({
+        slug: napkinbetsWagers.slug,
+        id: napkinbetsWagers.id,
+      })
       .from(napkinbetsWagers)
-      .where(sql`${napkinbetsWagers.slug} IN (${sql.join(wagerSlugs.map(s => sql`${s}`), sql`, `)})`)
+      .where(
+        sql`${napkinbetsWagers.slug} IN (${sql.join(
+          wagerSlugs.map((s) => sql`${s}`),
+          sql`, `,
+        )})`,
+      )
 
     const slugToId = new Map<string, string>()
     for (const row of wagerRows) slugToId.set(row.id, row.slug)
 
-    const ids = wagerRows.map(r => r.id)
+    const ids = wagerRows.map((r) => r.id)
     if (ids.length > 0) {
-      const counts = await db.select({
-        wagerId: napkinbetsParticipants.wagerId,
-        count: sql<number>`COUNT(*)`.as('count'),
-      })
+      const counts = await db
+        .select({
+          wagerId: napkinbetsParticipants.wagerId,
+          count: sql<number>`COUNT(*)`.as('count'),
+        })
         .from(napkinbetsParticipants)
-        .where(sql`${napkinbetsParticipants.wagerId} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`)
+        .where(
+          sql`${napkinbetsParticipants.wagerId} IN (${sql.join(
+            ids.map((id) => sql`${id}`),
+            sql`, `,
+          )})`,
+        )
         .groupBy(napkinbetsParticipants.wagerId)
 
       for (const c of counts) {
@@ -244,14 +260,15 @@ export default defineEventHandler(async (event) => {
       category: `Napkins (${wagers.length})`,
       items: wagers.map((w) => {
         const typeLabel = w.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool'
-        const statusLabel = (w.status || 'open').charAt(0).toUpperCase() + (w.status || 'open').slice(1)
+        const statusLabel =
+          (w.status || 'open').charAt(0).toUpperCase() + (w.status || 'open').slice(1)
         const count = participantCounts[w.slug] || 0
         const countPart = count > 0 ? ` · ${count} players` : ''
-        const stakePart = w.stakeCents && w.stakeCents > 0
-          ? ` · $${(w.stakeCents / 100).toFixed(0)}`
-          : ''
-        // eslint-disable-next-line narduk/no-inline-hex -- OG tag colors
-        const statusColor = w.status === 'settled' ? '#c67a12' : w.status === 'closed' ? '#8a2d14' : '#166534'
+        const stakePart =
+          w.stakeCents && w.stakeCents > 0 ? ` · $${(w.stakeCents / 100).toFixed(0)}` : ''
+
+        const statusColor =
+          w.status === 'settled' ? '#c67a12' : w.status === 'closed' ? '#8a2d14' : '#166534'
 
         return {
           label: `${w.title} (${statusLabel})`,
@@ -274,7 +291,7 @@ export default defineEventHandler(async (event) => {
   if (groups.length > 0) {
     sections.push({
       category: `Groups (${groups.length})`,
-      items: groups.map(g => ({
+      items: groups.map((g) => ({
         label: g.name,
         path: `/groups/${g.slug}`,
         ogUrl: buildOgUrl({
@@ -295,7 +312,7 @@ export default defineEventHandler(async (event) => {
       category: `Events (${events.length})`,
       items: events.map((e) => {
         const stateLabel = e.state === 'in' ? 'Live' : e.state === 'post' ? 'Final' : 'Upcoming'
-        // eslint-disable-next-line narduk/no-inline-hex -- OG tag colors
+
         const stateColor = e.state === 'in' ? '#166534' : e.state === 'post' ? '#64748b' : '#3b82f6'
 
         const home = parseTeamJson(e.homeTeamJson)
