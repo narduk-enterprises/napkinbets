@@ -152,10 +152,7 @@ export default defineNuxtConfig({
     : {}),
 
   ogImage: {
-    fonts: [
-      'Inter:400',
-      'Inter:700',
-    ],
+    fonts: ['Inter:400', 'Inter:700'],
     runtimeCacheStorage: {
       driver: 'memory',
     },
