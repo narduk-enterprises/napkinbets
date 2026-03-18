@@ -47,7 +47,7 @@ withDefaults(
       height: '630px',
       display: 'flex',
       flexDirection: 'row',
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'Manrope, sans-serif',
       position: 'relative',
       overflow: 'hidden',
       // eslint-disable-next-line narduk/no-inline-hex -- OG warm cream background
@@ -136,7 +136,7 @@ withDefaults(
             :style="{
               fontSize: '14px',
               fontWeight: '400',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Manrope, sans-serif',
               color: tagColor,
               letterSpacing: '0.07em',
               textTransform: 'uppercase' as const,
@@ -172,7 +172,7 @@ withDefaults(
             :style="{
               fontSize: '22px',
               fontWeight: '400',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Manrope, sans-serif',
               // eslint-disable-next-line narduk/no-inline-hex -- OG team name
               color: '#0f1a24',
             }"
@@ -184,7 +184,7 @@ withDefaults(
           :style="{
             fontSize: '17px',
             fontWeight: '400',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Manrope, sans-serif',
             // eslint-disable-next-line narduk/no-inline-hex -- OG vs separator
             color: '#94a3b8',
           }"
@@ -206,7 +206,7 @@ withDefaults(
             :style="{
               fontSize: '22px',
               fontWeight: '400',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Manrope, sans-serif',
               // eslint-disable-next-line narduk/no-inline-hex -- OG team name
               color: '#0f1a24',
             }"
@@ -233,7 +233,7 @@ withDefaults(
         :style="{
           fontSize: '56px',
           fontWeight: '400',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Manrope, sans-serif',
           // eslint-disable-next-line narduk/no-inline-hex -- OG title ink color
           color: '#0f1a24',
           lineHeight: '1.15',
@@ -250,7 +250,7 @@ withDefaults(
         :style="{
           fontSize: '21px',
           fontWeight: '400',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Manrope, sans-serif',
           // eslint-disable-next-line narduk/no-inline-hex -- OG description text
           color: '#475569',
           lineHeight: '1.5',
@@ -267,7 +267,7 @@ withDefaults(
           marginTop: '14px',
           fontSize: '16px',
           fontWeight: '400',
-          fontFamily: 'Inter, sans-serif',
+          fontFamily: 'Manrope, sans-serif',
           // eslint-disable-next-line narduk/no-inline-hex -- OG green meta text
           color: '#166534',
           letterSpacing: '0.01em',
@@ -300,7 +300,7 @@ withDefaults(
             color: 'white',
             fontSize: '12px',
             fontWeight: '400',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Manrope, sans-serif',
           }"
         >
           NB
@@ -309,7 +309,7 @@ withDefaults(
           :style="{
             fontSize: '15px',
             fontWeight: '400',
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'Manrope, sans-serif',
             // eslint-disable-next-line narduk/no-inline-hex -- OG brand text
             color: '#64748b',
             letterSpacing: '0.01em',
