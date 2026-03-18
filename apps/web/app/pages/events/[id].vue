@@ -37,17 +37,27 @@ const priceChangeInfo = computed(() => {
   }
 })
 
-const statusLabel = computed(() => {
+// If server says 'pre' but start time has passed, locally infer 'in'
+const effectiveState = computed(() => {
   const state = eventDetail.value?.state
-  if (state === 'in') return 'Live'
-  if (state === 'post') return 'Final'
+  if (state === 'pre' && eventDetail.value?.startTime) {
+    const startMs = new Date(eventDetail.value.startTime).getTime()
+    if (!Number.isNaN(startMs) && Date.now() >= startMs) {
+      return 'in'
+    }
+  }
+  return state
+})
+
+const statusLabel = computed(() => {
+  if (effectiveState.value === 'in') return 'Live'
+  if (effectiveState.value === 'post') return 'Final'
   return 'Upcoming'
 })
 
 const statusColor = computed(() => {
-  const state = eventDetail.value?.state
-  if (state === 'in') return 'success'
-  if (state === 'post') return 'neutral'
+  if (effectiveState.value === 'in') return 'success'
+  if (effectiveState.value === 'post') return 'neutral'
   return 'warning'
 })
 

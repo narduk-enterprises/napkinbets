@@ -10,6 +10,7 @@ const EMPTY_ADMIN: NapkinbetsAdminResponse = {
   ingestRuns: [],
   tierSummaries: {},
   aiSettings: {
+    chatModel: 'grok-3-mini',
     aiRecommendationsEnabled: false,
     aiPropSuggestionsEnabled: false,
     aiTermsAssistEnabled: false,

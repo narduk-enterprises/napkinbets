@@ -10,6 +10,17 @@ const props = defineProps<{
   event: NapkinbetsEvent
 }>()
 
+// If server still says 'pre' but start time has passed, locally infer 'in'
+const effectiveState = computed(() => {
+  if (props.event.state === 'pre' && props.event.startTime) {
+    const startMs = new Date(props.event.startTime).getTime()
+    if (!Number.isNaN(startMs) && Date.now() >= startMs) {
+      return 'in'
+    }
+  }
+  return props.event.state
+})
+
 function buildCreatePrefill(
   event: NapkinbetsEvent,
   idea?: NapkinbetsEventIdea,
@@ -88,22 +99,22 @@ const primaryIdeaLink = computed(() =>
   primaryIdea.value ? buildCreateLink(buildCreatePrefill(props.event, primaryIdea.value)) : null,
 )
 const statusLabel = computed(() => {
-  if (props.event.state === 'in') {
+  if (effectiveState.value === 'in') {
     return 'Live'
   }
 
-  if (props.event.state === 'post') {
+  if (effectiveState.value === 'post') {
     return 'Final'
   }
 
   return 'Upcoming'
 })
 const statusColor = computed(() => {
-  if (props.event.state === 'in') {
+  if (effectiveState.value === 'in') {
     return 'success'
   }
 
-  if (props.event.state === 'post') {
+  if (effectiveState.value === 'post') {
     return 'neutral'
   }
 
@@ -113,7 +124,7 @@ const hasOdds = computed(() => Boolean(props.event.odds?.moneyline))
 const eventDetailLink = computed(() => `/events/${encodeURIComponent(props.event.id)}`)
 const showInsights = computed(() => !hasOdds.value && insightRows.value.length > 0)
 const lastUpdatedLabel = computed(() => {
-  if (props.event.state !== 'in' || !props.event.lastSyncedAt) return null
+  if (effectiveState.value !== 'in' || !props.event.lastSyncedAt) return null
   const syncMs = Date.parse(props.event.lastSyncedAt)
   if (Number.isNaN(syncMs)) return null
   const diffMs = Date.now() - syncMs
@@ -125,7 +136,7 @@ const lastUpdatedLabel = computed(() => {
 })
 
 function scoreLabel(team: NapkinbetsEvent['homeTeam']) {
-  if (props.event.state === 'pre' && (!team.score || team.score === '0')) {
+  if (effectiveState.value === 'pre' && (!team.score || team.score === '0')) {
     return '—'
   }
 
@@ -176,7 +187,7 @@ function formatLocalTime(isoString: string) {
         </h3>
         <div class="napkinbets-event-meta">
           <span>
-            <template v-if="event.state === 'pre' && event.startTime">
+            <template v-if="effectiveState === 'pre' && event.startTime">
               <ClientOnly fallback-tag="span">
                 <template #fallback>
                   {{ timeLabel }}
@@ -225,7 +236,7 @@ function formatLocalTime(isoString: string) {
 
       <div v-if="showInsights" class="pt-2 border-t border-dashed border-default space-y-3">
         <h4 class="text-sm font-semibold text-default px-1">
-          {{ event.state === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
+          {{ effectiveState === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
         </h4>
         <div class="napkinbets-event-insights">
           <div

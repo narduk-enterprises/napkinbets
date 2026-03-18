@@ -39,6 +39,9 @@ import type {
   NapkinbetsAdminWagerCreateInput,
   NapkinbetsAdminWagerUpdateInput,
   NapkinbetsLedgerResponse,
+  NapkinbetsGeneratedNapkin,
+  NapkinbetsAdminAiModelSettingsResponse,
+  NapkinbetsSystemPromptEntry,
 } from '../../types/napkinbets'
 
 export function useNapkinbetsApi() {
@@ -376,6 +379,46 @@ export function useNapkinbetsApi() {
           method: 'POST',
         },
       )
+    },
+    // ─── AI Napkin Generator ─────────────────────────────────
+    generateNapkin(payload: {
+      userPrompt: string
+      eventContext?: {
+        eventTitle: string
+        sport: string
+        league: string
+        homeTeamName?: string
+        awayTeamName?: string
+        venueName?: string
+        startTime?: string
+        status?: string
+      }
+    }) {
+      return fetch<NapkinbetsGeneratedNapkin>('/api/napkinbets/ai/generate-napkin', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    // ─── Admin AI Model & Prompt Management ──────────────────
+    getAdminAiModelSettings() {
+      return fetch<NapkinbetsAdminAiModelSettingsResponse>(
+        '/api/napkinbets/admin/ai-model-settings',
+      )
+    },
+    saveAdminChatModel(chatModel: string) {
+      return fetch('/api/napkinbets/admin/ai-model-settings', {
+        method: 'PUT',
+        body: { chatModel },
+      })
+    },
+    getAdminSystemPrompts() {
+      return fetch<NapkinbetsSystemPromptEntry[]>('/api/napkinbets/admin/system-prompts')
+    },
+    updateAdminSystemPrompt(name: string, content: string) {
+      return fetch<{ success: boolean }>(`/api/napkinbets/admin/system-prompts/${name}`, {
+        method: 'PUT',
+        body: { content },
+      })
     },
   }
 }

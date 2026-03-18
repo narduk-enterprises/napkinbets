@@ -79,62 +79,6 @@ const ingestRunRows = computed(() =>
     errorMessage: run.errorMessage || '',
   })),
 )
-
-async function updateAiSettings(
-  key:
-    | 'aiRecommendationsEnabled'
-    | 'aiPropSuggestionsEnabled'
-    | 'aiTermsAssistEnabled'
-    | 'aiCloseoutAssistEnabled',
-) {
-  const current = admin.value.aiSettings
-  await actions.saveAdminAiSettings({
-    aiRecommendationsEnabled:
-      key === 'aiRecommendationsEnabled'
-        ? !current.aiRecommendationsEnabled
-        : current.aiRecommendationsEnabled,
-    aiPropSuggestionsEnabled:
-      key === 'aiPropSuggestionsEnabled'
-        ? !current.aiPropSuggestionsEnabled
-        : current.aiPropSuggestionsEnabled,
-    aiTermsAssistEnabled:
-      key === 'aiTermsAssistEnabled' ? !current.aiTermsAssistEnabled : current.aiTermsAssistEnabled,
-    aiCloseoutAssistEnabled:
-      key === 'aiCloseoutAssistEnabled'
-        ? !current.aiCloseoutAssistEnabled
-        : current.aiCloseoutAssistEnabled,
-  })
-}
-
-const aiControlRows = computed(() => [
-  {
-    key: 'aiRecommendationsEnabled' as const,
-    label: 'Global AI assists',
-    description: 'Master gate for any user-facing Grok help inside Napkinbets.',
-    enabled: admin.value.aiSettings.aiRecommendationsEnabled,
-  },
-  {
-    key: 'aiPropSuggestionsEnabled' as const,
-    label: 'Prop suggestion assists',
-    description:
-      'Lets Events and create flows ask for grounded prop variants from live event context.',
-    enabled: admin.value.aiSettings.aiPropSuggestionsEnabled,
-  },
-  {
-    key: 'aiTermsAssistEnabled' as const,
-    label: 'Terms rewrite assists',
-    description:
-      'Lets hosts tighten house rules and settle-up wording without changing the stake logic.',
-    enabled: admin.value.aiSettings.aiTermsAssistEnabled,
-  },
-  {
-    key: 'aiCloseoutAssistEnabled' as const,
-    label: 'Closeout summary assists',
-    description:
-      'Lets owners generate a cleaner reconciliation summary once proof and outcomes are in.',
-    enabled: admin.value.aiSettings.aiCloseoutAssistEnabled,
-  },
-])
 </script>
 
 <template>
@@ -152,7 +96,6 @@ const aiControlRows = computed(() => [
 
         <div class="grid gap-3 sm:grid-cols-2">
           <UCard v-for="tier in tierCards" :key="tier.key" class="napkinbets-panel">
-            <!-- Existing tier card content -->
             <div class="space-y-3">
               <div class="flex items-start justify-between gap-2">
                 <div class="space-y-1">
@@ -248,69 +191,6 @@ const aiControlRows = computed(() => [
           <p class="font-semibold text-default">Recent runs</p>
           <div class="overflow-x-auto">
             <UTable :data="ingestRunRows" :columns="ingestRunColumns" />
-          </div>
-        </div>
-      </div>
-    </UCard>
-
-    <UCard class="napkinbets-panel">
-      <div class="space-y-4">
-        <div class="space-y-2">
-          <p class="napkinbets-kicker">Integrations & AI</p>
-          <h2 class="napkinbets-subsection-title">Provider status and operator assists</h2>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-2">
-          <UAlert
-            :color="admin.aiSettings.xaiConfigured ? 'success' : 'warning'"
-            variant="soft"
-            :icon="admin.aiSettings.xaiConfigured ? 'i-lucide-bot' : 'i-lucide-key-round'"
-            :title="
-              admin.aiSettings.xaiConfigured
-                ? 'Grok provider configured'
-                : 'XAI_API_KEY not configured'
-            "
-            :description="
-              admin.aiSettings.xaiConfigured
-                ? 'UI flags can safely control what becomes visible to users.'
-                : 'Keep all AI flags off until the provider key is available in Doppler.'
-            "
-          />
-
-          <UAlert
-            :color="admin.aiSettings.theSportsDbConfigured ? 'success' : 'warning'"
-            variant="soft"
-            :icon="
-              admin.aiSettings.theSportsDbConfigured ? 'i-lucide-database' : 'i-lucide-key-round'
-            "
-            :title="
-              admin.aiSettings.theSportsDbConfigured
-                ? 'TheSportsDB provider configured'
-                : 'TSDB key not configured'
-            "
-            :description="
-              admin.aiSettings.theSportsDbConfigured
-                ? 'Reference sync and asset retrieval tasks are available.'
-                : 'Check Doppler for THE_SPORTS_DB_API_KEY.'
-            "
-          />
-        </div>
-
-        <div class="space-y-3">
-          <div v-for="control in aiControlRows" :key="control.key" class="napkinbets-note-row">
-            <div class="space-y-1">
-              <p class="font-semibold text-default">{{ control.label }}</p>
-              <p class="text-sm text-muted">{{ control.description }}</p>
-            </div>
-
-            <UButton
-              :color="control.enabled ? 'success' : 'neutral'"
-              variant="soft"
-              :loading="actions.activeAction.value === 'admin-ai-settings'"
-              @click="updateAiSettings(control.key)"
-            >
-              {{ control.enabled ? 'Enabled' : 'Disabled' }}
-            </UButton>
           </div>
         </div>
       </div>

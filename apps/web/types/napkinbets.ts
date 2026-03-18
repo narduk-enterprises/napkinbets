@@ -485,6 +485,7 @@ export interface NapkinbetsAdminResponse {
 }
 
 export interface NapkinbetsAiSettings {
+  chatModel: string
   aiRecommendationsEnabled: boolean
   aiPropSuggestionsEnabled: boolean
   aiTermsAssistEnabled: boolean
@@ -1078,4 +1079,37 @@ export interface NapkinbetsLedgerResponse {
   totalOwedCents: number
   totalOwedToYouCents: number
   refreshedAt: string
+}
+
+// ─── AI Napkin Generator ─────────────────────────────────────
+
+export interface NapkinbetsGeneratedNapkin {
+  title: string
+  description: string
+  category: string
+  format: string
+  sideOptions: string[]
+  terms: string
+  legs: Array<{
+    questionText: string
+    legType: 'categorical' | 'numeric'
+    options: string[]
+    numericUnit: string | null
+  }>
+  message: string
+}
+
+// ─── Admin AI Model & System Prompts ─────────────────────────
+
+export interface NapkinbetsAdminAiModelSettingsResponse {
+  currentModel: string
+  chatModels: string[]
+  preferredChatModel: string | null
+}
+
+export interface NapkinbetsSystemPromptEntry {
+  name: string
+  content: string
+  description: string
+  updatedAt: string
 }

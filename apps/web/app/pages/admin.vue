@@ -6,6 +6,7 @@ const actions = useNapkinbetsActions(async () => {})
 const items = [
   { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', slot: 'dashboard' },
   { label: 'Bets', icon: 'i-lucide-ticket', slot: 'bets' },
+  { label: 'AI', icon: 'i-lucide-sparkles', slot: 'ai' },
   { label: 'Taxonomy', icon: 'i-lucide-library-big', slot: 'taxonomy' },
   { label: 'Featured', icon: 'i-lucide-star', slot: 'featured' },
   { label: 'Users', icon: 'i-lucide-users', slot: 'users' },
@@ -67,6 +68,12 @@ useWebPageSchema({
       <template #bets>
         <div class="mt-6">
           <AdminBetsTab />
+        </div>
+      </template>
+
+      <template #ai>
+        <div class="mt-6">
+          <AdminAiTab />
         </div>
       </template>
 
