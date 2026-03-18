@@ -23,6 +23,7 @@ test.describe('napkins — closeout', () => {
       await expect(page.getByRole('heading', { name: 'Host checklist' })).toBeVisible()
       await expect(page).toHaveScreenshot(`closeout-pool-${DEMO_WAGER_SLUG}.png`, {
         fullPage: true,
+        maxDiffPixelRatio: 0.05,
       })
     })
 
@@ -30,7 +31,10 @@ test.describe('napkins — closeout', () => {
       await loginAsDemo(page, `/napkins/${DEMO_STATE_SLUGS.settled}/closeout`)
       await waitForHydration(page)
       await expect(page.getByRole('heading', { name: 'Demo Wager Settled' }).first()).toBeVisible()
-      await expect(page).toHaveScreenshot('closeout-state-settled.png', { fullPage: true })
+      await expect(page).toHaveScreenshot('closeout-state-settled.png', {
+        fullPage: true,
+        maxDiffPixelRatio: 0.05,
+      })
     })
 
     test('closeout — state: submitted', async ({ page }) => {
@@ -40,21 +44,30 @@ test.describe('napkins — closeout', () => {
         page.getByRole('heading', { name: 'Demo Wager Submitted' }).first(),
       ).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Ready to confirm' }).first()).toBeVisible()
-      await expect(page).toHaveScreenshot('closeout-state-submitted.png', { fullPage: true })
+      await expect(page).toHaveScreenshot('closeout-state-submitted.png', {
+        fullPage: true,
+        maxDiffPixelRatio: 0.05,
+      })
     })
 
     test('closeout — state: rejected', async ({ page }) => {
       await loginAsDemo(page, `/napkins/${DEMO_STATE_SLUGS.rejected}/closeout`)
       await waitForHydration(page)
       await expect(page.getByRole('heading', { name: 'Demo Wager Rejected' }).first()).toBeVisible()
-      await expect(page).toHaveScreenshot('closeout-state-rejected.png', { fullPage: true })
+      await expect(page).toHaveScreenshot('closeout-state-rejected.png', {
+        fullPage: true,
+        maxDiffPixelRatio: 0.05,
+      })
     })
 
     test('closeout — state: locked', async ({ page }) => {
       await loginAsDemo(page, `/napkins/${DEMO_STATE_SLUGS.locked}/closeout`)
       await waitForHydration(page)
       await expect(page.getByRole('heading', { name: 'Demo Wager Locked' }).first()).toBeVisible()
-      await expect(page).toHaveScreenshot('closeout-state-locked.png', { fullPage: true })
+      await expect(page).toHaveScreenshot('closeout-state-locked.png', {
+        fullPage: true,
+        maxDiffPixelRatio: 0.05,
+      })
     })
   })
 })

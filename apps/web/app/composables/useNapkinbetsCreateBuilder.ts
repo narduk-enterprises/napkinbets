@@ -1,3 +1,4 @@
+import { computed, reactive, ref, watch } from 'vue'
 import type { ComputedRef } from 'vue'
 import type {
   CreateWagerInput,
@@ -334,6 +335,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
       ...formState,
       creatorName,
       boardType: options.mode.value === 'event' ? 'event-backed' : 'community-created',
+      sport: formState.sport || 'other',
+      contextKey: formState.contextKey || 'community',
       customContextName: formState.customContextName.trim(),
       groupId: formState.groupId.trim(),
       paymentHandle: formState.paymentHandle.trim(),

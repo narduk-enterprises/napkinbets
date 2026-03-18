@@ -1,5 +1,10 @@
-import { resolve } from 'node:path'
+import { resolve, dirname } from 'node:path'
+import { createRequire } from 'node:module'
 import { defineConfig } from 'vitest/config'
+
+const require = createRequire(import.meta.url)
+const nuxtPkgDir = dirname(require.resolve('nuxt/package.json'))
+const vuePath = dirname(require.resolve('vue', { paths: [nuxtPkgDir] }))
 
 export default defineConfig({
   resolve: {
@@ -27,6 +32,9 @@ export default defineConfig({
   test: {
     projects: [
       {
+        resolve: {
+          alias: [{ find: 'vue', replacement: vuePath }],
+        },
         test: {
           name: 'unit',
           include: ['tests/unit/**/*.test.ts'],

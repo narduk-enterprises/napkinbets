@@ -269,7 +269,9 @@ export async function normalizeCreateWagerTaxonomyInputFromStore(
 
   const sport = sports.find((item) => item.key === input.sport)
   if (!sport) {
-    throw new Error('Select a supported sport before saving the napkin.')
+    throw new Error(
+      `Select a supported sport before saving the napkin. Received "${input.sport}", available: ${sports.map((s) => s.key).join(', ')}.`,
+    )
   }
 
   const rawLeague = input.league?.trim() || ''

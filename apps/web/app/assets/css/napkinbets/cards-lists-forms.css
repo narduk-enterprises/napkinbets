@@ -267,49 +267,6 @@
   justify-content: flex-end;
 }
 
-/* Two-column aligned forms: Log a pick | Submit payment proof */
-.napkinbets-pick-settle-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto;
-  gap: 1rem;
-  align-items: start;
-}
-
-.napkinbets-pick-settle-form {
-  display: grid;
-  grid-template-rows: auto;
-  gap: 0.75rem;
-}
-
-.napkinbets-pick-settle-form-left,
-.napkinbets-pick-settle-form-right {
-  grid-column: 1;
-  grid-row: auto;
-}
-
-@media (min-width: 1024px) {
-  .napkinbets-pick-settle-grid {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto repeat(6, auto);
-  }
-
-  .napkinbets-pick-settle-form {
-    grid-template-rows: subgrid;
-    grid-row: span 6;
-  }
-
-  .napkinbets-pick-settle-form-left {
-    grid-column: 1;
-    grid-row: 2 / span 6;
-  }
-
-  .napkinbets-pick-settle-form-right {
-    grid-column: 2;
-    grid-row: 2 / span 6;
-  }
-}
-
 .napkinbets-wager-card {
   overflow: hidden;
 }

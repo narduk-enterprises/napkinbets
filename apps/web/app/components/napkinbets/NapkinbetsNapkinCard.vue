@@ -3,7 +3,6 @@ import { reactive, watch } from 'vue'
 import type {
   JoinWagerInput,
   NapkinbetsWager,
-  WagerPickInput,
   WagerSettlementInput,
 } from '../../../types/napkinbets'
 import { displayNameToInitials } from '../../utils/napkinbets-display'
@@ -27,8 +26,6 @@ function openLightbox(url: string) {
 
 const emit = defineEmits<{
   join: [wagerId: string, payload: JoinWagerInput]
-  addPick: [wagerId: string, payload: WagerPickInput]
-  recordSettlement: [wagerId: string, payload: WagerSettlementInput]
   confirmSettlement: [wagerId: string, settlementId: string]
   rejectSettlement: [wagerId: string, settlementId: string]
   acknowledgeSettlement: [wagerId: string, settlementId: string]
@@ -43,14 +40,6 @@ const { buildLinks, buildPaymentNote } = useNapkinbetsPaymentLinks()
 const joinState = reactive<JoinWagerInput>({
   displayName: '',
   sideLabel: '',
-})
-
-const pickState = reactive<WagerPickInput>({
-  participantName: '',
-  pickLabel: '',
-  pickType: 'custom',
-  pickValue: '',
-  confidence: 3,
 })
 
 const settlementState = reactive<WagerSettlementInput>({
@@ -75,7 +64,6 @@ watch(
       ? wager.participants.find((p) => p.userId === props.currentUserId)
       : null
 
-    pickState.participantName = me?.displayName ?? wager.participants[0]?.displayName ?? ''
     settlementState.participantId = me?.id ?? wager.participants[0]?.id ?? ''
     settlementState.participantName = me?.displayName ?? wager.participants[0]?.displayName ?? ''
     settlementState.amountDollars = wager.entryFeeCents / 100
@@ -132,20 +120,6 @@ const paymentRoute = computed(() => {
   const parts = [props.wager.paymentService, props.wager.paymentHandle].filter(Boolean)
   return parts.length ? parts.join(' • ') : 'Payment route pending'
 })
-
-const participantOptions = computed(() =>
-  props.wager.participants.map((participant) => ({
-    label: participant.displayName,
-    value: participant.id,
-  })),
-)
-
-const participantNameOptions = computed(() =>
-  props.wager.participants.map((participant) => ({
-    label: participant.displayName,
-    value: participant.displayName,
-  })),
-)
 
 const participantNames = computed(
   () =>
@@ -464,48 +438,6 @@ function submitJoin() {
     displayName: joinState.displayName.trim(),
     sideLabel: joinState.sideLabel.trim(),
   })
-}
-
-function submitPick() {
-  if (!pickState.participantName.trim() || !pickState.pickLabel.trim()) {
-    return
-  }
-
-  emit('addPick', props.wager.id, {
-    participantName: pickState.participantName.trim(),
-    pickLabel: pickState.pickLabel.trim(),
-    pickType: pickState.pickType.trim(),
-    pickValue: pickState.pickValue.trim(),
-    confidence: pickState.confidence,
-  })
-}
-
-function submitSettlement() {
-  if (!settlementState.participantName.trim()) {
-    return
-  }
-
-  emit('recordSettlement', props.wager.id, {
-    participantId: settlementState.participantId,
-    participantName:
-      selectedSettlementParticipant.value?.displayName || settlementState.participantName.trim(),
-    amountDollars: settlementState.amountDollars,
-    method: settlementState.method.trim(),
-    handle: settlementState.handle.trim(),
-    confirmationCode: settlementState.confirmationCode.trim(),
-    note: settlementState.note.trim(),
-    proofImage: settlementState.proofImage,
-  })
-}
-
-function handleFileSelected(event: Event) {
-  const target = event.target as HTMLInputElement
-  const files = target.files
-  if (files && files.length > 0) {
-    settlementState.proofImage = files[0]
-  } else {
-    settlementState.proofImage = null
-  }
 }
 
 const emitAcknowledge = (wagerId: string, settlementId: string) => {
@@ -844,87 +776,6 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 title="You're in this bet"
                 :description="`Locked in as ${myParticipant!.displayName} on ${myParticipant!.sideLabel || 'Open side'}.`"
               />
-
-              <!-- Pool bet only: pick + settlement forms (aligned two-column grid) -->
-              <div v-if="!isOneOnOne" class="napkinbets-pick-settle-grid pt-4">
-                <h3 class="napkinbets-subsection-title">Log a pick</h3>
-                <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
-                <UForm
-                  :state="pickState"
-                  class="napkinbets-pick-settle-form napkinbets-pick-settle-form-left"
-                  @submit.prevent="submitPick"
-                >
-                  <UFormField name="participantName" label="Participant">
-                    <USelect
-                      v-model="pickState.participantName"
-                      :items="participantNameOptions"
-                      class="w-full"
-                    />
-                  </UFormField>
-                  <UFormField name="pickLabel" label="Pick label">
-                    <UInput v-model="pickState.pickLabel" class="w-full" />
-                  </UFormField>
-                  <UFormField name="pickValue" label="Pick detail">
-                    <UInput v-model="pickState.pickValue" class="w-full" />
-                  </UFormField>
-                  <UFormField name="confidence" label="Confidence">
-                    <UInput v-model="pickState.confidence" type="number" class="w-full" />
-                  </UFormField>
-                  <UButton
-                    type="submit"
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-save"
-                    :loading="isBusy(`pick:${wager.id}`)"
-                  >
-                    Save pick
-                  </UButton>
-                  <div />
-                </UForm>
-                <UForm
-                  :state="settlementState"
-                  class="napkinbets-pick-settle-form napkinbets-pick-settle-form-right"
-                  @submit.prevent="submitSettlement"
-                >
-                  <UFormField name="participantId" label="Participant">
-                    <USelect
-                      v-model="settlementState.participantId"
-                      :items="participantOptions"
-                      class="w-full"
-                    />
-                  </UFormField>
-                  <UFormField name="amountDollars" label="Amount ($)">
-                    <UInput v-model="settlementState.amountDollars" type="number" class="w-full" />
-                  </UFormField>
-                  <UFormField name="confirmationCode" label="Confirmation code">
-                    <UInput v-model="settlementState.confirmationCode" class="w-full" />
-                  </UFormField>
-                  <UFormField name="proofImage" label="Screenshot proof (optional)">
-                    <UInput
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic"
-                      class="w-full"
-                      @change="handleFileSelected"
-                    />
-                  </UFormField>
-                  <UFormField name="note" label="Note">
-                    <UInput
-                      v-model="settlementState.note"
-                      class="w-full"
-                      placeholder="Paid after final whistle"
-                    />
-                  </UFormField>
-                  <UButton
-                    type="submit"
-                    color="neutral"
-                    variant="outline"
-                    icon="i-lucide-save"
-                    :loading="isBusy(`wager:settle:${wager.id}`)"
-                  >
-                    Save proof
-                  </UButton>
-                </UForm>
-              </div>
             </template>
 
             <!-- Not a participant yet: show generic join form (pool bets only) -->

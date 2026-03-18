@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import type {
-  JoinWagerInput,
-  WagerPickInput,
-  WagerSettlementInput,
-  WagerSettlementReviewInput,
-} from '../../../../types/napkinbets'
+import type { JoinWagerInput, WagerSettlementReviewInput } from '../../../../types/napkinbets'
 import type { NapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
 import { getNapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
 
@@ -93,24 +88,6 @@ async function handleJoin(wagerId: string, payload: JoinWagerInput) {
   }
 
   await actions.joinWager(wagerId, payload)
-}
-
-async function handlePick(wagerId: string, payload: WagerPickInput) {
-  if (!loggedIn.value) {
-    await navigateTo('/register')
-    return
-  }
-
-  await actions.addPick(wagerId, payload)
-}
-
-async function handleSettlement(wagerId: string, payload: WagerSettlementInput) {
-  if (!loggedIn.value) {
-    await navigateTo('/register')
-    return
-  }
-
-  await actions.recordSettlement(wagerId, payload)
 }
 
 async function handleConfirmSettlement(wagerId: string, settlementId: string) {
@@ -319,8 +296,6 @@ useWebPageSchema({
         :is-authenticated="loggedIn"
         :current-user-id="user?.id ?? null"
         @join="handleJoin"
-        @add-pick="handlePick"
-        @record-settlement="handleSettlement"
         @confirm-settlement="handleConfirmSettlement"
         @reject-settlement="handleRejectSettlement"
         @acknowledge-settlement="handleAcknowledgeSettlement"

@@ -1,20 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
   <defs>
-    <linearGradient id="favicon-gradient" x1="4" y1="3" x2="28" y2="29" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#1B7C47" />
-      <stop offset="0.65" stop-color="#14532D" />
-      <stop offset="1" stop-color="#0F3E2B" />
+    <linearGradient id="napkin-bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1B4332"/>
+      <stop offset="100%" stop-color="#112B21"/>
+    </linearGradient>
+    <linearGradient id="paper-fill" x1="140" y1="90" x2="340" y2="380" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFF8ED"/>
+      <stop offset="100%" stop-color="#F2E8D0"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="9" fill="url(#favicon-gradient)" />
-  <path
-    d="M10 6H19L24 11V22C24 24.761 21.761 27 19 27H10C7.239 27 5 24.761 5 22V11C5 8.239 7.239 6 10 6Z"
-    fill="#FFF6E8"
-  />
-  <path d="M19 6V11H24" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M11 15.5H20" stroke="#14532D" stroke-width="1.7" stroke-linecap="round" />
-  <path d="M11 18.75H17" stroke="#14532D" stroke-width="1.7" stroke-linecap="round" />
-  <path d="M11 22H14.5" stroke="#14532D" stroke-width="1.7" stroke-linecap="round" />
-  <circle cx="13.5" cy="24" r="2.8" fill="#D97706" fill-opacity="0.15" stroke="#D97706" stroke-width="1.6" />
-  <path d="M17 24L22 19" stroke="#D97706" stroke-width="2" stroke-linecap="round" />
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="110" fill="url(#napkin-bg)"/>
+
+  <!-- Paper / napkin sheet -->
+  <path d="M140 90 H330 L380 140 V390 C380 405 368 418 352 418 H140 C124 418 112 405 112 390 V118 C112 103 124 90 140 90Z" fill="url(#paper-fill)"/>
+
+  <!-- Dog-ear fold -->
+  <path d="M330 90 V140 H380 Z" fill="#E8D9B8" opacity="0.7"/>
+  <line x1="330" y1="90" x2="380" y2="140" stroke="#C9A94E" stroke-width="2" opacity="0.4"/>
+
+  <!-- Scorecard lines with checkboxes -->
+  <!-- Row 1 — checked (gold) -->
+  <rect x="148" y="168" width="22" height="22" rx="4" stroke="#C9A94E" stroke-width="3" fill="none"/>
+  <polyline points="153,179 159,186 169,173" stroke="#C9A94E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="186" y="173" width="150" height="10" rx="5" fill="#1B4332" opacity="0.22"/>
+
+  <!-- Row 2 — checked (gold) -->
+  <rect x="148" y="218" width="22" height="22" rx="4" stroke="#C9A94E" stroke-width="3" fill="none"/>
+  <polyline points="153,229 159,236 169,223" stroke="#C9A94E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="186" y="223" width="125" height="10" rx="5" fill="#1B4332" opacity="0.18"/>
+
+  <!-- Row 3 — empty (pending) -->
+  <rect x="148" y="268" width="22" height="22" rx="4" stroke="#1B4332" stroke-width="2.5" fill="none" opacity="0.35"/>
+  <rect x="186" y="273" width="140" height="10" rx="5" fill="#1B4332" opacity="0.12"/>
+
+  <!-- Row 4 — empty (pending) -->
+  <rect x="148" y="318" width="22" height="22" rx="4" stroke="#1B4332" stroke-width="2.5" fill="none" opacity="0.25"/>
+  <rect x="186" y="323" width="105" height="10" rx="5" fill="#1B4332" opacity="0.09"/>
+
+  <!-- Dashed divider (matchup / vs energy) -->
+  <line x1="155" y1="365" x2="350" y2="365" stroke="#C9A94E" stroke-width="2" stroke-dasharray="8,5" opacity="0.35"/>
+
+  <!-- Tally marks (scorecard energy) -->
+  <g stroke="#1B4332" stroke-width="3" stroke-linecap="round" opacity="0.28">
+    <line x1="155" y1="382" x2="155" y2="404"/>
+    <line x1="167" y1="382" x2="167" y2="404"/>
+    <line x1="179" y1="382" x2="179" y2="404"/>
+    <line x1="191" y1="382" x2="191" y2="404"/>
+    <line x1="150" y1="401" x2="196" y2="385"/>
+  </g>
+  <g stroke="#1B4332" stroke-width="3" stroke-linecap="round" opacity="0.18">
+    <line x1="215" y1="382" x2="215" y2="404"/>
+    <line x1="227" y1="382" x2="227" y2="404"/>
+  </g>
 </svg>
