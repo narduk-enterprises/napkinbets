@@ -154,8 +154,9 @@ export default defineNuxtConfig({
   ogImage: {
     // @ts-expect-error — `fonts` works at runtime; v6 warns deprecated but this is required for production
     fonts: ['Manrope:400', 'Manrope:700'],
-    // Disable runtime cache to force fresh renders after CDN cache purge
+    // Disable all caching to bust stale CDN responses
     runtimeCacheStorage: false,
+    cacheTtl: 0,
   },
 
   image: {
