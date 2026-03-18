@@ -135,7 +135,7 @@ withDefaults(
           <span
             :style="{
               fontSize: '14px',
-              fontWeight: '400',
+              fontWeight: '700',
               fontFamily: 'Manrope, sans-serif',
               color: tagColor,
               letterSpacing: '0.07em',
@@ -171,7 +171,7 @@ withDefaults(
             v-if="homeLabel"
             :style="{
               fontSize: '22px',
-              fontWeight: '400',
+              fontWeight: '700',
               fontFamily: 'Manrope, sans-serif',
               // eslint-disable-next-line narduk/no-inline-hex -- OG team name
               color: '#0f1a24',
@@ -183,7 +183,7 @@ withDefaults(
         <span
           :style="{
             fontSize: '17px',
-            fontWeight: '400',
+            fontWeight: '600',
             fontFamily: 'Manrope, sans-serif',
             // eslint-disable-next-line narduk/no-inline-hex -- OG vs separator
             color: '#94a3b8',
@@ -205,7 +205,7 @@ withDefaults(
             v-if="awayLabel"
             :style="{
               fontSize: '22px',
-              fontWeight: '400',
+              fontWeight: '700',
               fontFamily: 'Manrope, sans-serif',
               // eslint-disable-next-line narduk/no-inline-hex -- OG team name
               color: '#0f1a24',
@@ -231,8 +231,8 @@ withDefaults(
       <!-- Title -->
       <div
         :style="{
-          fontSize: '56px',
-          fontWeight: '400',
+          fontSize: '48px',
+          fontWeight: '700',
           fontFamily: 'Manrope, sans-serif',
           // eslint-disable-next-line narduk/no-inline-hex -- OG title ink color
           color: '#0f1a24',
@@ -266,7 +266,7 @@ withDefaults(
         :style="{
           marginTop: '14px',
           fontSize: '16px',
-          fontWeight: '400',
+          fontWeight: '700',
           fontFamily: 'Manrope, sans-serif',
           // eslint-disable-next-line narduk/no-inline-hex -- OG green meta text
           color: '#166534',
@@ -299,7 +299,7 @@ withDefaults(
             justifyContent: 'center',
             color: 'white',
             fontSize: '12px',
-            fontWeight: '400',
+            fontWeight: '700',
             fontFamily: 'Manrope, sans-serif',
           }"
         >
@@ -308,7 +308,7 @@ withDefaults(
         <div
           :style="{
             fontSize: '15px',
-            fontWeight: '400',
+            fontWeight: '600',
             fontFamily: 'Manrope, sans-serif',
             // eslint-disable-next-line narduk/no-inline-hex -- OG brand text
             color: '#64748b',
