@@ -152,6 +152,7 @@ export default defineNuxtConfig({
     : {}),
 
   ogImage: {
+    // @ts-expect-error — `fonts` works at runtime in v6.0.3 but is missing from the type defs
     fonts: ['Inter:400', 'Inter:700'],
     runtimeCacheStorage: {
       driver: 'memory',
