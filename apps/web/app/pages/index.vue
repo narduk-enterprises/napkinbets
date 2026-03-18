@@ -31,7 +31,11 @@ useSeo({
   title: 'Real games first. Simple bets second.',
   description:
     'Napkinbets starts with real games, then helps you spin up simple bets and group bets without the usual text-thread mess.',
-  image: '/brand/og/home.webp',
+  ogImage: {
+    title: 'Pick a game. Start a bet. Settle after the final.',
+    description: 'Real games first. Simple bets second.',
+    icon: '🎯',
+  },
 })
 
 useWebPageSchema({

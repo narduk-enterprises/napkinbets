@@ -19,7 +19,11 @@ useSeo({
   title: 'Browse live and upcoming games',
   description:
     'Browse live and upcoming games, then start a bet from the game instead of typing everything by hand.',
-  image: '/brand/og/discover.webp',
+  ogImage: {
+    title: 'Browse live and upcoming games',
+    description: 'Pick a game, then start a bet.',
+    icon: '📡',
+  },
 })
 
 useWebPageSchema({

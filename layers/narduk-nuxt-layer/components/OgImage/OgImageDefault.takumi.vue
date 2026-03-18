@@ -20,7 +20,7 @@ withDefaults(
     icon: '✨',
     siteName: 'Napkinbets',
     // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color; Tailwind utilities are not available in component props defaults
-    primaryColor: '#10b981',
+    primaryColor: '#22c55e',
   },
 )
 </script>
@@ -125,7 +125,7 @@ withDefaults(
           fontWeight: '700',
         }"
       >
-        N4
+        NB
       </div>
       <div
         :style="{

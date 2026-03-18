@@ -95,7 +95,11 @@ async function refreshOddsData() {
 useSeo({
   title: eventDetail.value?.eventTitle ?? 'Event details',
   description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
-  image: '/brand/og/discover.webp',
+  ogImage: {
+    title: eventDetail.value?.eventTitle ?? 'Event details',
+    description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
+    icon: '⚡',
+  },
 })
 
 useWebPageSchema({

@@ -12,7 +12,11 @@ useSeo({
   title: 'Napkinbets walkthrough',
   description:
     'A focused slide walkthrough of how Napkinbets Events, bets, and settle-up work together.',
-  image: '/brand/og/tour.webp',
+  ogImage: {
+    title: 'See how Napkinbets works',
+    description: 'A focused slide walkthrough of Events, bets, and settle-up.',
+    icon: '🎬',
+  },
 })
 
 useWebPageSchema({

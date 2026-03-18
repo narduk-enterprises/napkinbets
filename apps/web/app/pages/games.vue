@@ -54,7 +54,11 @@ watch(selectedSport, (sport) => {
 useSeo({
   title: 'All games',
   description: 'Chronological timeline of all live and upcoming games. Pick a game to start a bet.',
-  image: '/brand/og/discover.webp',
+  ogImage: {
+    title: 'All games',
+    description: 'Chronological timeline of every live and upcoming game.',
+    icon: '🗓️',
+  },
 })
 
 useWebPageSchema({

@@ -56,7 +56,11 @@ useSeo({
   title: 'Help',
   description:
     'A simple guide to events, bets, one-on-one bets, group bets, and how the main objects fit together.',
-  image: '/brand/og/home.webp',
+  ogImage: {
+    title: 'How Napkinbets works',
+    description: 'Events, bets, settle-up — in plain English.',
+    icon: '📘',
+  },
 })
 
 useWebPageSchema({

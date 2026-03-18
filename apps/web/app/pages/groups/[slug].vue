@@ -64,7 +64,11 @@ async function handleLeave() {
 useSeo({
   title: () => data.value?.group.name || 'Group Details',
   description: () => data.value?.group.description || 'View group details and members.',
-  image: '/brand/og/dashboard.webp',
+  ogImage: {
+    title: data.value?.group.name || 'Group Details',
+    description: data.value?.group.description || 'View group details and members.',
+    icon: '👥',
+  },
 })
 
 useWebPageSchema({
