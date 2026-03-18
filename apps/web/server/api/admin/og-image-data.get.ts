@@ -45,8 +45,6 @@ interface OgPreviewSection {
   items: OgPreviewItem[]
 }
 
- 
-
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const db = useAppDatabase(event)
@@ -234,7 +232,7 @@ export default defineEventHandler(async (event) => {
           (w.status || 'open').charAt(0).toUpperCase() + (w.status || 'open').slice(1)
         const count = participantCounts[w.slug] || 0
         const countPart = count > 0 ? ` · ${count} players` : ''
-         
+
         const statusColor =
           w.status === 'settled' ? '#f59e0b' : w.status === 'closed' ? '#ef4444' : '#22c55e'
 
@@ -277,7 +275,7 @@ export default defineEventHandler(async (event) => {
       category: `Events (${events.length})`,
       items: events.map((e) => {
         const stateLabel = e.state === 'in' ? 'Live' : e.state === 'post' ? 'Final' : 'Upcoming'
-         
+
         const stateColor = e.state === 'in' ? '#22c55e' : e.state === 'post' ? '#64748b' : '#3b82f6'
 
         return {

@@ -155,13 +155,14 @@ useSeo({
       (wager.value?.status || 'open').charAt(0).toUpperCase() +
         (wager.value?.status || 'open').slice(1),
     ].join(' · '),
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color for Takumi WASM renderer
+    /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
     tagColor:
       wager.value?.status === 'settled'
         ? '#f59e0b'
         : wager.value?.status === 'closed'
           ? '#ef4444'
           : '#22c55e',
+    /* eslint-enable narduk/no-inline-hex */
   },
 })
 

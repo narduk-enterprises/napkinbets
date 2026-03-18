@@ -103,13 +103,14 @@ useSeo({
       eventDetail.value?.leagueLabel || eventDetail.value?.sportLabel || 'Sports',
       statusLabel.value,
     ].join(' · '),
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color for Takumi WASM renderer
+    /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
     tagColor:
       effectiveState.value === 'in'
         ? '#22c55e'
         : effectiveState.value === 'post'
           ? '#64748b'
           : '#3b82f6',
+    /* eslint-enable narduk/no-inline-hex */
   },
 })
 
