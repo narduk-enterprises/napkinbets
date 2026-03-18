@@ -112,11 +112,29 @@ defineOgImage({
   /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
   tagColor:
     effectiveState.value === 'in'
-      ? '#22c55e'
+      ? '#166534'
       : effectiveState.value === 'post'
         ? '#64748b'
         : '#3b82f6',
   /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
+  homeLogo: eventDetail.value?.homeTeam?.logo || '',
+  awayLogo: eventDetail.value?.awayTeam?.logo || '',
+  homeLabel: eventDetail.value?.homeTeam?.abbreviation || eventDetail.value?.homeTeam?.shortName || '',
+  awayLabel: eventDetail.value?.awayTeam?.abbreviation || eventDetail.value?.awayTeam?.shortName || '',
+  meta: [
+    eventDetail.value?.startTime
+      ? new Date(eventDetail.value.startTime).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'America/New_York',
+        }) + ' ET'
+      : '',
+    eventDetail.value?.broadcast || '',
+    eventDetail.value?.venueName || '',
+  ].filter(Boolean).join(' · '),
 })
 
 useWebPageSchema({

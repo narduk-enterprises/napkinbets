@@ -160,15 +160,29 @@ defineOgImage({
     wager.value?.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool',
     (wager.value?.status || 'open').charAt(0).toUpperCase() +
       (wager.value?.status || 'open').slice(1),
-  ].join(' · '),
+    wager.value?.participants?.length
+      ? `${wager.value.participants.length} players`
+      : '',
+  ].filter(Boolean).join(' · '),
   /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
   tagColor:
     wager.value?.status === 'settled'
-      ? '#f59e0b'
+      ? '#c67a12'
       : wager.value?.status === 'closed'
-        ? '#ef4444'
-        : '#22c55e',
+        ? '#8a2d14'
+        : '#166534',
   /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
+  homeLogo: wager.value?.homeTeamLogo || '',
+  awayLogo: wager.value?.awayTeamLogo || '',
+  homeLabel: wager.value?.homeTeamName || '',
+  awayLabel: wager.value?.awayTeamName || '',
+  meta: [
+    wager.value?.category || wager.value?.sport || '',
+    wager.value?.totalPotCents && wager.value.totalPotCents > 0
+      ? `$${(wager.value.totalPotCents / 100).toFixed(0)} pot`
+      : '',
+    wager.value?.eventTitle || '',
+  ].filter(Boolean).join(' · '),
 })
 
 useWebPageSchema({

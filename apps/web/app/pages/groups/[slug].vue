@@ -75,6 +75,8 @@ useSeo({
 defineOgImage({
   component: 'OgImageDefault',
   tag: `Group · ${data.value?.members.length || 0} members`,
+  // eslint-disable-next-line narduk/no-inline-hex -- OG tag color for Takumi WASM
+  tagColor: '#8b5cf6',
 })
 
 useWebPageSchema({
