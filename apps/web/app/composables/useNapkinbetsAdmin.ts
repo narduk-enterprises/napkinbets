@@ -3,8 +3,6 @@ import { useNapkinbetsApi } from '../services/napkinbets-api'
 
 const EMPTY_ADMIN: NapkinbetsAdminResponse = {
   metrics: [],
-  users: [],
-  wagers: [],
   totalCachedEvents: 0,
   featuredBetCount: 0,
   ingestRuns: [],
@@ -24,7 +22,11 @@ const EMPTY_ADMIN: NapkinbetsAdminResponse = {
 export function useNapkinbetsAdmin() {
   const api = useNapkinbetsApi()
 
-  return useAsyncData<NapkinbetsAdminResponse>('napkinbets-admin', () => api.getAdminOverview(), {
-    default: () => EMPTY_ADMIN,
-  })
+  return useLazyAsyncData<NapkinbetsAdminResponse>(
+    'napkinbets-admin',
+    () => api.getAdminOverview(),
+    {
+      default: () => EMPTY_ADMIN,
+    },
+  )
 }

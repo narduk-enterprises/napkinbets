@@ -24,9 +24,13 @@ function select(value: NapkinbetsWagerListFilterValue) {
       v-for="chip in chips"
       :key="chip.value"
       size="sm"
-      :color="modelValue === chip.value ? 'primary' : 'neutral'"
-      :variant="modelValue === chip.value ? 'soft' : 'ghost'"
+      color="neutral"
+      variant="ghost"
       :icon="chip.icon"
+      :class="[
+        'napkinbets-filter-chip',
+        { 'napkinbets-nav-link-active': modelValue === chip.value },
+      ]"
       @click="select(chip.value)"
     >
       {{ chip.label }}

@@ -46,13 +46,41 @@ function handleSearch() {
 }
 
 const columns = [
-  { accessorKey: 'status', header: 'Status' },
-  { accessorKey: 'sport', header: 'Sport' },
-  { accessorKey: 'league', header: 'League' },
-  { accessorKey: 'eventTitle', header: 'Matchup' },
-  { accessorKey: 'startTime', header: 'Starts' },
-  { accessorKey: 'importanceScore', header: 'Score' },
-  { accessorKey: 'importanceReason', header: 'AI Reason' },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    meta: { class: { th: 'w-20', td: 'w-20' } },
+  },
+  {
+    accessorKey: 'sport',
+    header: 'Sport',
+    meta: { class: { th: 'min-w-[5rem]', td: 'min-w-[5rem]' } },
+  },
+  {
+    accessorKey: 'league',
+    header: 'League',
+    meta: { class: { th: 'min-w-[5.5rem]', td: 'min-w-[5.5rem]' } },
+  },
+  {
+    accessorKey: 'eventTitle',
+    header: 'Matchup',
+    meta: { class: { th: 'min-w-[10rem]', td: 'min-w-[10rem]' } },
+  },
+  {
+    accessorKey: 'startTime',
+    header: 'Starts',
+    meta: { class: { th: 'w-28 whitespace-nowrap', td: 'w-28 whitespace-nowrap' } },
+  },
+  {
+    accessorKey: 'importanceScore',
+    header: 'Score',
+    meta: { class: { th: 'w-16', td: 'w-16' } },
+  },
+  {
+    accessorKey: 'importanceReason',
+    header: 'AI Reason',
+    meta: { class: { th: 'max-w-[14rem]', td: 'max-w-[14rem]' } },
+  },
 ]
 
 function formatStartTime(isoString: string) {
@@ -85,7 +113,7 @@ const tableData = computed(() => {
             <h2 class="napkinbets-subsection-title">Manage ingested event coverage</h2>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="w-full max-w-xs">
             <UInput
               v-model="searchInput"
               icon="i-lucide-search"

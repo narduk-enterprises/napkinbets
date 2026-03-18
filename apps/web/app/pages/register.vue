@@ -33,16 +33,10 @@ useWebPageSchema({
       </div>
 
       <div class="napkinbets-auth-card-shell">
-        <NapkinbetsAuthStage
-          eyebrow="Register"
-          title="Claim your workspace."
-          description="Set up your identity for bets, reminders, and admin access."
-        >
-          <AuthRegisterCard
-            title="Create an account"
-            subtitle="Set up your identity for bets, reminders, and admin access"
-          />
-        </NapkinbetsAuthStage>
+        <AuthRegisterCard
+          title="Create an account"
+          subtitle="Set up your identity for bets, reminders, and admin access."
+        />
       </div>
     </div>
   </div>

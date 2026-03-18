@@ -173,7 +173,7 @@ const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)
                     {{ opt }}
                   </UBadge>
                 </div>
-                <p v-else class="text-xs text-dimmed">
+                <p v-else class="text-xs text-muted">
                   Numeric answer {{ leg.numericUnit ? `(${leg.numericUnit})` : '' }}
                 </p>
               </div>
@@ -220,7 +220,7 @@ const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)
           @keydown.prevent.enter="handleGenerate"
         />
         <div class="flex items-center justify-between">
-          <p class="text-xs text-dimmed">Press Enter to send (Shift+Enter for new line)</p>
+          <p class="text-xs text-muted">Press Enter to send (Shift+Enter for new line)</p>
           <div class="flex gap-2">
             <UButton
               v-if="messages.length > 0"

@@ -5,7 +5,7 @@ import {
   isDiscoverCacheStale,
   normalizeMatchupEspnEvent,
   normalizeTournamentEspnEvent,
-} from '../../server/services/napkinbets/events'
+} from '../../server/services/napkinbets/espn'
 import { findNapkinbetsLeague } from '../../server/services/napkinbets/taxonomy'
 
 describe('napkinbets event ingest helpers', () => {

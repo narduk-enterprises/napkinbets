@@ -3,10 +3,16 @@ import { useNapkinbetsApi } from '../../services/napkinbets-api'
 import type { NapkinbetsAdminFeaturedBet, SaveFeaturedBetInput } from '../../../types/napkinbets'
 
 const api = useNapkinbetsApi()
-const adminState = await useNapkinbetsAdmin()
-const actions = useNapkinbetsActions(adminState.refresh)
+const { refresh: refreshAdmin } = useNapkinbetsAdmin()
+const actions = useNapkinbetsActions(refreshAdmin)
 
-const featuredBets = ref<NapkinbetsAdminFeaturedBet[]>([])
+const { data: featuredData, refresh: loadFeaturedBets } = useLazyAsyncData(
+  'admin-featured-bets',
+  () => api.getAdminFeaturedBets(),
+  { default: () => ({ featuredBets: [] }) },
+)
+const featuredBets = computed(() => featuredData.value.featuredBets)
+
 const showFeaturedForm = ref(false)
 const editingFeaturedBet = ref<NapkinbetsAdminFeaturedBet | null>(null)
 const featuredForm = ref<SaveFeaturedBetInput>({
@@ -22,17 +28,6 @@ const featuredForm = ref<SaveFeaturedBetInput>({
   isActive: true,
   prefillJson: '{}',
 })
-
-async function loadFeaturedBets() {
-  try {
-    const response = await api.getAdminFeaturedBets()
-    featuredBets.value = response.featuredBets
-  } catch {
-    featuredBets.value = []
-  }
-}
-
-await loadFeaturedBets()
 
 function resetFeaturedForm() {
   editingFeaturedBet.value = null
@@ -184,11 +179,28 @@ function openFeaturedForm() {
           </div>
         </div>
 
-        <div v-if="featuredBets.length === 0 && !showFeaturedForm" class="text-sm text-muted">
-          No featured bets configured. Auto-generated spotlights will be used.
-        </div>
+        <UAlert
+          v-if="featuredBets.length === 0 && !showFeaturedForm"
+          color="info"
+          variant="soft"
+          icon="i-lucide-star"
+          title="No featured items"
+          description="Add featured bets to highlight specific events on the Events page, or leave empty to use auto-generated spotlights."
+        >
+          <template #actions>
+            <UButton
+              color="primary"
+              variant="soft"
+              size="sm"
+              icon="i-lucide-plus"
+              @click="openFeaturedForm"
+            >
+              Add featured bet
+            </UButton>
+          </template>
+        </UAlert>
 
-        <div class="space-y-3">
+        <div v-else-if="featuredBets.length > 0" class="space-y-3">
           <div v-for="bet in featuredBets" :key="bet.id" class="napkinbets-note-row">
             <div class="space-y-1">
               <div class="flex flex-wrap items-center gap-2">

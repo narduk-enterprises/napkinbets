@@ -89,8 +89,8 @@ const shortName = computed(() => {
       </div>
 
       <div class="min-w-0 flex-1">
-        <p class="truncate text-sm font-semibold text-default">{{ wager.title }}</p>
-        <p class="truncate text-xs text-muted">
+        <p class="napkinbets-compact-title">{{ wager.title }}</p>
+        <p class="napkinbets-compact-meta">
           <template v-if="shortName">{{ shortName }} · </template>{{ meta }}
         </p>
       </div>
@@ -99,15 +99,12 @@ const shortName = computed(() => {
     <!-- Stake + chevron -->
     <div class="napkinbets-compact-right">
       <div class="text-right">
-        <p class="text-sm font-semibold text-default">{{ formatCurrency(wager.entryFeeCents) }}</p>
-        <p class="text-xs text-dimmed">
+        <p class="napkinbets-compact-stake">{{ formatCurrency(wager.entryFeeCents) }}</p>
+        <p class="napkinbets-compact-meta">
           {{ wager.participants.length }} player{{ wager.participants.length === 1 ? '' : 's' }}
         </p>
       </div>
-      <UIcon
-        name="i-lucide-chevron-right"
-        class="size-4 text-dimmed transition-fast group-hover:text-default"
-      />
+      <UIcon name="i-lucide-chevron-right" class="napkinbets-compact-chevron" />
     </div>
   </NuxtLink>
 </template>

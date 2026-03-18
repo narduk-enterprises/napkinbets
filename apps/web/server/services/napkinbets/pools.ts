@@ -508,8 +508,14 @@ async function getSettlementOrThrow(event: H3Event, settlementId: string) {
   return settlement
 }
 
+// Per-isolate flag: seed data only needs to be ensured once per worker lifecycle
+let seedDataEnsured = false
+
 export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions = {}) {
-  await ensureSeedData(event)
+  if (!seedDataEnsured) {
+    await ensureSeedData(event)
+    seedDataEnsured = true
+  }
 
   const db = useAppDatabase(event)
   let wagers: (typeof napkinbetsWagers.$inferSelect)[] = []

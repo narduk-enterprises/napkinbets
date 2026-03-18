@@ -4,13 +4,14 @@ import type {
   SaveNapkinbetsTaxonomyLeagueInput,
 } from '../../../types/napkinbets'
 
-const taxonomyState = await useNapkinbetsAdminTaxonomy()
-const actions = useNapkinbetsActions(taxonomyState.refresh)
-const taxonomy = computed(() => taxonomyState.data.value)
+const { data: taxonomyState, refresh: refreshTaxonomy } = useNapkinbetsAdminTaxonomy()
+const actions = useNapkinbetsActions(refreshTaxonomy)
+const taxonomy = computed(() => taxonomyState.value)
 
 const showForm = ref(false)
 const editingLeagueKey = ref<string | null>(null)
 const formError = ref('')
+const leagueFilter = ref('')
 const formState = reactive({
   key: '',
   label: '',
@@ -177,54 +178,92 @@ async function saveLeague() {
 async function syncLeague(key: string) {
   await actions.syncAdminTaxonomyLeague(key)
 }
+
+const filteredLeagues = computed(() => {
+  const q = leagueFilter.value.trim().toLowerCase()
+  if (!q) return taxonomy.value.leagues
+  return taxonomy.value.leagues.filter(
+    (league) =>
+      league.key.toLowerCase().includes(q) ||
+      league.label.toLowerCase().includes(q) ||
+      (league.sportLabel ?? league.sportKey).toLowerCase().includes(q) ||
+      (league.primaryContextLabel ?? league.primaryContextKey).toLowerCase().includes(q),
+  )
+})
 </script>
 
 <template>
   <div class="space-y-4">
-    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <UCard class="napkinbets-panel">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Teams</p>
-          <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.teams }}</p>
-        </div>
-      </UCard>
-      <UCard class="napkinbets-panel">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Players</p>
-          <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.players }}</p>
-        </div>
-      </UCard>
-      <UCard class="napkinbets-panel">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Venues</p>
-          <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.venues }}</p>
-        </div>
-      </UCard>
-      <UCard class="napkinbets-panel">
-        <div class="space-y-1">
-          <p class="napkinbets-kicker">Roster rows</p>
-          <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.rosters }}</p>
-        </div>
-      </UCard>
+    <div class="space-y-2">
+      <p class="text-xs font-medium uppercase tracking-wider text-muted">
+        Total across all leagues
+      </p>
+      <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <UCard class="napkinbets-panel">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Teams</p>
+            <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.teams }}</p>
+          </div>
+        </UCard>
+        <UCard class="napkinbets-panel">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Players</p>
+            <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.players }}</p>
+          </div>
+        </UCard>
+        <UCard class="napkinbets-panel">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Venues</p>
+            <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.venues }}</p>
+          </div>
+        </UCard>
+        <UCard class="napkinbets-panel">
+          <div class="space-y-1">
+            <p class="napkinbets-kicker">Roster rows</p>
+            <p class="text-2xl font-semibold text-default">{{ taxonomy.entityCounts.rosters }}</p>
+          </div>
+        </UCard>
+      </div>
+      <p
+        v-if="
+          taxonomy.entityCounts.teams === 0 &&
+          taxonomy.entityCounts.players === 0 &&
+          taxonomy.entityCounts.venues === 0 &&
+          taxonomy.entityCounts.rosters === 0 &&
+          taxonomy.leagues.length > 0
+        "
+        class="text-xs text-muted"
+      >
+        Sync a league from the list below to populate teams, players, venues, and roster rows.
+      </p>
     </div>
 
     <UCard class="napkinbets-panel">
       <div class="space-y-4">
-        <div class="flex items-end justify-between gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Taxonomy</p>
             <h2 class="napkinbets-subsection-title">Manage league source config</h2>
           </div>
 
-          <UButton
-            color="primary"
-            variant="soft"
-            size="sm"
-            icon="i-lucide-plus"
-            @click="createLeague"
-          >
-            New league
-          </UButton>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <UInput
+              v-model="leagueFilter"
+              icon="i-lucide-search"
+              placeholder="Filter leagues by key, label, sport..."
+              class="w-full max-w-xs"
+            />
+            <UButton
+              color="primary"
+              variant="soft"
+              size="md"
+              icon="i-lucide-plus"
+              class="min-h-10 shrink-0"
+              @click="createLeague"
+            >
+              New league
+            </UButton>
+          </div>
         </div>
 
         <UAlert
@@ -354,7 +393,7 @@ async function syncLeague(key: string) {
         </div>
 
         <div class="space-y-3">
-          <div v-for="league in taxonomy.leagues" :key="league.key" class="napkinbets-note-row">
+          <div v-for="league in filteredLeagues" :key="league.key" class="napkinbets-note-row">
             <div class="space-y-1">
               <div class="flex flex-wrap items-center gap-2">
                 <UBadge
@@ -402,12 +441,13 @@ async function syncLeague(key: string) {
               </p>
             </div>
 
-            <div class="flex gap-2 shrink-0">
+            <div class="flex flex-wrap gap-2 shrink-0">
               <UButton
                 color="neutral"
                 variant="soft"
-                size="sm"
+                size="md"
                 icon="i-lucide-eye"
+                class="min-h-10"
                 :to="`/admin/taxonomy/${league.key}`"
               >
                 Inspect
@@ -415,8 +455,9 @@ async function syncLeague(key: string) {
               <UButton
                 color="primary"
                 variant="soft"
-                size="sm"
+                size="md"
                 icon="i-lucide-refresh-cw"
+                class="min-h-10"
                 :loading="actions.activeAction.value === `admin-taxonomy-league:sync:${league.key}`"
                 @click="syncLeague(league.key)"
               >
@@ -425,8 +466,9 @@ async function syncLeague(key: string) {
               <UButton
                 color="neutral"
                 variant="soft"
-                size="sm"
+                size="md"
                 icon="i-lucide-pencil"
+                class="min-h-10"
                 @click="fillForm(league)"
               >
                 Edit

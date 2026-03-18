@@ -77,6 +77,41 @@
   color: var(--napkinbets-accent-strong);
 }
 
+/* Dashboard filter chips: inactive muted; active solid for clear selection */
+.napkinbets-filter-chip {
+  align-items: center;
+  background: rgb(255 255 255 / 0.78);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 9999px;
+  color: var(--napkinbets-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.79rem;
+  font-weight: 600;
+  gap: 0.45rem;
+  padding: 0.4rem 0.62rem;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.napkinbets-filter-chip:hover {
+  background: rgb(255 255 255 / 0.9);
+  color: var(--napkinbets-ink);
+}
+
+.napkinbets-filter-chip.napkinbets-nav-link-active {
+  background: var(--napkinbets-accent-strong);
+  border-color: var(--napkinbets-accent-strong);
+  color: var(--napkinbets-on-accent);
+}
+
+.napkinbets-filter-chip.napkinbets-nav-link-active:hover {
+  background: var(--napkinbets-accent-strong);
+  color: var(--napkinbets-on-accent);
+}
+
 .napkinbets-user-pill {
   background: rgb(255 255 255 / 0.9);
 }
@@ -168,6 +203,14 @@
   margin: 0 auto;
   max-width: 80rem;
   padding: 1rem 1.1rem;
+}
+
+.napkinbets-footer-inner .napkinbets-support-copy {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  text-overflow: unset;
+  white-space: normal;
 }
 
 @media (min-width: 640px) {

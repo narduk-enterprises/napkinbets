@@ -56,7 +56,7 @@ export interface NapkinbetsLeagueDefinition {
   primaryContextKey: NapkinbetsContextKey
   primaryContextLabel?: string
   contextKeys: NapkinbetsContextKey[]
-  provider: 'espn' | 'manual'
+  provider: 'espn' | 'manual' | 'mysportsfeeds' | 'balldontlie' | 'thesportsdb'
   providerLeagueKey?: string
   scoreboardQueryParams?: Readonly<Record<string, string>>
   eventShape?: 'head-to-head' | 'tournament'

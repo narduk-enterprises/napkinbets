@@ -33,27 +33,21 @@ useWebPageSchema({
       </div>
 
       <div class="napkinbets-auth-card-shell">
-        <NapkinbetsAuthStage
-          eyebrow="Sign in"
-          title="Account access"
-          description="Access your bets and player controls."
-        >
-          <AuthLoginCard title="Sign in" subtitle="Access your bets and player controls">
-            <template #after-form>
-              <div class="mt-4">
-                <UButton
-                  color="primary"
-                  class="w-full"
-                  icon="i-lucide-zap"
-                  :loading="demoAccess.pending.value"
-                  @click="() => demoAccess.openDemo()"
-                >
-                  See the demo account
-                </UButton>
-              </div>
-            </template>
-          </AuthLoginCard>
-        </NapkinbetsAuthStage>
+        <AuthLoginCard title="Sign in" subtitle="Access your bets and player controls.">
+          <template #after-form>
+            <div class="mt-4">
+              <UButton
+                color="primary"
+                class="w-full"
+                icon="i-lucide-zap"
+                :loading="demoAccess.pending.value"
+                @click="() => demoAccess.openDemo()"
+              >
+                See the demo account
+              </UButton>
+            </div>
+          </template>
+        </AuthLoginCard>
       </div>
     </div>
   </div>

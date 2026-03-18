@@ -22,7 +22,7 @@ export type { NapkinbetsEventOdds }
 
 export interface NapkinbetsCachedEvent {
   id: string
-  source: 'espn'
+  source: 'espn' | 'mysportsfeeds' | 'balldontlie'
   sport: string
   sportLabel: string
   contextKey: string
@@ -133,7 +133,7 @@ function isWithinHours(date: Date, hours: number, now: Date) {
 export function toCachedEvent(row: NapkinbetsCachedEventRow): NapkinbetsCachedEvent {
   return {
     id: row.id,
-    source: row.source as 'espn',
+    source: row.source as 'espn' | 'mysportsfeeds' | 'balldontlie',
     sport: row.sport,
     sportLabel: row.sportLabel,
     contextKey: row.contextKey,

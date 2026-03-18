@@ -1,8 +1,5 @@
-import type { NapkinbetsLeagueDefinition } from '#server/services/napkinbets/taxonomy'
-import {
-  getNapkinbetsContextLabel,
-  getNapkinbetsSportLabel,
-} from '#server/services/napkinbets/taxonomy'
+import type { NapkinbetsLeagueDefinition } from './taxonomy'
+import { getNapkinbetsContextLabel, getNapkinbetsSportLabel } from './taxonomy'
 import type { NapkinbetsCachedEvent } from './event-queries'
 
 // ---------------------------------------------------------------------------
@@ -191,6 +188,13 @@ function addDays(date: Date, days: number) {
 
 function buildEventId(source: string, league: string, externalEventId: string) {
   return `${source}:${league}:${externalEventId}`
+}
+
+export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
+  if (!freshestSync) {
+    return true
+  }
+  return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
 }
 
 // ---------------------------------------------------------------------------

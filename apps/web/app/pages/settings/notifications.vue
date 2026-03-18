@@ -153,20 +153,20 @@ useWebPageSchema({
             >
               <USwitch v-model="formState.notifyWagerUpdates" />
             </UFormField>
-
-            <div class="pt-6">
-              <UButton
-                color="primary"
-                icon="i-lucide-save"
-                :loading="isSaving"
-                @click="handleSave"
-                class="w-full justify-center"
-              >
-                Save Preferences
-              </UButton>
-            </div>
           </div>
         </UCard>
+      </div>
+
+      <div class="mt-6 flex flex-wrap justify-start">
+        <UButton
+          color="primary"
+          icon="i-lucide-save"
+          :loading="isSaving"
+          @click="handleSave"
+          class="w-full sm:w-auto"
+        >
+          Save notification preferences
+        </UButton>
       </div>
     </ClientOnly>
   </div>

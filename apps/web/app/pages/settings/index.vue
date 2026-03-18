@@ -162,8 +162,8 @@ useWebPageSchema({
         </div>
       </template>
 
-      <div class="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <UCard class="napkinbets-panel">
+      <div class="grid gap-4 xl:grid-cols-[1fr_1fr] xl:[&>*]:min-h-[18rem]">
+        <UCard class="napkinbets-panel h-full">
           <div class="space-y-5">
             <div class="space-y-2">
               <p class="napkinbets-kicker">Profile</p>
@@ -232,7 +232,7 @@ useWebPageSchema({
           </div>
         </UCard>
 
-        <UCard class="napkinbets-panel">
+        <UCard class="napkinbets-panel h-full">
           <div class="space-y-4">
             <div class="space-y-2">
               <p class="napkinbets-kicker">Quick links</p>

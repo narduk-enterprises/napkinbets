@@ -1,11 +1,18 @@
 /* ─── Notification Bell ─────────────────────────────── */
 
+.napkinbets-notification-bell-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .napkinbets-notification-badge {
   align-items: center;
   background: var(--napkinbets-accent-strong);
   border-radius: 9999px;
   color: var(--napkinbets-on-accent);
-  display: flex;
+  display: inline-flex;
   font-size: 0.56rem;
   font-weight: 700;
   height: 1rem;

@@ -893,6 +893,29 @@ own app-specific specs alongside those files.
 
 For more detail on the baseline-vs-extension model, see `docs/e2e-testing.md`.
 
+### API integration tests (Vitest, main vs external)
+
+API routes are covered by **integration tests** in
+`apps/web/tests/integration/`:
+
+- **Main path (CI / default):** `tests/integration/api/**` — endpoints that do
+  not call 3rd party APIs. Run with `pnpm run test:integration`. **Requires the
+  app server to be running** (e.g. `pnpm run dev` in another terminal, or set
+  `NUXT_TEST_BASE_URL`). Not run automatically in preship; run locally or in CI
+  after starting the server.
+- **External bucket (on-demand):** `tests/integration/api-external/**` —
+  endpoints that call 3rd party APIs. Run with
+  `pnpm run test:integration:external`. **Do not add to CI** so 3rd party APIs
+  are not hammered; run only when verifying external integrations. Covered
+  integrations: **xAI/Grok** (ai.test.ts), **Polymarket** and **The Odds API**
+  (admin-and-cron.test.ts, events-odds-and-payments.test.ts), **ESPN**
+  (admin-and-cron.test.ts), **API-Sports** (admin-and-cron.test.ts), **Venmo**
+  (events-odds-and-payments.test.ts). Open-Meteo is used internally by
+  pool/weather and not exercised by a dedicated external route test.
+
+Helpers: `tests/integration/helpers/fetch.ts` (base URL), `helpers/headers.ts`
+(CSRF), `helpers/auth.ts` (demo-login cookie for authenticated requests).
+
 ### Test Explorer: enabling Playwright projects
 
 E2E tests use a **single root config** (`playwright.config.ts` at repo root)

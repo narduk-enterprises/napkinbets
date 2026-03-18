@@ -32,6 +32,7 @@ const menuLinks = computed(() => {
   const links = [
     { label: 'My Bets', to: '/dashboard', icon: 'i-lucide-layout-dashboard' },
     { label: 'Notifications', to: '/notifications', icon: 'i-lucide-bell' },
+    { label: 'Ledger', to: '/ledger', icon: 'i-lucide-book-open' },
     { label: 'Friends', to: '/friends', icon: 'i-lucide-user-round-plus' },
     { label: 'Groups', to: '/groups', icon: 'i-lucide-users-round' },
     { label: 'Payments', to: '/settings/payments', icon: 'i-lucide-wallet-cards' },

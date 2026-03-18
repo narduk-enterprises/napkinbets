@@ -92,13 +92,17 @@ useWebPageSchema({
 
           <UForm :state="createState" class="space-y-4" @submit.prevent="handleCreate">
             <UFormField name="name" label="Group name">
-              <UInput v-model="createState.name" class="w-full" placeholder="Friday Night Watch" />
+              <UInput
+                v-model="createState.name"
+                class="w-full placeholder:text-muted"
+                placeholder="Friday Night Watch"
+              />
             </UFormField>
 
             <UFormField name="description" label="What is this room for?">
               <UInput
                 v-model="createState.description"
-                class="w-full"
+                class="w-full placeholder:text-muted"
                 placeholder="Quick one-on-ones, weekend games, and a light room when everyone shows."
               />
             </UFormField>
@@ -197,7 +201,7 @@ useWebPageSchema({
               variant="soft"
               icon="i-lucide-users"
               title="No groups yet"
-              description="Start with one room for the people you bet with most often."
+              description="Start with one room for the people you bet with most often. Create a group using the form to the left."
             />
           </div>
         </UCard>
@@ -250,7 +254,14 @@ useWebPageSchema({
               </div>
             </div>
 
-            <p v-else class="text-sm text-muted">There are no public groups yet.</p>
+            <UAlert
+              v-else
+              color="info"
+              variant="soft"
+              icon="i-lucide-globe"
+              title="No public groups yet"
+              description="There are no public groups to join right now. Create a public group with the form to the left to invite others."
+            />
           </div>
         </UCard>
       </div>

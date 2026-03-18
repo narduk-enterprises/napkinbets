@@ -483,10 +483,13 @@ export interface NapkinbetsAdminWager {
   createdAt: string
 }
 
+export interface NapkinbetsAdminUsersResponse {
+  users: NapkinbetsAdminUser[]
+  total: number
+}
+
 export interface NapkinbetsAdminResponse {
   metrics: NapkinbetsMetric[]
-  users: NapkinbetsAdminUser[]
-  wagers: NapkinbetsAdminWager[]
   totalCachedEvents: number
   featuredBetCount: number
   ingestRuns: NapkinbetsIngestRun[]

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-const adminState = await useNapkinbetsAdmin()
-const actions = useNapkinbetsActions(adminState.refresh)
-const admin = computed(() => adminState.data.value)
+const { data: adminData, refresh: refreshAdmin } = useNapkinbetsAdmin()
+const actions = useNapkinbetsActions(refreshAdmin)
+const admin = computed(() => adminData.value)
 
 async function runIngest(tier: 'live-window' | 'next-48h' | 'next-7d' | 'next-8w') {
   await actions.runAdminIngest(tier)

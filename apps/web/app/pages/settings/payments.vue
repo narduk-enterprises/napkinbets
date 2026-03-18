@@ -129,8 +129,8 @@ useWebPageSchema({
       :description="actions.feedback.value.text"
     />
 
-    <div class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-      <UCard class="napkinbets-panel">
+    <div class="grid gap-4 xl:grid-cols-[0.9fr_1.1fr] xl:[&>*]:min-h-[18rem]">
+      <UCard class="napkinbets-panel h-full">
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Add profile</p>
@@ -187,7 +187,7 @@ useWebPageSchema({
         </div>
       </UCard>
 
-      <UCard class="napkinbets-panel">
+      <UCard class="napkinbets-panel h-full">
         <div class="space-y-4">
           <div class="space-y-2">
             <p class="napkinbets-kicker">Registered profiles</p>

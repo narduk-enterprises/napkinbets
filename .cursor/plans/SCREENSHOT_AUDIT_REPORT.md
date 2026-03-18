@@ -77,9 +77,9 @@ games, groups, guest, napkins/detail, napkins/closeout, settings, shell).
 
 ### 1.7 Missing baseline
 
-| #   | Issue                     | Where                      | Action                                                                                                                 |
-| --- | ------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 14  | **Missing snapshot file** | admin taxonomy league test | Test expects `admin-taxonomy-league-nba.png`; file not on disk. Generate via `--update-snapshots` or adjust/skip test. |
+| #   | Issue                     | Where                      | Action                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 14  | **Missing snapshot file** | admin taxonomy league test | Test expects `admin-taxonomy-league-nba.png`; file not on disk. Generate via `--update-snapshots` or adjust/skip test. To generate: `pnpm exec playwright test --config=playwright.config.ts --project=web apps/web/tests/e2e/admin/admin.spec.ts --update-snapshots` (run from repo root). |
 
 ---
 

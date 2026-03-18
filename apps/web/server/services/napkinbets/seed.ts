@@ -1104,9 +1104,7 @@ export async function ensureSeedData(event: H3Event) {
     const eventMismatchSoccer =
       pool.slug === 'demo-soccer-watch' && (!pool.eventRow || pool.eventRow.sport !== 'soccer')
     const usePoolSportLeague = eventMismatchHoops || eventMismatchSoccer
-    const effectiveSport = usePoolSportLeague
-      ? pool.sport!
-      : (pool.sport ?? pool.eventRow?.sport)
+    const effectiveSport = usePoolSportLeague ? pool.sport! : (pool.sport ?? pool.eventRow?.sport)
     const effectiveLeague = usePoolSportLeague
       ? pool.league!
       : (pool.league ?? pool.eventRow?.league)

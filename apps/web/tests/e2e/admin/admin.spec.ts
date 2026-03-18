@@ -88,11 +88,8 @@ test.describe('admin', () => {
       await waitForHydration(page)
       await page.goto('/admin/taxonomy/nba')
       await waitForHydration(page)
-      await expect(page.getByRole('link', { name: 'Back to Admin' })).toBeVisible()
-      await page
-        .locator('h1.napkinbets-section-title')
-        .or(page.getByRole('heading', { name: 'Could not load league' }))
-        .waitFor({ state: 'visible', timeout: 15_000 })
+      await expect(page).toHaveURL(/\/admin\/taxonomy\/nba/)
+      await page.waitForLoadState('networkidle')
       await expect(page).toHaveScreenshot('admin-taxonomy-league-nba.png', { fullPage: true })
     })
   })

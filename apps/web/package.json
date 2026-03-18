@@ -20,7 +20,10 @@
     "deploy": "nuxt build && wrangler deploy",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
-    "test:unit": "vitest run --config vitest.config.ts",
+    "test:unit": "vitest run --config vitest.config.ts --project=unit",
+    "test:integration": "vitest run --config vitest.config.ts --project=integration",
+    "test:integration:external": "vitest run --config vitest.config.ts --project=integration-external",
+    "test:integration:all": "vitest run --config vitest.config.ts --project=integration --project=integration-external",
     "test:e2e": "playwright test --config=../../playwright.config.ts",
     "test:e2e:smoke": "playwright test --project=smoke --config=../../playwright.config.ts",
     "test:e2e:auth": "playwright test --project=auth --config=../../playwright.config.ts",
@@ -46,6 +49,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@nuxt/test-utils": "^4.0.0",
     "@cloudflare/workers-types": "^4.20250303.0",
     "@iconify-json/lucide": "^1.2.94",
     "@tailwindcss/vite": "^4.0.0",

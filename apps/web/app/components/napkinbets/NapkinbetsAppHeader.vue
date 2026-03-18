@@ -9,13 +9,13 @@ const isMobileMenuOpen = ref(false)
 
 const headerLinks = computed(() =>
   primaryLinks.value.filter((link) =>
-    ['/dashboard', '/events', '/napkins/create'].includes(link.to),
+    ['/dashboard', '/events', '/games', '/napkins/create'].includes(link.to),
   ),
 )
 
 const mobilePrimaryLinks = computed(() =>
   (isAuthenticated.value ? primaryLinks.value : publicLinks.value).filter((link) =>
-    ['/events', '/napkins/create', '/dashboard', '/guide'].includes(link.to),
+    ['/events', '/games', '/napkins/create', '/dashboard', '/guide'].includes(link.to),
   ),
 )
 
@@ -71,16 +71,26 @@ async function signOut() {
         </NuxtLink>
 
         <div class="napkinbets-header-nav">
-          <NuxtLink
-            v-for="link in headerLinks"
-            :key="link.to"
-            :to="link.to"
-            class="napkinbets-nav-link"
-            :class="{ 'napkinbets-nav-link-active': link.active }"
-          >
-            <UIcon :name="link.icon" class="size-4" />
-            <span>{{ link.label }}</span>
-          </NuxtLink>
+          <template v-for="link in headerLinks" :key="link.to">
+            <UButton
+              v-if="link.to === '/napkins/create'"
+              :to="link.to"
+              color="primary"
+              size="sm"
+              :icon="link.icon"
+            >
+              {{ link.label }}
+            </UButton>
+            <NuxtLink
+              v-else
+              :to="link.to"
+              class="napkinbets-nav-link"
+              :class="{ 'napkinbets-nav-link-active': link.active }"
+            >
+              <UIcon :name="link.icon" class="size-4" />
+              <span>{{ link.label }}</span>
+            </NuxtLink>
+          </template>
         </div>
 
         <div class="napkinbets-header-actions">

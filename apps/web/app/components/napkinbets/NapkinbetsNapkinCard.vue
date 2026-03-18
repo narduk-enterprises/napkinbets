@@ -1103,12 +1103,21 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                     </ULink>
                     <span
                       v-else
-                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0"
-                      :title="participantNames.get(settlement.participantId) ?? ''"
+                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0 bg-muted border border-default rounded"
+                      :title="
+                        participantNames.get(settlement.participantId)
+                          ? participantNames.get(settlement.participantId)
+                          : 'No proof'
+                      "
                     >
                       <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
                       {{
-                        displayNameToInitials(participantNames.get(settlement.participantId) ?? '')
+                        displayNameToInitials(
+                          participantNames.get(settlement.participantId) ?? '',
+                        ) ||
+                        (settlement.participantId
+                          ? settlement.participantId.slice(0, 2).toUpperCase()
+                          : '—')
                       }}
                     </span>
                   </div>

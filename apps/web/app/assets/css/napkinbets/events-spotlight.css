@@ -9,6 +9,11 @@
   padding: 0.62rem;
 }
 
+/* Consistent height when some cards have insights/venue and others do not */
+.napkinbets-event-card-min-h {
+  min-height: 18rem;
+}
+
 .napkinbets-event-card-top,
 .napkinbets-event-footer,
 .napkinbets-event-side-main,

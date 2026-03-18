@@ -8,8 +8,9 @@ import type {
 } from '../../../types/napkinbets'
 
 const api = useNapkinbetsApi()
-const adminState = await useNapkinbetsAdmin()
-const actions = useNapkinbetsActions(adminState.refresh)
+const actions = useNapkinbetsActions(async () => {
+  await loadWagers()
+})
 
 // Pagination & Search State
 const page = ref(1)
@@ -195,7 +196,28 @@ async function confirmDelete() {
           </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <UAlert
+          v-if="!isLoading && total === 0"
+          color="info"
+          variant="soft"
+          icon="i-lucide-ticket"
+          title="No bets to manage"
+          description="Create a bet below or wait for users to create napkins. Use the table here once wagers exist."
+        >
+          <template #actions>
+            <UButton
+              color="primary"
+              variant="soft"
+              size="sm"
+              icon="i-lucide-plus"
+              @click="openCreateModal"
+            >
+              Create bet
+            </UButton>
+          </template>
+        </UAlert>
+
+        <div v-else class="overflow-x-auto">
           <UTable :data="tableData" :columns="columns" :loading="isLoading">
             <template #status-cell="{ row }">
               <UBadge color="neutral" variant="subtle">{{ row.original.status }}</UBadge>
@@ -244,7 +266,7 @@ async function confirmDelete() {
           </UTable>
         </div>
 
-        <div class="flex justify-end p-2 border-t border-default">
+        <div v-if="total > 0" class="flex justify-end p-2 border-t border-default">
           <UPagination v-model:page="page" :total="total" :items-per-page="limit" />
         </div>
       </div>

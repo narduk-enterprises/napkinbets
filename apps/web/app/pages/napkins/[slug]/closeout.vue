@@ -213,6 +213,13 @@ useWebPageSchema({
                   <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
                   <p class="napkinbets-support-copy">{{ paymentNote }}</p>
                 </div>
+                <div class="napkinbets-surface">
+                  <p class="napkinbets-surface-label">Paid</p>
+                  <p class="napkinbets-surface-value">
+                    {{ confirmedParticipants.length }}/{{ wager.participants?.length ?? 0 }}
+                  </p>
+                  <p class="napkinbets-support-copy">Confirmed so far</p>
+                </div>
               </div>
 
               <div class="napkinbets-card-actions flex-wrap">
@@ -319,7 +326,12 @@ useWebPageSchema({
             <div class="space-y-4">
               <div class="space-y-1">
                 <p class="napkinbets-kicker">Submitted</p>
-                <h2 class="napkinbets-subsection-title">Ready to confirm</h2>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h2 class="napkinbets-subsection-title">Ready to confirm</h2>
+                  <span class="text-sm text-muted">
+                    Paid: {{ confirmedParticipants.length }}/{{ wager.participants?.length ?? 0 }}
+                  </span>
+                </div>
               </div>
 
               <div v-if="wager.settlements.length" class="space-y-3">
@@ -339,14 +351,21 @@ useWebPageSchema({
                         />
                         <span
                           v-else
-                          class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold"
-                          :title="participantById.get(settlement.participantId)?.displayName ?? ''"
+                          class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0 bg-muted border border-default rounded"
+                          :title="
+                            participantById.get(settlement.participantId)?.displayName
+                              ? participantById.get(settlement.participantId)?.displayName
+                              : 'No proof'
+                          "
                         >
                           <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
                           {{
                             displayNameToInitials(
                               participantById.get(settlement.participantId)?.displayName ?? '',
-                            )
+                            ) ||
+                            (settlement.participantId
+                              ? settlement.participantId.slice(0, 2).toUpperCase()
+                              : '—')
                           }}
                         </span>
                       </div>
@@ -410,7 +429,13 @@ useWebPageSchema({
                 </div>
               </div>
 
-              <p v-else class="napkinbets-support-copy">No payment proof has been submitted yet.</p>
+              <p v-else class="napkinbets-support-copy">
+                {{
+                  confirmedParticipants.length > 0
+                    ? 'Payments confirmed; no proof to review.'
+                    : 'No payment proof has been submitted yet.'
+                }}
+              </p>
             </div>
           </UCard>
 
@@ -427,9 +452,17 @@ useWebPageSchema({
                   :key="participant.id"
                   class="napkinbets-list-row"
                 >
-                  <div>
-                    <p class="font-semibold text-default">{{ participant.displayName }}</p>
-                    <p class="text-sm text-muted">{{ participant.sideLabel || 'No side yet' }}</p>
+                  <div class="flex gap-4 items-center">
+                    <span
+                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0"
+                      :title="participant.displayName || 'No proof'"
+                    >
+                      {{ displayNameToInitials(participant.displayName ?? '') || '—' }}
+                    </span>
+                    <div>
+                      <p class="font-semibold text-default">{{ participant.displayName }}</p>
+                      <p class="text-sm text-muted">{{ participant.sideLabel || 'No side yet' }}</p>
+                    </div>
                   </div>
 
                   <UBadge color="warning" variant="soft">Pending</UBadge>
@@ -437,7 +470,11 @@ useWebPageSchema({
               </div>
 
               <p v-else class="napkinbets-support-copy">
-                Everyone has either paid or submitted proof.
+                {{
+                  wager.settlements.length
+                    ? 'Everyone has either paid or submitted proof.'
+                    : 'No payment proof submitted yet.'
+                }}
               </p>
             </div>
           </UCard>

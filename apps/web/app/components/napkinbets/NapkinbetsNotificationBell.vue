@@ -52,7 +52,7 @@ function timeAgo(value: string) {
         size="sm"
         icon="i-lucide-bell"
         aria-label="Notifications"
-        class="relative"
+        class="napkinbets-notification-bell-trigger"
       >
         <span v-if="unreadCount > 0" class="napkinbets-notification-badge">
           {{ unreadCount > 9 ? '9+' : unreadCount }}

@@ -65,21 +65,21 @@ useWebPageSchema({
           </div>
 
           <div class="napkinbets-hero-actions">
-            <UButton to="/events" size="xl" color="primary" icon="i-lucide-radar">
+            <UButton to="/events" size="lg" color="primary" icon="i-lucide-radar">
               Browse games
             </UButton>
             <UButton
               :to="isAuthenticated ? '/napkins/create' : '/register'"
-              size="xl"
-              color="neutral"
+              size="lg"
+              :color="isAuthenticated ? 'primary' : 'neutral'"
               icon="i-lucide-ticket-plus"
             >
-              {{ isAuthenticated ? 'Start a custom bet' : 'Create account' }}
+              {{ isAuthenticated ? 'Create Napkin' : 'Create account' }}
             </UButton>
             <UButton
               v-if="!isAuthenticated"
               to="/tour"
-              size="xl"
+              size="lg"
               color="neutral"
               variant="ghost"
               icon="i-lucide-panels-top-left"
@@ -111,12 +111,14 @@ useWebPageSchema({
             </div>
           </ClientOnly>
 
-          <div v-else class="napkinbets-aside-note">
-            <p class="napkinbets-kicker">What it does</p>
-            <p class="napkinbets-support-copy">
-              Start from a game, invite one person or a group, and settle after it goes final.
-            </p>
-          </div>
+          <UCard v-else class="napkinbets-panel">
+            <div class="napkinbets-aside-note">
+              <p class="napkinbets-kicker">What it does</p>
+              <p class="napkinbets-support-copy">
+                Start from a game, invite one person or a group, and settle after it goes final.
+              </p>
+            </div>
+          </UCard>
 
           <NapkinbetsSpotlightCard v-if="featuredSpotlight" :spotlight="featuredSpotlight" />
         </div>

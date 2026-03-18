@@ -23,6 +23,12 @@ const PRIMARY_NAV_LINKS: NapkinbetsNavLink[] = [
     mobileLabel: 'Events',
   },
   {
+    label: 'Games',
+    to: '/games',
+    icon: 'i-lucide-gamepad-2',
+    mobileLabel: 'Games',
+  },
+  {
     label: 'Help',
     to: '/guide',
     icon: 'i-lucide-book-open-text',

@@ -103,7 +103,7 @@ useWebPageSchema({
               data.group.userRole
             }}</UBadge>
           </div>
-          <h1 class="napkinbets-section-title">{{ data.group.name }}</h1>
+          <h1 class="napkinbets-section-title font-sans">{{ data.group.name }}</h1>
           <p v-if="data.group.description" class="napkinbets-hero-lede">
             {{ data.group.description }}
           </p>
@@ -134,7 +134,14 @@ useWebPageSchema({
                 <UBadge color="neutral" variant="subtle">{{ member.role }}</UBadge>
               </div>
             </div>
-            <p v-else class="text-muted text-sm">No members found.</p>
+            <UAlert
+              v-else
+              color="info"
+              variant="soft"
+              icon="i-lucide-users"
+              title="No members yet"
+              description="This group has no members listed yet."
+            />
           </div>
         </UCard>
 
@@ -276,14 +283,24 @@ useWebPageSchema({
           </template>
         </template>
 
-        <UAlert
-          v-else
-          color="info"
-          variant="soft"
-          icon="i-lucide-ticket"
-          title="No bets yet"
-          description="Start the first bet for this group to get things rolling."
-        />
+        <div v-else class="space-y-3">
+          <UAlert
+            color="info"
+            variant="soft"
+            icon="i-lucide-ticket"
+            title="No bets yet"
+            description="Start the first bet for this group to get things rolling."
+          />
+          <UButton
+            v-if="data?.group?.userRole"
+            :to="`/napkins/create?groupId=${data.group.id}`"
+            color="primary"
+            variant="soft"
+            icon="i-lucide-ticket-plus"
+          >
+            Start group bet
+          </UButton>
+        </div>
       </div>
     </template>
   </div>

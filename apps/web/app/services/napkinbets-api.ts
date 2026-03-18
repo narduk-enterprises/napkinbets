@@ -37,6 +37,7 @@ import type {
   WagerSettlementInput,
   WagerSettlementReviewInput,
   NapkinbetsAdminWagersResponse,
+  NapkinbetsAdminUsersResponse,
   NapkinbetsAdminWagerCreateInput,
   NapkinbetsAdminWagerUpdateInput,
   NapkinbetsLedgerResponse,
@@ -376,6 +377,11 @@ export function useNapkinbetsApi() {
     },
     getAdminWagers(params: { page: number; limit: number; search?: string }) {
       return fetch<NapkinbetsAdminWagersResponse>('/api/napkinbets/admin/wagers', {
+        query: params,
+      })
+    },
+    getAdminUsers(params: { page: number; limit: number; search?: string }) {
+      return fetch<NapkinbetsAdminUsersResponse>('/api/napkinbets/admin/users', {
         query: params,
       })
     },

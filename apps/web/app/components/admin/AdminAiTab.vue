@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const admin = useNapkinbetsAdminAi()
-const adminState = await useNapkinbetsAdmin()
-const actions = useNapkinbetsActions(adminState.refresh)
-const adminData = computed(() => adminState.data.value)
+const { data: adminState, refresh: refreshAdmin } = useNapkinbetsAdmin()
+const actions = useNapkinbetsActions(refreshAdmin)
+const adminData = computed(() => adminState.value)
 
 // ─── Model selector ────────────────────────────────────────
 const selectedModel = ref('')
@@ -336,9 +336,7 @@ function formatPromptName(name: string) {
     <!-- AI activity (empty state when no run history) -->
     <UCard class="napkinbets-panel">
       <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        <div
-          class="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted"
-        >
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted">
           <UIcon name="i-lucide-sparkles" class="h-6 w-6" />
         </div>
         <p class="text-sm font-medium text-default">No AI runs yet</p>

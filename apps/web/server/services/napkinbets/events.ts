@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, asc, desc, eq, inArray, lt, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, lt, or, sql } from 'drizzle-orm'
 import {
   napkinbetsEvents,
   napkinbetsEventOdds,
@@ -19,10 +19,13 @@ import { useAppDatabase } from '#server/utils/database'
 import {
   buildIngestWindows,
   fetchLeagueEvents,
+  isDiscoverCacheStale,
   isLeagueActive,
   type DiscoverTier,
   type IngestWindow,
 } from '#server/services/napkinbets/espn'
+import { fetchMySportsFeedsLeagueEvents } from '#server/services/napkinbets/mysportsfeeds'
+import { fetchBallDontLieLeagueEvents } from '#server/services/napkinbets/balldontlie'
 import {
   type NapkinbetsCachedEvent,
   NAPKINBETS_CACHED_EVENT_SELECT,
@@ -37,6 +40,7 @@ export {
   normalizeMatchupEspnEvent,
   normalizeTournamentEspnEvent,
   isLeagueActive,
+  isDiscoverCacheStale,
   type DiscoverTier,
   type IngestWindow,
   type CachedDiscoverEventIdea,
@@ -195,14 +199,6 @@ function isWithinHours(date: Date, hours: number, now: Date) {
 function readScoreFromJson(value: string) {
   const parsed = parseJsonValue<{ score: string }>(value, { score: '0' })
   return parsed.score
-}
-
-export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
-  if (!freshestSync) {
-    return true
-  }
-
-  return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
 }
 
 // -- Ingest pipeline ---------------------------------------------------------
@@ -643,7 +639,7 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   const windows = buildIngestWindows(tier)
   const refreshedEvents = new Map<string, NapkinbetsCachedEvent>()
   const activeLeagues = (await loadNapkinbetsLeaguesFromStore(event, { eventBackedOnly: true }))
-    .filter((config) => config.provider === 'espn')
+    .filter((config) => ['espn', 'mysportsfeeds', 'balldontlie'].includes(config.provider))
     .filter((config) => isLeagueActive(config, windows))
   const summaries: Array<{
     league: string
@@ -677,9 +673,9 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
         if (source === 'espn') {
           result = await fetchLeagueEvents(config, tier, syncedAt)
         } else if (source === 'mysportsfeeds') {
-          throw new Error('MySportsFeeds API mapping not yet implemented for events.')
+          result = await fetchMySportsFeedsLeagueEvents(event, config, tier, syncedAt)
         } else if (source === 'balldontlie') {
-          throw new Error('BALLDONTLIE API mapping not yet implemented for events.')
+          result = await fetchBallDontLieLeagueEvents(event, config, tier, syncedAt)
         }
 
         if (result) {
@@ -1029,10 +1025,12 @@ export async function runEventIngest(event: H3Event, scope: NapkinbetsDiscoverSc
 
 export async function loadEventIngestHealth(event: H3Event) {
   const db = useAppDatabase(event)
-  const [latestRuns, totalEvents] = await Promise.all([
+  const [latestRuns, totalEventsResult] = await Promise.all([
     db.select().from(napkinbetsIngestRuns).orderBy(desc(napkinbetsIngestRuns.startedAt)).limit(20),
-    db.select().from(napkinbetsEvents),
+    db.select({ count: sql<number>`count(*)` }).from(napkinbetsEvents),
   ])
+
+  const totalCachedEvents = totalEventsResult[0]?.count ?? 0
 
   const tiers = ['live-window', 'next-48h', 'next-7d', 'next-8w', 'manual'] as const
   const now = Date.now()
@@ -1066,7 +1064,7 @@ export async function loadEventIngestHealth(event: H3Event) {
   }
 
   return {
-    totalCachedEvents: totalEvents.length,
+    totalCachedEvents,
     tierSummaries,
     latestRuns: latestRuns.map((run) => ({
       id: run.id,

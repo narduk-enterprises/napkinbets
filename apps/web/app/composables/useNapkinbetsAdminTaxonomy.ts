@@ -16,7 +16,7 @@ const EMPTY_ADMIN_TAXONOMY: NapkinbetsAdminTaxonomyResponse = {
 export function useNapkinbetsAdminTaxonomy() {
   const api = useNapkinbetsApi()
 
-  return useAsyncData<NapkinbetsAdminTaxonomyResponse>(
+  return useLazyAsyncData<NapkinbetsAdminTaxonomyResponse>(
     'napkinbets-admin-taxonomy',
     () => api.getAdminTaxonomy(),
     {

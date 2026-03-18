@@ -74,6 +74,7 @@ function badgeLabel(team: NapkinbetsEvent['homeTeam']) {
 const cardClass = computed(() => [
   'napkinbets-panel',
   'napkinbets-event-card',
+  'napkinbets-event-card-min-h',
   props.event.sport === 'golf' ? 'napkinbets-event-card-golf' : '',
 ])
 const isMatchupEvent = computed(
@@ -139,7 +140,7 @@ const countdownText = computed(() => {
 
 <template>
   <UCard :class="cardClass">
-    <div class="space-y-2.5">
+    <div class="flex min-h-[17rem] flex-col gap-2.5">
       <!-- Row 1: Title -->
       <div>
         <h3 class="font-semibold text-default text-base leading-tight">
@@ -246,8 +247,8 @@ const countdownText = computed(() => {
         </div>
       </div>
 
-      <!-- Row 7: Actions -->
-      <div class="flex flex-col gap-2 pt-2 mt-auto">
+      <!-- Row 7: Actions (mt-auto pushes to bottom when card has variable content) -->
+      <div class="mt-auto flex flex-col gap-2 pt-2">
         <UButton :to="createLink" color="primary" size="md" block icon="i-lucide-plus">
           Bet
         </UButton>

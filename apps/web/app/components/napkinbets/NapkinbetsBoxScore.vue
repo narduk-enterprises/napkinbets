@@ -174,7 +174,7 @@ function _formatLocalTime(isoString: string) {
           </span>
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-dimmed">
+        <div class="flex items-center gap-2 text-xs text-muted">
           <span v-if="leagueLabel">{{ leagueLabel }}</span>
         </div>
       </div>
@@ -219,14 +219,14 @@ function _formatLocalTime(isoString: string) {
               :class="{ 'opacity-40': isFinished && Number(awayScore) < Number(homeScore) }"
               >{{ awayTotal }}</span
             >
-            <span class="text-dimmed text-sm">–</span>
+            <span class="text-muted text-sm">–</span>
             <span
               class="napkinbets-boxscore-score"
               :class="{ 'opacity-40': isFinished && Number(homeScore) < Number(awayScore) }"
               >{{ homeTotal }}</span
             >
           </template>
-          <span v-else class="font-display text-xl font-bold text-dimmed">VS</span>
+          <span v-else class="font-display text-xl font-bold text-muted">VS</span>
         </div>
 
         <!-- Home Team -->

@@ -39,3 +39,61 @@ export async function fetchTheSportsDb<T>(
     throw createError({ statusCode: 500, message: 'Failed to fetch from TheSportsDB' })
   }
 }
+
+export interface TsdbTeam {
+  idTeam: string
+  strTeam: string
+  strTeamShort: string
+  strAlternate: string
+  intFormedYear: string
+  strSport: string
+  strLeague: string
+  idLeague: string
+  strManager: string
+  strStadium: string
+  strStadiumThumb: string
+  strStadiumLocation: string
+  intStadiumCapacity: string
+  strWebsite: string
+  strTeamBadge: string
+  strTeamJersey: string
+  strTeamLogo: string
+}
+
+export interface TsdbPlayer {
+  idPlayer: string
+  idTeam: string
+  idTeam2: string
+  idTeamNational: string
+  idSoccerXML: string
+  idAPIfootball: string
+  idPlayerManager: string
+  strNationality: string
+  strPlayer: string
+  strTeam: string
+  strTeam2: string
+  strSport: string
+  dateBorn: string
+  strNumber: string
+  dateSigned: string
+  strSigning: string
+  strWage: string
+  strThumb: string
+  strCutout: string
+}
+
+export type TsdbVenue = Record<string, unknown> // If needed
+
+export async function searchTheSportsDbTeams(event: H3Event, teamName: string) {
+  const data = await fetchTheSportsDb<{ teams: TsdbTeam[] | null }>(event, 'searchteams.php', {
+    t: teamName,
+  })
+  return data.teams || []
+}
+
+export async function searchTheSportsDbPlayers(event: H3Event, playerName: string) {
+  const data = await fetchTheSportsDb<{ player: TsdbPlayer[] | null }>(event, 'searchplayers.php', {
+    p: playerName,
+  })
+  return data.player || []
+}

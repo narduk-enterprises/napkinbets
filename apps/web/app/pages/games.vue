@@ -163,7 +163,7 @@ function onSelect(_e: Event, item: GamesTimelineItem) {
           :items="timelineItems"
           class="games-timeline w-full max-w-3xl"
           :ui="{
-            item: 'games-timeline-item py-4 px-4 rounded-xl bg-elevated border border-default mb-3 last:mb-0',
+            item: 'games-timeline-item games-timeline-item-surface py-4 px-4 rounded-xl mb-3 last:mb-0',
             separator: 'border-l-2 border-default',
             date: 'text-muted text-sm font-medium',
             title: 'text-default font-semibold',
@@ -241,8 +241,14 @@ function onSelect(_e: Event, item: GamesTimelineItem) {
   padding: 1.25rem;
 }
 
+/* Same surface as event cards (napkinbets-panel) for visual consistency */
+.games-timeline-item-surface {
+  background: var(--napkinbets-surface);
+  border: 1px solid var(--napkinbets-border);
+}
+
 .games-timeline :deep([data-slot='indicator']) {
-  border: 2px solid var(--ui-border);
-  background: var(--ui-bg);
+  border: 2px solid var(--napkinbets-border);
+  background: var(--napkinbets-surface);
 }
 </style>

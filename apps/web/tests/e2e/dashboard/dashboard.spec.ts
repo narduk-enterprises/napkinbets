@@ -14,12 +14,8 @@ test.describe('dashboard', () => {
 
       await page.goto('/dashboard')
       await waitForHydration(page)
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
-      await expect(page.getByRole('link', { name: 'Create Napkin' }).last()).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Create Napkin' }).first()).toBeVisible()
     })
   })
 
@@ -36,11 +32,7 @@ test.describe('dashboard', () => {
     test('dashboard — default', async ({ page }) => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-default.png', { fullPage: true })
     })
 
@@ -48,11 +40,7 @@ test.describe('dashboard', () => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
       await dashboardApplyFilter(page, 'Settled')
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-filter-settled.png', { fullPage: true })
     })
 
@@ -60,11 +48,7 @@ test.describe('dashboard', () => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
       await dashboardApplyFilter(page, 'Upcoming')
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-filter-upcoming.png', { fullPage: true })
     })
 
@@ -72,11 +56,7 @@ test.describe('dashboard', () => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
       await dashboardApplyFilter(page, 'Live')
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-filter-live.png', { fullPage: true })
     })
 
@@ -84,11 +64,7 @@ test.describe('dashboard', () => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
       await dashboardApplyFilter(page, 'Finished')
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-filter-finished.png', { fullPage: true })
     })
 
@@ -96,11 +72,7 @@ test.describe('dashboard', () => {
       await loginAsDemo(page, '/dashboard')
       await waitForHydration(page)
       await dashboardApplyFilter(page, 'Unsettled')
-      await expect(
-        page.getByRole('heading', {
-          name: 'Everything you started, joined, or still need to settle.',
-        }),
-      ).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page).toHaveScreenshot('dashboard-filter-unsettled.png', { fullPage: true })
     })
   })

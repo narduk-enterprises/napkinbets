@@ -8,6 +8,21 @@ const workspaceState = useNapkinbetsWorkspace({
   lazy: true,
 })
 const workspace = computed(() => workspaceState.data.value)
+
+const ledgerState = useNapkinbetsLedger({ server: false, lazy: true })
+const ledger = computed(() => ledgerState.data.value)
+
+const ledgerNetCents = computed(
+  () => ledger.value.totalOwedToYouCents - ledger.value.totalOwedCents,
+)
+
+function formatCurrency(cents: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(Math.abs(cents) / 100)
+}
 const isInitialWorkspaceLoad = computed(() => {
   if (workspaceState.status.value !== 'pending') {
     return false
@@ -71,39 +86,47 @@ useWebPageSchema({
 </script>
 
 <template>
-  <div class="napkinbets-page">
-    <div class="napkinbets-hero">
-      <div class="space-y-4">
-        <p class="napkinbets-kicker">Dashboard</p>
-        <h1 class="napkinbets-section-title">
-          Everything you started, joined, or still need to settle.
-        </h1>
-        <div class="flex flex-wrap gap-2">
-          <UButton to="/napkins/create" color="primary" variant="soft" icon="i-lucide-ticket-plus">
-            Create Napkin
-          </UButton>
-          <UButton to="/friends" color="neutral" variant="soft" icon="i-lucide-user-round-plus">
-            Friends
-          </UButton>
-          <UButton to="/groups" color="neutral" variant="soft" icon="i-lucide-users-round">
-            Groups
-          </UButton>
-          <UButton to="/ledger" color="neutral" variant="soft" icon="i-lucide-book-open">
-            Ledger
-          </UButton>
-        </div>
-      </div>
-    </div>
-
+  <div class="napkinbets-page napkinbets-dashboard">
     <ClientOnly>
       <template #fallback>
-        <div class="napkinbets-aside-note">
-          <p class="napkinbets-kicker">Loading</p>
-          <p class="napkinbets-support-copy">Pulling your bets and invitations.</p>
+        <div class="napkinbets-dashboard-content" aria-busy="true" aria-live="polite">
+          <p class="sr-only">Pulling your bets and invitations.</p>
+          <div class="napkinbets-stats-strip">
+            <USkeleton v-for="i in 5" :key="i" class="h-5 w-24 rounded-md" />
+          </div>
+          <div class="napkinbets-ledger-summary">
+            <USkeleton class="h-5 w-16 rounded-md" />
+            <USkeleton class="h-5 w-20 rounded-md" />
+            <USkeleton class="h-5 w-20 rounded-md" />
+            <USkeleton class="h-5 w-14 rounded-md" />
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <USkeleton v-for="i in 4" :key="i" class="h-8 w-20 rounded-full" />
+          </div>
+          <div class="space-y-2">
+            <div
+              v-for="i in 4"
+              :key="i"
+              class="napkinbets-compact-card items-center gap-3 opacity-60"
+            >
+              <div class="flex gap-1.5">
+                <USkeleton class="h-5 w-12 rounded-full" />
+                <USkeleton class="h-5 w-14 rounded-full" />
+              </div>
+              <div class="min-w-0 space-y-1.5">
+                <USkeleton class="h-3.5 w-full max-w-48" />
+                <USkeleton class="h-3 w-3/4 max-w-36" />
+              </div>
+              <div class="text-right">
+                <USkeleton class="ml-auto h-3.5 w-10" />
+                <USkeleton class="ml-auto mt-1 h-3 w-14" />
+              </div>
+            </div>
+          </div>
         </div>
       </template>
 
-      <div class="space-y-6">
+      <div class="napkinbets-dashboard-content">
         <UAlert
           v-if="workspaceState.error.value"
           color="error"
@@ -113,23 +136,97 @@ useWebPageSchema({
           :description="workspaceState.error.value.message"
         />
 
-        <div v-else-if="isInitialWorkspaceLoad" class="napkinbets-aside-note">
-          <p class="napkinbets-kicker">Loading</p>
-          <p class="napkinbets-support-copy">Pulling your bets, invitations, and settlements.</p>
-          <div class="pt-3">
-            <UButton color="neutral" variant="ghost" loading> Loading your bets </UButton>
+        <div
+          v-else-if="isInitialWorkspaceLoad"
+          class="napkinbets-dashboard-content"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <p class="sr-only">Pulling your bets, invitations, and settlements. Loading your bets.</p>
+          <div class="napkinbets-stats-strip">
+            <USkeleton v-for="i in 5" :key="i" class="h-5 w-24 rounded-md" />
+          </div>
+          <div class="napkinbets-ledger-summary">
+            <USkeleton class="h-5 w-16 rounded-md" />
+            <USkeleton class="h-5 w-20 rounded-md" />
+            <USkeleton class="h-5 w-20 rounded-md" />
+            <USkeleton class="h-5 w-14 rounded-md" />
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <USkeleton v-for="i in 4" :key="i" class="h-8 w-20 rounded-full" />
+          </div>
+          <div class="space-y-2">
+            <div
+              v-for="i in 4"
+              :key="i"
+              class="napkinbets-compact-card items-center gap-3 opacity-60"
+            >
+              <div class="flex gap-1.5">
+                <USkeleton class="h-5 w-12 rounded-full" />
+                <USkeleton class="h-5 w-14 rounded-full" />
+              </div>
+              <div class="min-w-0 space-y-1.5">
+                <USkeleton class="h-3.5 w-full max-w-48" />
+                <USkeleton class="h-3 w-3/4 max-w-36" />
+              </div>
+              <div class="text-right">
+                <USkeleton class="ml-auto h-3.5 w-10" />
+                <USkeleton class="ml-auto mt-1 h-3 w-14" />
+              </div>
+            </div>
           </div>
         </div>
 
         <template v-else>
-          <!-- Metrics row -->
-          <div class="napkinbets-metric-grid">
-            <NapkinbetsMetricCard
-              v-for="metric in workspace.metrics"
-              :key="metric.label"
-              :metric="metric"
+          <!-- Compact stats: at-a-glance only -->
+          <NapkinbetsDashboardStatsStrip :metrics="workspace.metrics" />
+
+          <!-- Ledger summary -->
+          <NuxtLink to="/ledger" class="napkinbets-ledger-summary">
+            <span class="napkinbets-ledger-summary-label">
+              <UIcon name="i-lucide-book-open" class="size-4 shrink-0" aria-hidden="true" />
+              Ledger
+            </span>
+            <template v-if="ledgerState.status.value === 'pending'">
+              <span class="napkinbets-ledger-summary-value text-muted">—</span>
+              <span class="napkinbets-ledger-summary-value text-muted">—</span>
+              <span class="napkinbets-ledger-summary-value text-muted">—</span>
+            </template>
+            <template v-else>
+              <span class="napkinbets-ledger-summary-item">
+                <span class="napkinbets-ledger-summary-meta">You owe</span>
+                <span
+                  class="napkinbets-ledger-summary-value"
+                  :class="ledger.totalOwedCents > 0 ? 'text-error' : ''"
+                >
+                  {{ formatCurrency(ledger.totalOwedCents) }}
+                </span>
+              </span>
+              <span class="napkinbets-ledger-summary-item">
+                <span class="napkinbets-ledger-summary-meta">Owed to you</span>
+                <span
+                  class="napkinbets-ledger-summary-value"
+                  :class="ledger.totalOwedToYouCents > 0 ? 'text-success' : ''"
+                >
+                  {{ formatCurrency(ledger.totalOwedToYouCents) }}
+                </span>
+              </span>
+              <span class="napkinbets-ledger-summary-item">
+                <span class="napkinbets-ledger-summary-meta">Net</span>
+                <span
+                  class="napkinbets-ledger-summary-value"
+                  :class="ledgerNetCents >= 0 ? 'text-success' : 'text-error'"
+                >
+                  {{ ledgerNetCents >= 0 ? '+' : '-' }}{{ formatCurrency(ledgerNetCents) }}
+                </span>
+              </span>
+            </template>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="napkinbets-ledger-summary-chevron"
+              aria-hidden="true"
             />
-          </div>
+          </NuxtLink>
 
           <!-- Pending invitations banner -->
           <div v-if="workspace.invitedWagers.length" class="space-y-3">
@@ -152,40 +249,42 @@ useWebPageSchema({
             </div>
           </div>
 
-          <!-- Filter chips -->
-          <NapkinbetsWagerListFilters
-            :chips="filterChips"
-            :model-value="activeFilter"
-            @update:model-value="setWagerFilter"
-          />
-
-          <!-- Unified bet list -->
-          <div v-if="filteredBets.length" class="space-y-2">
-            <NapkinbetsNapkinSummaryCard
-              v-for="{ wager, role } in filteredBets"
-              :key="wager.id"
-              :wager="wager"
-              :role="role"
+          <!-- Your bets: main content -->
+          <section class="space-y-3" aria-labelledby="dashboard-your-bets-heading">
+            <h2 id="dashboard-your-bets-heading" class="napkinbets-section-heading">Your bets</h2>
+            <NapkinbetsWagerListFilters
+              :chips="filterChips"
+              :model-value="activeFilter"
+              @update:model-value="setWagerFilter"
             />
-          </div>
 
-          <UAlert
-            v-else-if="activeFilter !== 'all'"
-            color="neutral"
-            variant="soft"
-            icon="i-lucide-filter-x"
-            title="No bets match this filter"
-            description="Try a different filter or create a new napkin."
-          />
+            <div v-if="filteredBets.length" class="space-y-2">
+              <NapkinbetsNapkinSummaryCard
+                v-for="{ wager, role } in filteredBets"
+                :key="wager.id"
+                :wager="wager"
+                :role="role"
+              />
+            </div>
 
-          <UAlert
-            v-else
-            color="info"
-            variant="soft"
-            icon="i-lucide-ticket-plus"
-            title="No bets yet"
-            description="Start from Events first, or create a quick custom bet."
-          />
+            <UAlert
+              v-else-if="activeFilter !== 'all'"
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-filter-x"
+              title="No bets match this filter"
+              description="Try a different filter or create a new napkin."
+            />
+
+            <UAlert
+              v-else
+              color="info"
+              variant="soft"
+              icon="i-lucide-ticket-plus"
+              title="No bets yet"
+              description="Start from Events first, or create a quick custom bet."
+            />
+          </section>
         </template>
       </div>
     </ClientOnly>

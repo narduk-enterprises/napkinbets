@@ -106,13 +106,18 @@ useWebPageSchema({
 
 <template>
   <div class="napkinbets-page">
-    <div v-if="!eventDetail" class="space-y-4">
+    <div
+      v-if="!eventDetail"
+      class="flex min-h-[50vh] flex-col items-center justify-center gap-4 py-12"
+    >
       <UAlert
         color="error"
-        variant="soft"
+        variant="outline"
         icon="i-lucide-circle-alert"
         title="Event not found"
         description="This event may have expired or been removed."
+        :ui="{ description: 'text-sm text-error mt-1' }"
+        class="w-full max-w-md"
       />
       <UButton to="/events" color="neutral" variant="soft" icon="i-lucide-arrow-left">
         Back to events
