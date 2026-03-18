@@ -21,7 +21,7 @@ const selectedTab = computed({
   get() {
     const tabParam = route.query.tab as string
     const item = items.find((i) => i.slot === tabParam)
-    return item ? item.slot : items[0].slot
+    return item ? item.slot : items[0]!.slot
   },
   set(newTab) {
     router.replace({ query: { ...route.query, tab: newTab as string } })
