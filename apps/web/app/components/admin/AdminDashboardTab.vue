@@ -152,6 +152,7 @@ const aiControlRows = computed(() => [
 
         <div class="grid gap-3 sm:grid-cols-2">
           <UCard v-for="tier in tierCards" :key="tier.key" class="napkinbets-panel">
+            <!-- Existing tier card content -->
             <div class="space-y-3">
               <div class="flex items-start justify-between gap-2">
                 <div class="space-y-1">
@@ -220,6 +221,25 @@ const aiControlRows = computed(() => [
               </UPopover>
             </div>
           </UCard>
+
+          <UCard class="napkinbets-panel border-dashed ring-0 bg-transparent">
+            <div class="flex flex-col items-center justify-center p-6 text-center space-y-3">
+              <div
+                class="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-dimmed"
+              >
+                <UIcon name="i-lucide-database-zap" class="w-5 h-5" />
+              </div>
+              <div class="space-y-1">
+                <p class="font-semibold text-default">TheSportsDB Reference Sync</p>
+                <p class="text-xs text-muted max-w-[200px]">
+                  Sync league metadata and team assets from TheSportsDB.
+                </p>
+              </div>
+              <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-info" disabled>
+                Waiting for ingest logic
+              </UButton>
+            </div>
+          </UCard>
         </div>
 
         <USeparator />
@@ -236,25 +256,45 @@ const aiControlRows = computed(() => [
     <UCard class="napkinbets-panel">
       <div class="space-y-4">
         <div class="space-y-2">
-          <p class="napkinbets-kicker">AI controls</p>
-          <h2 class="napkinbets-subsection-title">Transparent, operator-controlled assists</h2>
+          <p class="napkinbets-kicker">Integrations & AI</p>
+          <h2 class="napkinbets-subsection-title">Provider status and operator assists</h2>
         </div>
 
-        <UAlert
-          :color="admin.aiSettings.xaiConfigured ? 'success' : 'warning'"
-          variant="soft"
-          :icon="admin.aiSettings.xaiConfigured ? 'i-lucide-bot' : 'i-lucide-key-round'"
-          :title="
-            admin.aiSettings.xaiConfigured
-              ? 'Grok provider configured'
-              : 'XAI_API_KEY not configured'
-          "
-          :description="
-            admin.aiSettings.xaiConfigured
-              ? 'UI flags can safely control what becomes visible to users.'
-              : 'Keep all AI flags off until the provider key is available in Doppler.'
-          "
-        />
+        <div class="grid gap-3 sm:grid-cols-2">
+          <UAlert
+            :color="admin.aiSettings.xaiConfigured ? 'success' : 'warning'"
+            variant="soft"
+            :icon="admin.aiSettings.xaiConfigured ? 'i-lucide-bot' : 'i-lucide-key-round'"
+            :title="
+              admin.aiSettings.xaiConfigured
+                ? 'Grok provider configured'
+                : 'XAI_API_KEY not configured'
+            "
+            :description="
+              admin.aiSettings.xaiConfigured
+                ? 'UI flags can safely control what becomes visible to users.'
+                : 'Keep all AI flags off until the provider key is available in Doppler.'
+            "
+          />
+
+          <UAlert
+            :color="admin.aiSettings.theSportsDbConfigured ? 'success' : 'warning'"
+            variant="soft"
+            :icon="
+              admin.aiSettings.theSportsDbConfigured ? 'i-lucide-database' : 'i-lucide-key-round'
+            "
+            :title="
+              admin.aiSettings.theSportsDbConfigured
+                ? 'TheSportsDB provider configured'
+                : 'TSDB key not configured'
+            "
+            :description="
+              admin.aiSettings.theSportsDbConfigured
+                ? 'Reference sync and asset retrieval tasks are available.'
+                : 'Check Doppler for THE_SPORTS_DB_API_KEY.'
+            "
+          />
+        </div>
 
         <div class="space-y-3">
           <div v-for="control in aiControlRows" :key="control.key" class="napkinbets-note-row">

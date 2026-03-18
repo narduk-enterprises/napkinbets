@@ -5,11 +5,13 @@ import { napkinbetsAppSettings } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 
 export interface NapkinbetsAiSettings {
+  chatModel: string
   aiRecommendationsEnabled: boolean
   aiPropSuggestionsEnabled: boolean
   aiTermsAssistEnabled: boolean
   aiCloseoutAssistEnabled: boolean
   xaiConfigured: boolean
+  theSportsDbConfigured: boolean
 }
 
 interface SaveNapkinbetsAiSettingsInput {
@@ -38,6 +40,7 @@ async function ensureSettingsRow(event: H3Event) {
   const createdAt = nowIso()
   await db.insert(napkinbetsAppSettings).values({
     id: 1,
+    chatModel: 'grok-3-mini',
     aiRecommendationsEnabled: false,
     aiPropSuggestionsEnabled: false,
     aiTermsAssistEnabled: false,
@@ -63,11 +66,13 @@ export async function loadNapkinbetsAiSettings(event: H3Event): Promise<Napkinbe
   const row = await ensureSettingsRow(event)
 
   return {
+    chatModel: row.chatModel || 'grok-3-mini',
     aiRecommendationsEnabled: Boolean(row.aiRecommendationsEnabled),
     aiPropSuggestionsEnabled: Boolean(row.aiPropSuggestionsEnabled),
     aiTermsAssistEnabled: Boolean(row.aiTermsAssistEnabled),
     aiCloseoutAssistEnabled: Boolean(row.aiCloseoutAssistEnabled),
     xaiConfigured: Boolean(config.xaiApiKey),
+    theSportsDbConfigured: Boolean(config.theSportsDbApiKey),
   }
 }
 
@@ -89,6 +94,20 @@ export async function saveNapkinbetsAiSettings(
       aiCloseoutAssistEnabled: input.aiCloseoutAssistEnabled,
       updatedAt,
     })
+    .where(eq(napkinbetsAppSettings.id, 1))
+
+  return await loadNapkinbetsAiSettings(event)
+}
+
+export async function saveNapkinbetsChatModel(event: H3Event, chatModel: string) {
+  const db = useAppDatabase(event)
+  const updatedAt = nowIso()
+
+  await ensureSettingsRow(event)
+
+  await db
+    .update(napkinbetsAppSettings)
+    .set({ chatModel, updatedAt })
     .where(eq(napkinbetsAppSettings.id, 1))
 
   return await loadNapkinbetsAiSettings(event)

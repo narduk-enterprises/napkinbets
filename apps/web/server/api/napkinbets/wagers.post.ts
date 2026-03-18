@@ -44,6 +44,22 @@ const bodySchema = z.object({
   eventStatus: z.string().max(40).optional(),
   homeTeamName: z.string().max(80).optional(),
   awayTeamName: z.string().max(80).optional(),
+  scoringRule: z
+    .enum(['proportional', 'most-correct', 'parlay', 'closest', 'price-is-right'])
+    .optional(),
+  scoringConfigJson: z.string().max(2000).optional(),
+  legs: z
+    .array(
+      z.object({
+        questionText: z.string().min(1).max(300),
+        legType: z.enum(['categorical', 'numeric']).optional(),
+        options: z.array(z.string().max(200)).max(20).optional(),
+        numericUnit: z.string().max(40).optional(),
+        numericPrecision: z.number().int().min(0).max(4).optional(),
+      }),
+    )
+    .max(50)
+    .optional(),
 })
 
 export default defineEventHandler(async (event) => {

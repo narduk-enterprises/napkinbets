@@ -19,6 +19,14 @@ export type NapkinbetsJoinStatus = 'invited' | 'accepted'
 export type NapkinbetsPaymentStatus = 'pending' | 'submitted' | 'confirmed'
 export type NapkinbetsPickOutcome = 'pending' | 'winning' | 'won' | 'lost' | 'push'
 export type NapkinbetsSettlementVerification = 'submitted' | 'confirmed' | 'rejected'
+export type NapkinbetsScoringRule =
+  | 'proportional'
+  | 'most-correct'
+  | 'parlay'
+  | 'closest'
+  | 'price-is-right'
+export type NapkinbetsLegType = 'categorical' | 'numeric'
+export type NapkinbetsLegOutcomeStatus = 'pending' | 'settled' | 'voided'
 
 export interface NapkinbetsConcept {
   summary: string
@@ -79,6 +87,8 @@ export interface NapkinbetsPick {
   pickLabel: string
   pickType: string
   pickValue: string | null
+  wagerLegId: string | null
+  pickNumericValue: number | null
   confidence: number
   liveScore: number
   outcome: string
@@ -136,6 +146,19 @@ export interface NapkinbetsLeaderboardRow {
   confirmedSettlementCents: number
 }
 
+export interface NapkinbetsWagerLeg {
+  id: string
+  sortOrder: number
+  questionText: string
+  legType: NapkinbetsLegType
+  options: string[]
+  numericUnit: string | null
+  numericPrecision: number
+  outcomeStatus: NapkinbetsLegOutcomeStatus
+  outcomeOptionKey: string | null
+  outcomeNumericValue: number | null
+}
+
 export interface NapkinbetsWager {
   id: string
   ownerUserId: string | null
@@ -172,9 +195,11 @@ export interface NapkinbetsWager {
   awayTeamName: string
   homeTeamLogo: string
   awayTeamLogo: string
+  scoringRule: NapkinbetsScoringRule
   participants: NapkinbetsParticipant[]
   pots: NapkinbetsPot[]
   picks: NapkinbetsPick[]
+  legs: NapkinbetsWagerLeg[]
   notifications: NapkinbetsNotification[]
   settlements: NapkinbetsSettlement[]
   leaderboard: NapkinbetsLeaderboardRow[]
@@ -465,6 +490,7 @@ export interface NapkinbetsAiSettings {
   aiTermsAssistEnabled: boolean
   aiCloseoutAssistEnabled: boolean
   xaiConfigured: boolean
+  theSportsDbConfigured: boolean
 }
 
 export interface NapkinbetsIngestRun {
@@ -890,6 +916,14 @@ export interface CreateWagerInput {
   eventStatus?: string
   homeTeamName?: string
   awayTeamName?: string
+  scoringRule?: NapkinbetsScoringRule
+  legs?: Array<{
+    questionText: string
+    legType: NapkinbetsLegType
+    options?: string[]
+    numericUnit?: string
+    numericPrecision?: number
+  }>
 }
 
 export interface JoinWagerInput {

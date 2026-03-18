@@ -31,9 +31,21 @@ onUnmounted(() => {
   clearInterval(timer)
 })
 
-const isUpcoming = computed(() => props.state === 'pre')
-const isLive = computed(() => props.state === 'in')
-const isFinished = computed(() => props.state === 'post')
+// If the server still says 'pre' but the start time has already passed,
+// locally infer the game is live so we don't show "Starting soon" forever.
+const effectiveState = computed(() => {
+  if (props.state === 'pre' && props.startTime) {
+    const startMs = new Date(props.startTime).getTime()
+    if (!Number.isNaN(startMs) && now.value.getTime() >= startMs) {
+      return 'in'
+    }
+  }
+  return props.state
+})
+
+const isUpcoming = computed(() => effectiveState.value === 'pre')
+const isLive = computed(() => effectiveState.value === 'in')
+const isFinished = computed(() => effectiveState.value === 'post')
 
 const countdownString = computed(() => {
   if (!isUpcoming.value || !props.startTime) return ''
@@ -73,7 +85,7 @@ const badgeLabel = computed(() => {
   return 'Upcoming'
 })
 
-function formatLocalTime(isoString: string) {
+function _formatLocalTime(isoString: string) {
   try {
     const date = new Date(isoString)
     if (Number.isNaN(date.getTime())) return ''
@@ -105,17 +117,7 @@ function formatLocalTime(isoString: string) {
             {{ countdownString }}
           </span>
           <span v-else class="text-sm font-medium text-muted">
-            <template v-if="isUpcoming && startTime">
-              <ClientOnly fallback-tag="span">
-                <template #fallback>
-                  {{ status }}
-                </template>
-                {{ formatLocalTime(startTime) || status }}
-              </ClientOnly>
-            </template>
-            <template v-else>
-              {{ status }}
-            </template>
+            {{ status }}
           </span>
         </div>
 

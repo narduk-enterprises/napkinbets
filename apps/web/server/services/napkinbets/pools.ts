@@ -9,6 +9,7 @@ import {
   napkinbetsPicks,
   napkinbetsPots,
   napkinbetsSettlements,
+  napkinbetsWagerLegs,
   napkinbetsWagers,
 } from '#server/database/schema'
 import { users } from '#layer/server/database/schema'
@@ -17,6 +18,7 @@ import { hashUserPassword } from '#layer/server/utils/password'
 import type { NapkinbetsWeatherSnapshot } from '#server/services/napkinbets/live'
 import { loadCachedEventsByIds, loadFeaturedLiveGames } from '#server/services/napkinbets/events'
 import { ensureDemoSocialGraph } from '#server/services/napkinbets/social'
+import { computeScoringResult } from '#server/services/napkinbets/scoring'
 import { useAppDatabase } from '#server/utils/database'
 
 interface SavePoolDataInput {
@@ -53,6 +55,15 @@ interface SavePoolDataInput {
   eventStatus?: string
   homeTeamName?: string
   awayTeamName?: string
+  scoringRule?: string
+  scoringConfigJson?: string
+  legs?: Array<{
+    questionText: string
+    legType?: string
+    options?: string[]
+    numericUnit?: string
+    numericPrecision?: number
+  }>
 }
 
 interface JoinPoolInput {
@@ -66,6 +77,8 @@ interface SavePickInput {
   pickType: string
   pickValue: string
   confidence: number
+  wagerLegId?: string
+  pickNumericValue?: number
 }
 
 interface SettlementInput {
@@ -780,43 +793,61 @@ function computeLeaderboard(
   picks: Array<typeof napkinbetsPicks.$inferSelect>,
   pots: Array<typeof napkinbetsPots.$inferSelect>,
   settlements: Array<typeof napkinbetsSettlements.$inferSelect>,
+  legs: Array<typeof napkinbetsWagerLegs.$inferSelect> = [],
+  scoringRule = 'proportional',
+  scoringConfigJson = '{}',
 ) {
-  const totalPotCents = pots.reduce((sum, pot) => sum + pot.amountCents, 0)
   const acceptedParticipants = participants.filter(
     (participant) => participant.joinStatus !== 'pending',
   )
 
-  const rows: SerializedLeaderboardRow[] = []
-  let totalScore = 0
+  // Use scoring engine for all rules (proportional strategy matches legacy math)
+  const result = computeScoringResult(
+    scoringRule,
+    acceptedParticipants.map((p) => ({
+      id: p.id,
+      joinStatus: p.joinStatus,
+      draftOrder: p.draftOrder ?? null,
+    })),
+    picks.map((p) => ({
+      participantId: p.participantId,
+      wagerLegId: p.wagerLegId ?? null,
+      pickValue: p.pickValue ?? null,
+      pickNumericValue: p.pickNumericValue ?? null,
+      liveScore: p.liveScore,
+      outcome: p.outcome,
+    })),
+    legs.map((l) => ({
+      id: l.id,
+      sortOrder: l.sortOrder,
+      legType: l.legType as 'categorical' | 'numeric',
+      outcomeStatus: l.outcomeStatus as 'pending' | 'settled' | 'voided',
+      outcomeOptionKey: l.outcomeOptionKey ?? null,
+      outcomeNumericValue: l.outcomeNumericValue ?? null,
+    })),
+    pots.map((p) => ({ amountCents: p.amountCents })),
+    scoringConfigJson,
+  )
 
-  for (const participant of acceptedParticipants) {
+  const rows: SerializedLeaderboardRow[] = []
+
+  for (const standing of result.standings) {
+    const participant = acceptedParticipants.find((p) => p.id === standing.participantId)
+    if (!participant) continue
+
     const participantPicks = picks.filter((pick) => pick.participantId === participant.id)
     const participantSettlements = settlements.filter(
       (settlement) => settlement.participantId === participant.id,
     )
 
-    let score = 0
-    for (const pick of participantPicks) {
-      score += pick.liveScore
-      if (pick.outcome === 'won') {
-        score += 5
-      } else if (pick.outcome === 'winning') {
-        score += 3
-      } else if (pick.outcome === 'pending') {
-        score += 1
-      }
-      // 'lost' and 'push' add no bonus
-    }
-
-    totalScore += score
     rows.push({
       participantId: participant.id,
       displayName: participant.displayName,
       sideLabel: participant.sideLabel ?? 'Open side',
       draftOrder: participant.draftOrder ?? null,
-      score,
+      score: standing.score,
       pickCount: participantPicks.length,
-      projectedPayoutCents: 0,
+      projectedPayoutCents: result.payouts.get(participant.id) ?? 0,
       confirmedSettlementCents: participantSettlements.reduce(
         (sum, settlement) => sum + settlement.amountCents,
         0,
@@ -824,16 +855,6 @@ function computeLeaderboard(
     })
   }
 
-  const fallbackSplit = rows.length > 0 ? Math.round(totalPotCents / rows.length) : 0
-
-  for (const row of rows) {
-    row.projectedPayoutCents =
-      totalScore > 0 ? Math.round(totalPotCents * (row.score / totalScore)) : fallbackSplit
-  }
-
-  rows.sort(
-    (left, right) => right.score - left.score || left.displayName.localeCompare(right.displayName),
-  )
   return rows
 }
 
@@ -1143,7 +1164,7 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     groupIds.length > 0
       ? await db.select().from(napkinbetsGroups).where(inArray(napkinbetsGroups.id, groupIds))
       : []
-  const [participants, pots, picks, notifications, settlements] =
+  const [participants, pots, picks, notifications, settlements, wagerLegs] =
     wagerIds.length > 0
       ? await Promise.all([
           db
@@ -1171,8 +1192,13 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
             .from(napkinbetsSettlements)
             .where(inArray(napkinbetsSettlements.wagerId, wagerIds))
             .orderBy(asc(napkinbetsSettlements.recordedAt)),
+          db
+            .select()
+            .from(napkinbetsWagerLegs)
+            .where(inArray(napkinbetsWagerLegs.wagerId, wagerIds))
+            .orderBy(asc(napkinbetsWagerLegs.sortOrder)),
         ])
-      : [[], [], [], [], []]
+      : [[], [], [], [], [], []]
 
   const groupNamesById = new Map(groups.map((group) => [group.id, group.name]))
 
@@ -1222,11 +1248,15 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
     const wagerSettlements = settlements
       .filter((settlement) => settlement.wagerId === wager.id)
       .sort((left, right) => right.recordedAt.localeCompare(left.recordedAt))
+    const wagerLegRows = wagerLegs.filter((leg) => leg.wagerId === wager.id)
     const leaderboard = computeLeaderboard(
       wagerParticipants,
       wagerPicks,
       wagerPots,
       wagerSettlements,
+      wagerLegRows,
+      wager.scoringRule,
+      wager.scoringConfigJson,
     )
     const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
     const eventContext = wager.eventId ? (cachedEventsById.get(wager.eventId) ?? null) : null
@@ -1267,12 +1297,25 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       awayTeamName: wager.awayTeamName ?? '',
       homeTeamLogo: eventContext?.homeTeam.logo ?? '',
       awayTeamLogo: eventContext?.awayTeam.logo ?? '',
+      scoringRule: wager.scoringRule as 'proportional',
       participants: wagerParticipants.map((p) => ({
         ...p,
         avatarUrl: p.avatarUrl || (p.userId ? (userAvatars.get(p.userId) ?? '') : ''),
       })),
       pots: wagerPots,
       picks: wagerPicks,
+      legs: wagerLegRows.map((leg) => ({
+        id: leg.id,
+        sortOrder: leg.sortOrder,
+        questionText: leg.questionText,
+        legType: leg.legType as 'categorical' | 'numeric',
+        options: parseJsonArray(leg.optionsJson),
+        numericUnit: leg.numericUnit ?? null,
+        numericPrecision: leg.numericPrecision ?? 0,
+        outcomeStatus: leg.outcomeStatus as 'pending' | 'settled' | 'voided',
+        outcomeOptionKey: leg.outcomeOptionKey ?? null,
+        outcomeNumericValue: leg.outcomeNumericValue ?? null,
+      })),
       notifications: wagerNotifications,
       settlements: wagerSettlements,
       leaderboard,
@@ -1415,6 +1458,8 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
     eventStatus: input.eventStatus || 'open',
     homeTeamName: input.homeTeamName || null,
     awayTeamName: input.awayTeamName || null,
+    scoringRule: input.scoringRule || 'proportional',
+    scoringConfigJson: input.scoringConfigJson || '{}',
     createdAt,
     updatedAt: createdAt,
   })
@@ -1453,6 +1498,26 @@ export async function savePoolData(event: H3Event, input: SavePoolDataInput) {
     })
   }
   await db.insert(napkinbetsPots).values(potsToInsert)
+
+  // Persist wager legs if provided
+  if (input.legs && input.legs.length > 0) {
+    const legsToInsert = input.legs.map((leg, index) => ({
+      id: crypto.randomUUID(),
+      wagerId,
+      sortOrder: index,
+      questionText: leg.questionText,
+      legType: leg.legType || 'categorical',
+      optionsJson: JSON.stringify(leg.options ?? []),
+      numericUnit: leg.numericUnit ?? null,
+      numericPrecision: leg.numericPrecision ?? 0,
+      outcomeStatus: 'pending',
+      outcomeOptionKey: null,
+      outcomeNumericValue: null,
+      createdAt,
+      updatedAt: createdAt,
+    }))
+    await db.insert(napkinbetsWagerLegs).values(legsToInsert)
+  }
 
   await createNotification(
     event,
@@ -1662,6 +1727,8 @@ export async function savePick(event: H3Event, wagerId: string, input: SavePickI
     pickLabel: input.pickLabel.trim(),
     pickType: input.pickType.trim() || 'custom',
     pickValue: input.pickValue.trim() || null,
+    wagerLegId: input.wagerLegId || null,
+    pickNumericValue: input.pickNumericValue ?? null,
     confidence: input.confidence,
     liveScore: input.confidence * 2,
     outcome: 'pending',

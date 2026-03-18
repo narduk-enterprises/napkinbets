@@ -6,9 +6,11 @@ import {
   napkinbetsPots,
   napkinbetsSettlements,
   napkinbetsUserPaymentProfiles,
+  napkinbetsWagerLegs,
   napkinbetsWagers,
 } from '#server/database/schema'
 import { users } from '#layer/server/database/schema'
+import { computeScoringResult } from '#server/services/napkinbets/scoring'
 import { useAppDatabase } from '#server/utils/database'
 
 const FINISHED_STATUSES = new Set(['settling', 'settled', 'closed', 'archived'])
@@ -19,8 +21,7 @@ function nowIso() {
 
 /**
  * Compute the projected payout for each participant on a single wager.
- * This mirrors the leaderboard scoring logic in pools.ts but returns
- * a simple participantId → payoutCents map.
+ * Delegates to the central scoring engine for consistency with leaderboard.
  */
 function computePayouts(
   participants: Array<{
@@ -30,46 +31,39 @@ function computePayouts(
   }>,
   picks: Array<{
     participantId: string
+    wagerLegId: string | null
+    pickValue: string | null
+    pickNumericValue: number | null
     liveScore: number
     outcome: string
   }>,
   pots: Array<{
     amountCents: number
   }>,
+  legs: Array<{
+    id: string
+    sortOrder: number
+    legType: string
+    outcomeStatus: string
+    outcomeOptionKey: string | null
+    outcomeNumericValue: number | null
+  }>,
+  scoringRule: string,
+  scoringConfigJson: string,
 ) {
-  const totalPotCents = pots.reduce((sum, pot) => sum + pot.amountCents, 0)
-  const accepted = participants.filter((p) => p.joinStatus !== 'pending')
-
-  const scores = new Map<string, number>()
-  let totalScore = 0
-
-  for (const participant of accepted) {
-    const participantPicks = picks.filter((pick) => pick.participantId === participant.id)
-    let score = 0
-    for (const pick of participantPicks) {
-      score += pick.liveScore
-      if (pick.outcome === 'won') {
-        score += 5
-      } else if (pick.outcome === 'winning') {
-        score += 3
-      } else if (pick.outcome === 'pending') {
-        score += 1
-      }
-    }
-    totalScore += score
-    scores.set(participant.id, score)
-  }
-
-  const fallbackSplit = accepted.length > 0 ? Math.round(totalPotCents / accepted.length) : 0
-  const payoutMap = new Map<string, number>()
-
-  for (const participant of accepted) {
-    const score = scores.get(participant.id) ?? 0
-    const payout = totalScore > 0 ? Math.round(totalPotCents * (score / totalScore)) : fallbackSplit
-    payoutMap.set(participant.id, payout)
-  }
-
-  return payoutMap
+  const result = computeScoringResult(
+    scoringRule,
+    participants,
+    picks,
+    legs.map((l) => ({
+      ...l,
+      legType: l.legType as 'categorical' | 'numeric',
+      outcomeStatus: l.outcomeStatus as 'pending' | 'settled' | 'voided',
+    })),
+    pots,
+    scoringConfigJson,
+  )
+  return result.payouts
 }
 
 interface LedgerEntry {
@@ -112,16 +106,21 @@ export async function computeLedger(event: H3Event, userId: string) {
   const wagerIds = [...new Set(myParticipantRows.map((row) => row.wagerId))]
 
   // 2. Load all related data in parallel
-  const [wagerRows, allParticipants, allPicks, allPots, allSettlements] = await Promise.all([
-    db.select().from(napkinbetsWagers).where(inArray(napkinbetsWagers.id, wagerIds)),
-    db
-      .select()
-      .from(napkinbetsParticipants)
-      .where(inArray(napkinbetsParticipants.wagerId, wagerIds)),
-    db.select().from(napkinbetsPicks).where(inArray(napkinbetsPicks.wagerId, wagerIds)),
-    db.select().from(napkinbetsPots).where(inArray(napkinbetsPots.wagerId, wagerIds)),
-    db.select().from(napkinbetsSettlements).where(inArray(napkinbetsSettlements.wagerId, wagerIds)),
-  ])
+  const [wagerRows, allParticipants, allPicks, allPots, allSettlements, allLegs] =
+    await Promise.all([
+      db.select().from(napkinbetsWagers).where(inArray(napkinbetsWagers.id, wagerIds)),
+      db
+        .select()
+        .from(napkinbetsParticipants)
+        .where(inArray(napkinbetsParticipants.wagerId, wagerIds)),
+      db.select().from(napkinbetsPicks).where(inArray(napkinbetsPicks.wagerId, wagerIds)),
+      db.select().from(napkinbetsPots).where(inArray(napkinbetsPots.wagerId, wagerIds)),
+      db
+        .select()
+        .from(napkinbetsSettlements)
+        .where(inArray(napkinbetsSettlements.wagerId, wagerIds)),
+      db.select().from(napkinbetsWagerLegs).where(inArray(napkinbetsWagerLegs.wagerId, wagerIds)),
+    ])
 
   // 3. Only process finished wagers
   const finishedWagers = wagerRows.filter((w) => FINISHED_STATUSES.has(w.status))
@@ -133,6 +132,7 @@ export async function computeLedger(event: H3Event, userId: string) {
     const wagerPicks = allPicks.filter((p) => p.wagerId === wager.id)
     const wagerPots = allPots.filter((p) => p.wagerId === wager.id)
     const wagerSettlements = allSettlements.filter((s) => s.wagerId === wager.id)
+    const wagerLegs = allLegs.filter((l) => l.wagerId === wager.id)
 
     const myParticipant = wagerParticipants.find((p) => p.userId === userId)
     if (!myParticipant) continue
@@ -140,7 +140,14 @@ export async function computeLedger(event: H3Event, userId: string) {
     const otherParticipants = wagerParticipants.filter((p) => p.userId && p.userId !== userId)
     if (otherParticipants.length === 0) continue
 
-    const payouts = computePayouts(wagerParticipants, wagerPicks, wagerPots)
+    const payouts = computePayouts(
+      wagerParticipants,
+      wagerPicks,
+      wagerPots,
+      wagerLegs,
+      wager.scoringRule,
+      wager.scoringConfigJson,
+    )
     const myPayout = payouts.get(myParticipant.id) ?? 0
     const myEntry = wager.entryFeeCents
 

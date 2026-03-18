@@ -9,6 +9,8 @@ const bodySchema = z.object({
   pickType: z.string().max(40),
   pickValue: z.string().max(120),
   confidence: z.coerce.number().min(1).max(10),
+  wagerLegId: z.string().max(100).optional(),
+  pickNumericValue: z.coerce.number().int().optional(),
 })
 
 export default defineEventHandler(async (event) => {

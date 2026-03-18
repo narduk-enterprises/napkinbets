@@ -15,6 +15,7 @@ const EMPTY_ADMIN: NapkinbetsAdminResponse = {
     aiTermsAssistEnabled: false,
     aiCloseoutAssistEnabled: false,
     xaiConfigured: false,
+    theSportsDbConfigured: false,
   },
   refreshedAt: '',
 }

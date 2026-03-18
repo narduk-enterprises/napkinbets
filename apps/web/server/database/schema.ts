@@ -48,6 +48,30 @@ export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   awayTeamName: text('away_team_name'),
   homeScore: text('home_score').notNull().default(''),
   awayScore: text('away_score').notNull().default(''),
+  scoringRule: text('scoring_rule').notNull().default('proportional'),
+  scoringConfigJson: text('scoring_config_json').notNull().default('{}'),
+  createdAt: text('created_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsWagerLegs = sqliteTable('napkinbets_wager_legs', {
+  id: text('id').primaryKey(),
+  wagerId: text('wager_id')
+    .notNull()
+    .references(() => napkinbetsWagers.id, { onDelete: 'cascade' }),
+  sortOrder: integer('sort_order').notNull().default(0),
+  questionText: text('question_text').notNull(),
+  legType: text('leg_type').notNull().default('categorical'),
+  optionsJson: text('options_json').notNull().default('[]'),
+  numericUnit: text('numeric_unit'),
+  numericPrecision: integer('numeric_precision').default(0),
+  outcomeStatus: text('outcome_status').notNull().default('pending'),
+  outcomeOptionKey: text('outcome_option_key'),
+  outcomeNumericValue: integer('outcome_numeric_value'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -151,6 +175,10 @@ export const napkinbetsPicks = sqliteTable('napkinbets_picks', {
   pickLabel: text('pick_label').notNull(),
   pickType: text('pick_type').notNull().default('custom'),
   pickValue: text('pick_value'),
+  wagerLegId: text('wager_leg_id').references(() => napkinbetsWagerLegs.id, {
+    onDelete: 'set null',
+  }),
+  pickNumericValue: integer('pick_numeric_value'),
   confidence: integer('confidence').notNull().default(0),
   liveScore: integer('live_score').notNull().default(0),
   outcome: text('outcome').notNull().default('pending'),
@@ -234,6 +262,7 @@ export const napkinbetsUserPaymentProfiles = sqliteTable('napkinbets_user_paymen
 
 export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
   id: integer('id').primaryKey(),
+  chatModel: text('chat_model').notNull().default('grok-3-mini'),
   aiRecommendationsEnabled: integer('ai_recommendations_enabled', { mode: 'boolean' })
     .notNull()
     .default(false),
@@ -246,6 +275,15 @@ export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
   aiCloseoutAssistEnabled: integer('ai_closeout_assist_enabled', { mode: 'boolean' })
     .notNull()
     .default(false),
+  updatedAt: text('updated_at')
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+})
+
+export const napkinbetsSystemPrompts = sqliteTable('napkinbets_system_prompts', {
+  name: text('name').primaryKey().notNull(),
+  content: text('content').notNull(),
+  description: text('description').notNull(),
   updatedAt: text('updated_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -604,6 +642,14 @@ export const napkinbetsFeaturedBets = sqliteTable('napkinbets_featured_bets', {
 
 export const napkinbetsWagersRelations = relations(napkinbetsWagers, ({ many }) => ({
   participants: many(napkinbetsParticipants),
+  legs: many(napkinbetsWagerLegs),
+}))
+
+export const napkinbetsWagerLegsRelations = relations(napkinbetsWagerLegs, ({ one }) => ({
+  wager: one(napkinbetsWagers, {
+    fields: [napkinbetsWagerLegs.wagerId],
+    references: [napkinbetsWagers.id],
+  }),
 }))
 
 export const napkinbetsParticipantsRelations = relations(napkinbetsParticipants, ({ one }) => ({
