@@ -527,3 +527,170 @@ export async function enrichNapkinbetsEventsWithPolymarketOdds<T extends Napkinb
     ),
   )
 }
+
+export async function refreshPolymarketOddsForEventId(
+  db: import('drizzle-orm/d1').DrizzleD1Database<typeof import('#server/database/schema')>,
+  eventId: string,
+  eventData: NapkinbetsOddsEventInput,
+) {
+  if (
+    !isSupportedLeague(eventData) ||
+    eventData.state === 'post' ||
+    !isReasonableTimeWindow(eventData.startTime)
+  ) {
+    return null
+  }
+
+  const odds = await findPolymarketOddsForEvent(eventData)
+
+  const nowMs = Date.now()
+  const fetchedAt = new Date(nowMs).toISOString()
+
+  // If we found odds, give them a normal TTL based on state.
+  // If we didn't find odds, give a shorter negative-cache TTL so we don't spam Polymarket.
+  const ttl = odds ? (eventData.state === 'in' ? 2 * 60 * 1000 : 5 * 60 * 1000) : 15 * 60 * 1000
+
+  const expiresAt = new Date(nowMs + ttl).toISOString()
+  const rowId = `odds:${eventId}`
+
+  if (odds) {
+    const { napkinbetsEventOdds } = await import('#server/database/schema')
+    await db
+      .insert(napkinbetsEventOdds)
+      .values({
+        id: rowId,
+        eventId,
+        source: odds.source,
+        polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+        polymarketUrl: odds.url,
+        moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+        spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+        totalJson: odds.total ? JSON.stringify(odds.total) : null,
+        extraMarketsJson: JSON.stringify(odds.extraMarkets),
+        volume: odds.volume,
+        priceChange24h: odds.priceChange24h,
+        commentCount: odds.commentCount,
+        fetchedAt,
+        expiresAt,
+      })
+      .onConflictDoUpdate({
+        target: napkinbetsEventOdds.id,
+        set: {
+          polymarketEventSlug: odds.url.replace('https://polymarket.com/event/', '') || null,
+          polymarketUrl: odds.url,
+          moneylineJson: odds.moneyline ? JSON.stringify(odds.moneyline) : null,
+          spreadJson: odds.spread ? JSON.stringify(odds.spread) : null,
+          totalJson: odds.total ? JSON.stringify(odds.total) : null,
+          extraMarketsJson: JSON.stringify(odds.extraMarkets),
+          volume: odds.volume,
+          priceChange24h: odds.priceChange24h,
+          commentCount: odds.commentCount,
+          fetchedAt,
+          expiresAt,
+          updatedAt: fetchedAt,
+        },
+      })
+      .run()
+  } else {
+    // Even if we didn't find odds, we should upsert a "not found" record or at least update the expiresAt
+    // of an existing record to prevent immediate re-fetching.
+    // In the schema, we might need a way to indicate "fetched but not found",
+    // but currently `syncCachedOdds` only inserts when odds are found.
+    // To avoid spamming, we could insert a dummy record, but schema requires URL.
+    // Actually, if we don't insert, `syncCachedOdds` will just try again next time standard ingest runs.
+    // For the on-demand button, if it fails, it fails. We can just return null.
+  }
+
+  return odds
+}
+
+export async function refreshActivelyTradedOdds(
+  db: import('drizzle-orm/d1').DrizzleD1Database<typeof import('#server/database/schema')>,
+  limit = 15,
+) {
+  const { napkinbetsEvents, napkinbetsEventOdds } = await import('#server/database/schema')
+  const { or, eq, asc } = await import('drizzle-orm')
+
+  const nowIsoStr = new Date().toISOString()
+
+  // Find events that are 'pre' or 'in' and either:
+  // 1. Have no odds row
+  // 2. Have an odds row that is expired
+  // We prioritize 'in' events and those starting soonest.
+  // We need to fetch the events and left join with odds to check expiration.
+
+  const eventsToRefresh = await db
+    .select({
+      id: napkinbetsEvents.id,
+      league: napkinbetsEvents.league,
+      state: napkinbetsEvents.state,
+      startTime: napkinbetsEvents.startTime,
+      eventTitle: napkinbetsEvents.eventTitle,
+      awayTeamJson: napkinbetsEvents.awayTeamJson,
+      homeTeamJson: napkinbetsEvents.homeTeamJson,
+      oddsExpiresAt: napkinbetsEventOdds.expiresAt,
+    })
+    .from(napkinbetsEvents)
+    .leftJoin(napkinbetsEventOdds, eq(napkinbetsEvents.id, napkinbetsEventOdds.eventId))
+    .where(or(eq(napkinbetsEvents.state, 'in'), eq(napkinbetsEvents.state, 'pre')))
+    .orderBy(asc(napkinbetsEvents.state), asc(napkinbetsEvents.startTime))
+
+  // Filter in memory since Drizzle SQLite leftJoin + isNull/lt can be slightly tricky or non-indexed
+  const candidates: NapkinbetsOddsEventInput[] = []
+
+  for (const row of eventsToRefresh) {
+    if (!row.oddsExpiresAt || row.oddsExpiresAt < nowIsoStr) {
+      const homeTeam = parseJsonValue(row.homeTeamJson, {
+        name: '',
+        shortName: '',
+        abbreviation: '',
+      })
+      const awayTeam = parseJsonValue(row.awayTeamJson, {
+        name: '',
+        shortName: '',
+        abbreviation: '',
+      })
+
+      // We only want unsupported events skipped, but we can filter that via the isSupportedLeague func inside
+      candidates.push({
+        id: row.id,
+        league: row.league,
+        state: row.state as 'in' | 'pre' | 'post',
+        startTime: row.startTime,
+        eventTitle: row.eventTitle,
+        awayTeam: {
+          name: awayTeam.name,
+          shortName: awayTeam.shortName || awayTeam.name,
+          abbreviation: awayTeam.abbreviation || awayTeam.name.substring(0, 3).toUpperCase(),
+        },
+        homeTeam: {
+          name: homeTeam.name,
+          shortName: homeTeam.shortName || homeTeam.name,
+          abbreviation: homeTeam.abbreviation || homeTeam.name.substring(0, 3).toUpperCase(),
+        },
+      })
+    }
+  }
+
+  const prioritized = candidates
+    .filter((event) => isSupportedLeague(event) && isReasonableTimeWindow(event.startTime))
+    .slice(0, limit)
+
+  let updatedCount = 0
+  for (const candidate of prioritized) {
+    const odds = await refreshPolymarketOddsForEventId(db, candidate.id, candidate)
+    if (odds) {
+      updatedCount++
+    }
+  }
+
+  return { attempted: prioritized.length, updatedCount }
+}
+
+function parseJsonValue<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
+}

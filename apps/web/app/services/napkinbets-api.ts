@@ -56,6 +56,15 @@ export function useNapkinbetsApi() {
       const safeId = typeof btoa !== 'undefined' ? btoa(id) : Buffer.from(id).toString('base64')
       return fetch<NapkinbetsEventDetailResponse>(`/api/napkinbets/events/${safeId}`)
     },
+    refreshEventOdds(id: string) {
+      const safeId = typeof btoa !== 'undefined' ? btoa(id) : Buffer.from(id).toString('base64')
+      return fetch<{ success: boolean; odds: unknown }>(
+        `/api/napkinbets/events/${safeId}/odds/refresh`,
+        {
+          method: 'POST',
+        },
+      )
+    },
     getLeagueProfile(key: string) {
       return fetch<NapkinbetsLeagueProfileResponse>(
         `/api/napkinbets/leagues/${encodeURIComponent(key)}`,

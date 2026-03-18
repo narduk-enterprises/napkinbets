@@ -6,6 +6,7 @@ import type {
   WagerPickInput,
   WagerSettlementInput,
 } from '../../../types/napkinbets'
+import { getNapkinbetsWagerSettlementStage } from '../../utils/napkinbets-wager-detail'
 
 const props = defineProps<{
   wager: NapkinbetsWager
@@ -101,6 +102,36 @@ const isAlreadyAccepted = computed(
 
 const isOneOnOne = computed(() => props.wager.napkinType === 'simple-bet')
 
+type NapkinbetsBadgeColor =
+  | 'error'
+  | 'info'
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'warning'
+  | 'neutral'
+
+interface NapkinbetsNextStepCard {
+  badgeLabel: string
+  badgeColor: NapkinbetsBadgeColor
+  icon: string
+  title: string
+  description: string
+  emphasis: string
+  primaryLabel: string
+  primaryValue: string
+  primaryHint: string
+  secondaryLabel: string
+  secondaryValue: string
+  secondaryHint: string
+  supportCopy: string
+}
+
+const paymentRoute = computed(() => {
+  const parts = [props.wager.paymentService, props.wager.paymentHandle].filter(Boolean)
+  return parts.length ? parts.join(' • ') : 'Payment route pending'
+})
+
 const participantOptions = computed(() =>
   props.wager.participants.map((participant) => ({
     label: participant.displayName,
@@ -145,6 +176,207 @@ const paymentLinks = computed(() =>
     paymentNote.value,
   ),
 )
+
+const mySettlement = computed(() =>
+  myParticipant.value
+    ? (props.wager.settlements.find(
+        (settlement) => settlement.participantId === myParticipant.value!.id,
+      ) ?? null)
+    : null,
+)
+
+const settlementStage = computed(() =>
+  getNapkinbetsWagerSettlementStage(props.wager, myParticipant.value?.id ?? null),
+)
+
+const showPaymentActions = computed(
+  () =>
+    props.isAuthenticated &&
+    (myParticipant.value !== null || props.canManage) &&
+    (settlementStage.value === 'ready' || settlementStage.value === 'rejected'),
+)
+
+const showCloseoutShortcut = computed(
+  () => props.canManage && settlementStage.value !== 'upcoming' && settlementStage.value !== 'live',
+)
+
+const paymentAmountCents = computed(() => Math.round(settlementState.amountDollars * 100))
+
+const activeProgressStep = computed(() => {
+  switch (settlementStage.value) {
+    case 'upcoming':
+      return 1
+    case 'live':
+      return 2
+    default:
+      return 3
+  }
+})
+
+const settlementSummary = computed(() => {
+  if (!mySettlement.value) {
+    return null
+  }
+
+  if (mySettlement.value.verificationStatus === 'rejected') {
+    return 'Proof needs to be resubmitted'
+  }
+
+  if (mySettlement.value.verificationStatus === 'confirmed') {
+    return mySettlement.value.recipientAcknowledged
+      ? 'Confirmed and acknowledged'
+      : 'Confirmed in the ledger'
+  }
+
+  return 'Waiting on ledger confirmation'
+})
+
+const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
+  const participantContext = myParticipant.value
+    ? `Locked in as ${myParticipant.value.displayName}${myParticipant.value.sideLabel ? ` on ${myParticipant.value.sideLabel}` : ''}.`
+    : props.isAuthenticated
+      ? 'Follow the game here and settle up once the result is official.'
+      : 'This bet stays shareable, but settlement still waits until the final result.'
+  const recordedAmount = mySettlement.value
+    ? formatCurrency(mySettlement.value.amountCents)
+    : formatCurrency(paymentAmountCents.value)
+
+  switch (settlementStage.value) {
+    case 'upcoming':
+      return {
+        badgeLabel: 'Pregame',
+        badgeColor: 'warning' as const,
+        icon: 'i-lucide-hourglass',
+        title: 'No payment due yet',
+        description: 'This bet is locked in, but nobody should send money until the game is final.',
+        emphasis: participantContext,
+        primaryLabel: 'Winner paid via',
+        primaryValue: paymentRoute.value,
+        primaryHint: 'The loser pays after the result is official.',
+        secondaryLabel: 'Stake each',
+        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryHint: props.wager.eventStatus || 'Waiting for first pitch.',
+        supportCopy: 'Payment shortcuts stay hidden until the result is official.',
+      }
+    case 'live':
+      return {
+        badgeLabel: 'Live game',
+        badgeColor: 'primary' as const,
+        icon: 'i-lucide-timer-reset',
+        title: 'Track it now, settle later',
+        description:
+          'The game is underway. Keep the bet here, but wait for the final result before paying anyone.',
+        emphasis: participantContext,
+        primaryLabel: 'Winner paid via',
+        primaryValue: paymentRoute.value,
+        primaryHint: 'Settle-up opens once the game goes final.',
+        secondaryLabel: 'Stake each',
+        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryHint: props.wager.eventStatus || 'Game in progress.',
+        supportCopy: 'Use the game context below to follow the score until settlement opens.',
+      }
+    case 'ready':
+      return {
+        badgeLabel: 'Ready to settle',
+        badgeColor: 'success' as const,
+        icon: 'i-lucide-wallet-cards',
+        title: 'Result is in. Settle this bet.',
+        description: props.isAuthenticated
+          ? 'Use the saved payment route below, then log proof in the settlement ledger once the transfer is sent.'
+          : 'The result is official. Sign in to unlock payment shortcuts and record proof in the settlement ledger.',
+        emphasis: participantContext,
+        primaryLabel: 'Pay to',
+        primaryValue: paymentRoute.value,
+        primaryHint: `Amount due: ${formatCurrency(paymentAmountCents.value)}.`,
+        secondaryLabel: 'Suggested note',
+        secondaryValue: paymentNote.value,
+        secondaryHint: 'Keep the slug in the note so both sides can match the transfer.',
+        supportCopy: props.isAuthenticated
+          ? 'Open the payment app directly or copy the details to settle manually.'
+          : 'Sign in to unlock payment shortcuts and upload proof once the transfer is complete.',
+      }
+    case 'rejected':
+      return {
+        badgeLabel: 'Proof sent back',
+        badgeColor: 'error' as const,
+        icon: 'i-lucide-refresh-ccw',
+        title: 'Update the payment proof',
+        description:
+          'A previous proof was rejected. Re-send the transfer if needed, then upload a fresh receipt in the ledger below.',
+        emphasis: settlementSummary.value || participantContext,
+        primaryLabel: 'Pay to',
+        primaryValue: paymentRoute.value,
+        primaryHint: `Amount due: ${formatCurrency(paymentAmountCents.value)}.`,
+        secondaryLabel: 'Suggested note',
+        secondaryValue: paymentNote.value,
+        secondaryHint: 'Reuse the note so the replacement transfer is easy to trace.',
+        supportCopy:
+          'The settlement ledger below will show the rejection note and the replacement proof once it is logged.',
+      }
+    case 'submitted':
+      return {
+        badgeLabel: mySettlement.value ? 'Proof logged' : 'Settlement in motion',
+        badgeColor: mySettlement.value?.verificationStatus === 'confirmed' ? 'success' : 'info',
+        icon:
+          mySettlement.value?.verificationStatus === 'confirmed'
+            ? 'i-lucide-badge-check'
+            : 'i-lucide-receipt',
+        title:
+          mySettlement.value?.verificationStatus === 'confirmed'
+            ? 'Payment confirmed'
+            : mySettlement.value
+              ? 'Payment proof submitted'
+              : 'Settlement proof logged',
+        description: mySettlement.value
+          ? mySettlement.value.verificationStatus === 'confirmed'
+            ? 'Your transfer is already in the ledger. Use this page to confirm the closeout status.'
+            : 'Your payment proof is on file. Wait for the other side to acknowledge it or for the host to confirm it.'
+          : 'A payment proof has already been logged in the ledger. Review or follow up there instead of sending another transfer here.',
+        emphasis: settlementSummary.value || participantContext,
+        primaryLabel: 'Payment route',
+        primaryValue: paymentRoute.value,
+        primaryHint: `Logged amount: ${recordedAmount}.`,
+        secondaryLabel: 'Ledger status',
+        secondaryValue: settlementSummary.value || 'Review the ledger below',
+        secondaryHint: 'Need to double-check it? Scroll down to the settlement ledger.',
+        supportCopy:
+          'Payment shortcuts are hidden here because the ledger already has a proof record.',
+      }
+    case 'settled':
+      return {
+        badgeLabel: 'Settled',
+        badgeColor: 'success' as const,
+        icon: 'i-lucide-check-circle-2',
+        title: 'This bet is closed out',
+        description:
+          'The wager has moved past game time and the settlement ledger reflects the final state.',
+        emphasis: settlementSummary.value || participantContext,
+        primaryLabel: 'Payout route',
+        primaryValue: paymentRoute.value,
+        primaryHint: `Stake was ${formatCurrency(props.wager.entryFeeCents)} per person.`,
+        secondaryLabel: 'Ledger entries',
+        secondaryValue: `${props.wager.settlements.length} payment record${props.wager.settlements.length === 1 ? '' : 's'}`,
+        secondaryHint: 'Use the ledger below if you need to review receipts or acknowledgements.',
+        supportCopy: 'No payment shortcut is shown because the closeout is already complete.',
+      }
+    default:
+      return {
+        badgeLabel: 'Bet detail',
+        badgeColor: 'neutral' as const,
+        icon: 'i-lucide-scroll-text',
+        title: 'Review the current state',
+        description: 'Check the scoreboard and settlement ledger for the latest bet status.',
+        emphasis: participantContext,
+        primaryLabel: 'Payment route',
+        primaryValue: paymentRoute.value,
+        primaryHint: `Stake is ${formatCurrency(props.wager.entryFeeCents)} per person.`,
+        secondaryLabel: 'Ledger',
+        secondaryValue: `${props.wager.settlements.length} payment record${props.wager.settlements.length === 1 ? '' : 's'}`,
+        secondaryHint: 'Open the ledger below for the current closeout state.',
+        supportCopy: 'Refresh the page if the event or settlement status looks stale.',
+      }
+  }
+})
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat('en-US', {
@@ -267,6 +499,25 @@ async function copyPaymentToClipboard() {
     settlementState.amountDollars,
     paymentNote.value,
   )
+}
+
+function progressBadgeColor(step: number): NapkinbetsBadgeColor {
+  if (step < activeProgressStep.value) {
+    return 'success'
+  }
+
+  if (step === activeProgressStep.value) {
+    switch (settlementStage.value) {
+      case 'upcoming':
+        return 'warning'
+      case 'live':
+        return 'primary'
+      default:
+        return 'success'
+    }
+  }
+
+  return 'neutral'
 }
 </script>
 
@@ -686,32 +937,56 @@ async function copyPaymentToClipboard() {
         </div>
 
         <div class="space-y-6">
-          <div class="napkinbets-surface space-y-3">
-            <h3 class="napkinbets-subsection-title">Pay with</h3>
-            <div class="space-y-2">
-              <div class="napkinbets-list-row">
-                <div>
-                  <p class="font-semibold text-default">Pay to</p>
-                  <p class="text-sm text-muted">
-                    {{ wager.paymentService
-                    }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
-                  </p>
-                </div>
-                <p class="font-semibold text-default">
-                  {{ formatCurrency(Math.round(settlementState.amountDollars * 100)) }}
-                </p>
+          <div class="napkinbets-surface space-y-4">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="space-y-1">
+                <p class="napkinbets-kicker">Next step</p>
+                <h3 class="napkinbets-subsection-title">{{ nextStepCard.title }}</h3>
               </div>
-              <div class="napkinbets-note-row">
-                <div>
-                  <p class="font-semibold text-default">Suggested note</p>
-                  <p class="text-sm text-muted">{{ paymentNote }}</p>
+              <UBadge :color="nextStepCard.badgeColor" variant="soft">
+                {{ nextStepCard.badgeLabel }}
+              </UBadge>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <UBadge :color="progressBadgeColor(1)" variant="soft">1. Locked in</UBadge>
+              <UBadge :color="progressBadgeColor(2)" variant="soft">2. Track game</UBadge>
+              <UBadge :color="progressBadgeColor(3)" variant="soft">3. Settle after final</UBadge>
+            </div>
+
+            <div class="napkinbets-note-row">
+              <div class="flex items-start gap-3">
+                <UIcon :name="nextStepCard.icon" class="mt-0.5 size-5 text-primary shrink-0" />
+                <div class="space-y-1">
+                  <p class="font-semibold text-default">{{ nextStepCard.description }}</p>
+                  <p class="text-sm text-muted">{{ nextStepCard.emphasis }}</p>
                 </div>
               </div>
             </div>
 
-            <div class="napkinbets-card-actions flex-wrap">
+            <div class="grid gap-2 sm:grid-cols-2">
+              <div class="napkinbets-note-row">
+                <div>
+                  <p class="font-semibold text-default">{{ nextStepCard.primaryLabel }}</p>
+                  <p class="text-sm text-muted break-words">{{ nextStepCard.primaryValue }}</p>
+                  <p class="text-xs text-dimmed mt-1">{{ nextStepCard.primaryHint }}</p>
+                </div>
+              </div>
+              <div class="napkinbets-note-row">
+                <div>
+                  <p class="font-semibold text-default">{{ nextStepCard.secondaryLabel }}</p>
+                  <p class="text-sm text-muted break-words">{{ nextStepCard.secondaryValue }}</p>
+                  <p class="text-xs text-dimmed mt-1">{{ nextStepCard.secondaryHint }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              v-if="showPaymentActions || showCloseoutShortcut"
+              class="napkinbets-card-actions flex-wrap"
+            >
               <UButton
-                v-for="link in paymentLinks"
+                v-for="link in showPaymentActions ? paymentLinks : []"
                 :key="link.href"
                 :to="link.href"
                 :color="link.isMobileApp ? 'primary' : 'neutral'"
@@ -724,24 +999,34 @@ async function copyPaymentToClipboard() {
                 {{ link.label }}
               </UButton>
               <UButton
+                v-if="showPaymentActions"
                 color="neutral"
                 variant="outline"
                 icon="i-lucide-copy"
                 class="min-h-[44px]"
                 @click="copyPaymentToClipboard"
               >
-                Copy details
+                Copy payment details
+              </UButton>
+              <UButton
+                v-if="showCloseoutShortcut"
+                :to="`/napkins/${wager.slug}/closeout`"
+                color="neutral"
+                variant="soft"
+                icon="i-lucide-clipboard-list"
+                class="min-h-[44px]"
+              >
+                Open closeout
               </UButton>
             </div>
 
             <p class="napkinbets-support-copy">
-              Tap the app button to launch your payment app directly, or copy the details to paste
-              manually.
+              {{ nextStepCard.supportCopy }}
             </p>
           </div>
 
           <div class="napkinbets-surface space-y-4">
-            <h3 class="napkinbets-subsection-title">Context feed</h3>
+            <h3 class="napkinbets-subsection-title">Game context</h3>
 
             <NapkinbetsWagerScoreboard v-if="wager.eventId" :wager="wager" />
 
@@ -776,7 +1061,7 @@ async function copyPaymentToClipboard() {
           </div>
 
           <div class="napkinbets-surface space-y-3">
-            <h3 class="napkinbets-subsection-title">Manual settlement ledger</h3>
+            <h3 class="napkinbets-subsection-title">Settlement ledger</h3>
             <div class="space-y-2">
               <div
                 v-for="settlement in wager.settlements"

@@ -223,14 +223,19 @@ function formatLocalTime(isoString: string) {
         </div>
       </div>
 
-      <div v-if="showInsights" class="napkinbets-event-insights">
-        <div
-          v-for="leader in insightRows"
-          :key="`${leader.label}-${leader.athlete}`"
-          class="napkinbets-event-insight"
-        >
-          <span>{{ leader.label }}</span>
-          <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
+      <div v-if="showInsights" class="pt-2 border-t border-dashed border-default space-y-3">
+        <h4 class="text-sm font-semibold text-default px-1">
+          {{ event.state === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
+        </h4>
+        <div class="napkinbets-event-insights">
+          <div
+            v-for="leader in insightRows"
+            :key="`${leader.label}-${leader.athlete}`"
+            class="napkinbets-event-insight"
+          >
+            <span>{{ leader.label }}</span>
+            <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
+          </div>
         </div>
       </div>
 

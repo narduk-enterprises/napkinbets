@@ -6,8 +6,9 @@ const route = useRoute()
 const eventId = route.params.id as string
 const api = useNapkinbetsApi()
 
-const { data: eventData } = await useAsyncData(`event-detail:${eventId}`, () =>
-  api.getEventDetail(eventId),
+const { data: eventData, execute: refreshEventData } = await useAsyncData(
+  `event-detail:${eventId}`,
+  () => api.getEventDetail(eventId),
 )
 
 const eventDetail = computed<NapkinbetsEventDetail | null>(() => eventData.value?.event ?? null)
@@ -52,6 +53,33 @@ const statusColor = computed(() => {
 
 function formatProbability(value: number | null) {
   return value === null ? '—' : `${value}%`
+}
+
+const isRefreshingOdds = ref(false)
+const toast = useToast()
+
+async function refreshOddsData() {
+  if (isRefreshingOdds.value) return
+  isRefreshingOdds.value = true
+
+  try {
+    await api.refreshEventOdds(eventId)
+    await refreshEventData() // refresh the async data
+    toast.add({
+      title: 'Odds refreshed',
+      icon: 'i-lucide-check-circle',
+      color: 'success',
+    })
+  } catch (error) {
+    toast.add({
+      title: 'Failed to refresh odds',
+      description: error instanceof Error ? error.message : 'Unknown error',
+      icon: 'i-lucide-x-circle',
+      color: 'error',
+    })
+  } finally {
+    isRefreshingOdds.value = false
+  }
 }
 
 useSeo({
@@ -147,15 +175,20 @@ useWebPageSchema({
           <template #footer>
             <div
               v-if="eventDetail.leaders?.length"
-              class="napkinbets-event-insights pt-2 border-t border-dashed border-default mt-4"
+              class="pt-4 border-t border-dashed border-default mt-4 space-y-3"
             >
-              <div
-                v-for="leader in eventDetail.leaders"
-                :key="`${leader.label}-${leader.athlete}`"
-                class="napkinbets-event-insight"
-              >
-                <span>{{ leader.label }}</span>
-                <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
+              <h4 class="text-sm font-semibold text-default">
+                {{ eventDetail.state === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
+              </h4>
+              <div class="napkinbets-event-insights">
+                <div
+                  v-for="leader in eventDetail.leaders"
+                  :key="`${leader.label}-${leader.athlete}`"
+                  class="napkinbets-event-insight"
+                >
+                  <span>{{ leader.label }}</span>
+                  <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
+                </div>
               </div>
             </div>
           </template>
@@ -251,9 +284,22 @@ useWebPageSchema({
           </UCard>
 
           <UCard v-else class="napkinbets-panel">
-            <div class="space-y-2">
-              <p class="napkinbets-kicker">Market odds</p>
-              <p class="text-sm text-muted">No prediction market data available for this event.</p>
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <p class="napkinbets-kicker">Market odds</p>
+                <p class="text-sm text-muted">
+                  No prediction market data available for this event.
+                </p>
+              </div>
+              <UButton
+                :loading="isRefreshingOdds"
+                @click="refreshOddsData"
+                color="neutral"
+                variant="subtle"
+                icon="i-lucide-refresh-cw"
+              >
+                Check Polymarket
+              </UButton>
             </div>
           </UCard>
 

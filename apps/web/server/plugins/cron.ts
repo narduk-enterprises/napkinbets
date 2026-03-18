@@ -27,10 +27,11 @@ export default defineNitroPlugin((nitroApp) => {
     }
 
     const cronToJob = {
-      '* * * * *': { tier: 'live-window', label: 'live-window refresh' },
-      '*/10 * * * *': { tier: 'next-48h', label: 'next-48h refresh' },
-      '7 */6 * * *': { tier: 'next-7d', label: 'next-7d refresh' },
-      '23 */12 * * *': { tier: 'next-8w', label: 'next-8w refresh' },
+      '* * * * *': { tier: 'live-window', label: 'live-window refresh', type: 'events' },
+      '*/5 * * * *': { tier: 'odds', label: 'actively traded odds refresh', type: 'odds' },
+      '*/10 * * * *': { tier: 'next-48h', label: 'next-48h refresh', type: 'events' },
+      '7 */6 * * *': { tier: 'next-7d', label: 'next-7d refresh', type: 'events' },
+      '23 */12 * * *': { tier: 'next-8w', label: 'next-8w refresh', type: 'events' },
     } as const
 
     const job =
@@ -38,13 +39,23 @@ export default defineNitroPlugin((nitroApp) => {
       cronToJob['* * * * *']
 
     try {
-      await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${cronSecret}`,
-        },
-        context: cloudflareCtx,
-      })
+      if (job.type === 'odds') {
+        await nitroApp.localFetch('/api/cron/napkinbets/odds', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cronSecret}`,
+          },
+          context: cloudflareCtx,
+        })
+      } else {
+        await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cronSecret}`,
+          },
+          context: cloudflareCtx,
+        })
+      }
       console.log(`[napkinbets-cron] Completed ${job.label}.`)
     } catch (error) {
       console.error(`[napkinbets-cron] Failed ${job.label}.`, error)
