@@ -154,9 +154,8 @@ export default defineNuxtConfig({
   ogImage: {
     // @ts-expect-error — `fonts` works at runtime; v6 warns deprecated but this is required for production
     fonts: ['Manrope:400', 'Manrope:700'],
-    runtimeCacheStorage: {
-      driver: 'memory',
-    },
+    // Disable runtime cache to force fresh renders after CDN cache purge
+    runtimeCacheStorage: false,
   },
 
   image: {
@@ -166,6 +165,8 @@ export default defineNuxtConfig({
   routeRules: {
     // Redirect legacy iOS apple-touch-icon-precomposed requests to the standard icon
     '/apple-touch-icon-precomposed.png': { redirect: '/apple-touch-icon.png' },
+    // Disable CDN caching on OG images to ensure fresh renders
+    '/_og/**': { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } },
   },
 
   nitro: {
