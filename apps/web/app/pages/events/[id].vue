@@ -103,7 +103,7 @@ useSeo({
       eventDetail.value?.leagueLabel || eventDetail.value?.sportLabel || 'Sports',
       statusLabel.value,
     ].join(' · '),
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color based on event state
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color for Takumi WASM renderer
     tagColor:
       effectiveState.value === 'in'
         ? '#22c55e'

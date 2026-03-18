@@ -3,7 +3,6 @@ import { useAppDatabase } from '#server/utils/database'
 import {
   napkinbetsWagers,
   napkinbetsGroups,
-  napkinbetsGroupMembers,
   napkinbetsEvents,
   napkinbetsParticipants,
 } from '../../database/schema'
@@ -46,7 +45,7 @@ interface OgPreviewSection {
   items: OgPreviewItem[]
 }
 
-// eslint-disable-next-line narduk/no-inline-hex -- OG image tag colors for contextual badges
+ 
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
@@ -99,7 +98,7 @@ export default defineEventHandler(async (event) => {
 
   // Get participant counts for wagers in a single query
   const wagerIds = wagers.map((w) => w.slug)
-  let participantCounts: Record<string, number> = {}
+  const participantCounts: Record<string, number> = {}
   if (wagerIds.length > 0) {
     const slugToId = new Map<string, string>()
     // We need wager IDs, so let's just fetch counts per slug
@@ -235,7 +234,7 @@ export default defineEventHandler(async (event) => {
           (w.status || 'open').charAt(0).toUpperCase() + (w.status || 'open').slice(1)
         const count = participantCounts[w.slug] || 0
         const countPart = count > 0 ? ` · ${count} players` : ''
-        // eslint-disable-next-line narduk/no-inline-hex -- OG image status-based tag coloring
+         
         const statusColor =
           w.status === 'settled' ? '#f59e0b' : w.status === 'closed' ? '#ef4444' : '#22c55e'
 
@@ -278,7 +277,7 @@ export default defineEventHandler(async (event) => {
       category: `Events (${events.length})`,
       items: events.map((e) => {
         const stateLabel = e.state === 'in' ? 'Live' : e.state === 'post' ? 'Final' : 'Upcoming'
-        // eslint-disable-next-line narduk/no-inline-hex -- OG image state-based tag coloring
+         
         const stateColor = e.state === 'in' ? '#22c55e' : e.state === 'post' ? '#64748b' : '#3b82f6'
 
         return {

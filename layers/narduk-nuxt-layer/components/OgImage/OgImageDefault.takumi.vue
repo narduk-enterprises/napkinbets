@@ -20,7 +20,7 @@ withDefaults(
     /** Contextual metadata badge — rendered above the title */
     tag?: string
     /** Badge accent color hex */
-     
+
     tagColor?: string
     siteName?: string
     /** Brand color hex — defaults to emerald */
