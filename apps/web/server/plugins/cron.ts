@@ -72,8 +72,9 @@ export default defineNitroPlugin((nitroApp) => {
     console.log(`[napkinbets-cron] Triggered: cron="${cronExpression ?? 'unknown'}" → ${job.label}`)
 
     try {
+      let response: Response
       if (job.type === 'odds') {
-        await nitroApp.localFetch('/api/cron/napkinbets/odds', {
+        response = await nitroApp.localFetch('/api/cron/napkinbets/odds', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${cronSecret}`,
@@ -81,7 +82,7 @@ export default defineNitroPlugin((nitroApp) => {
           context: localFetchContext,
         })
       } else {
-        await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
+        response = await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${cronSecret}`,
@@ -89,7 +90,15 @@ export default defineNitroPlugin((nitroApp) => {
           context: localFetchContext,
         })
       }
-      console.log(`[napkinbets-cron] Completed ${job.label}.`)
+
+      if (!response.ok) {
+        const body = await response.text().catch(() => '(unreadable)')
+        console.error(
+          `[napkinbets-cron] ${job.label} returned ${response.status}: ${body.slice(0, 500)}`,
+        )
+      } else {
+        console.log(`[napkinbets-cron] Completed ${job.label} (${response.status}).`)
+      }
     } catch (error) {
       console.error(`[napkinbets-cron] Failed ${job.label}.`, error)
     }
