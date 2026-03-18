@@ -99,19 +99,23 @@ useSeo({
     title: eventDetail.value?.eventTitle ?? 'Event details',
     description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
     icon: effectiveState.value === 'in' ? '🔴' : effectiveState.value === 'post' ? '🏁' : '⚡',
-    tag: [
-      eventDetail.value?.leagueLabel || eventDetail.value?.sportLabel || 'Sports',
-      statusLabel.value,
-    ].join(' · '),
-    /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
-    tagColor:
-      effectiveState.value === 'in'
-        ? '#22c55e'
-        : effectiveState.value === 'post'
-          ? '#64748b'
-          : '#3b82f6',
-    /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
   },
+})
+
+defineOgImage({
+  component: 'OgImageDefault',
+  tag: [
+    eventDetail.value?.leagueLabel || eventDetail.value?.sportLabel || 'Sports',
+    statusLabel.value,
+  ].join(' · '),
+  /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
+  tagColor:
+    effectiveState.value === 'in'
+      ? '#22c55e'
+      : effectiveState.value === 'post'
+        ? '#64748b'
+        : '#3b82f6',
+  /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
 })
 
 useWebPageSchema({

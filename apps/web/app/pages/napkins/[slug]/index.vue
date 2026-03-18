@@ -150,20 +150,24 @@ useSeo({
     title: wager.value?.title || 'Napkinbets bet',
     description: wager.value?.description || 'Bet detail and picks.',
     icon: wager.value?.status === 'settled' ? '🏆' : '🧾',
-    tag: [
-      wager.value?.napkinType === 'h2h' ? 'Head to Head' : 'Pool',
-      (wager.value?.status || 'open').charAt(0).toUpperCase() +
-        (wager.value?.status || 'open').slice(1),
-    ].join(' · '),
-    /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
-    tagColor:
-      wager.value?.status === 'settled'
-        ? '#f59e0b'
-        : wager.value?.status === 'closed'
-          ? '#ef4444'
-          : '#22c55e',
-    /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
   },
+})
+
+defineOgImage({
+  component: 'OgImageDefault',
+  tag: [
+    wager.value?.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool',
+    (wager.value?.status || 'open').charAt(0).toUpperCase() +
+      (wager.value?.status || 'open').slice(1),
+  ].join(' · '),
+  /* eslint-disable narduk/no-inline-hex -- OG tag colors for Takumi WASM */
+  tagColor:
+    wager.value?.status === 'settled'
+      ? '#f59e0b'
+      : wager.value?.status === 'closed'
+        ? '#ef4444'
+        : '#22c55e',
+  /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
 })
 
 useWebPageSchema({
