@@ -104,7 +104,12 @@ useSeo({
       statusLabel.value,
     ].join(' · '),
     // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color based on event state
-    tagColor: effectiveState.value === 'in' ? '#22c55e' : effectiveState.value === 'post' ? '#64748b' : '#3b82f6',
+    tagColor:
+      effectiveState.value === 'in'
+        ? '#22c55e'
+        : effectiveState.value === 'post'
+          ? '#64748b'
+          : '#3b82f6',
   },
 })
 

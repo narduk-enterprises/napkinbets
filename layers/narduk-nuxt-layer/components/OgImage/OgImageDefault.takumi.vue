@@ -20,7 +20,7 @@ withDefaults(
     /** Contextual metadata badge — rendered above the title */
     tag?: string
     /** Badge accent color hex */
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image prop default; Tailwind unavailable in Takumi
+     
     tagColor?: string
     siteName?: string
     /** Brand color hex — defaults to emerald */
@@ -153,6 +153,7 @@ withDefaults(
       :style="{
         fontSize: '52px',
         fontWeight: '700',
+        // eslint-disable-next-line narduk/no-inline-hex -- OG image title color; Takumi WASM uses inline styles
         color: '#f1f5f9',
         lineHeight: '1.15',
         marginBottom: '14px',
@@ -168,6 +169,7 @@ withDefaults(
       :style="{
         fontSize: '22px',
         fontWeight: '400',
+        // eslint-disable-next-line narduk/no-inline-hex -- OG image description color; Takumi WASM uses inline styles
         color: '#94a3b8',
         lineHeight: '1.5',
         maxWidth: '820px',
@@ -207,6 +209,7 @@ withDefaults(
         :style="{
           fontSize: '16px',
           fontWeight: '600',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG image brand text color; Takumi WASM uses inline styles
           color: '#475569',
           letterSpacing: '0.02em',
         }"
