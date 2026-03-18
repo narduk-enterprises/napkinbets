@@ -2,20 +2,35 @@
 const props = defineProps<{
   path: string
   label: string
+  ogUrl: string
 }>()
 
-const { ogData, status } = useOgImagePreview(props.path)
+const runtimeConfig = useRuntimeConfig()
+const siteUrl = runtimeConfig.public?.siteUrl || ''
 
-const url = computed(() => ogData.value?.url || '')
+const fullOgUrl = computed(() => {
+  if (!props.ogUrl) return ''
+  // In production use the full URL, locally use relative
+  if (siteUrl) return `${siteUrl}${props.ogUrl}`
+  return props.ogUrl
+})
+
 const displayUrl = computed(() => {
-  if (!url.value) return ''
+  if (!props.ogUrl) return ''
   try {
-    const parsed = new URL(url.value)
-    return parsed.pathname + parsed.search
+    const decoded = decodeURIComponent(props.ogUrl)
+    // Truncate for display
+    return decoded.length > 80 ? `${decoded.slice(0, 77)}...` : decoded
   } catch {
-    return url.value
+    return props.ogUrl
   }
 })
+
+const hasError = ref(false)
+
+function onImageError() {
+  hasError.value = true
+}
 </script>
 
 <template>
@@ -35,29 +50,23 @@ const displayUrl = computed(() => {
     </div>
 
     <div class="card-base p-1 overflow-hidden group">
-      <div
-        class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center"
-      >
-        <span v-if="status === 'pending'" class="absolute text-muted text-sm z-0"
-          >Loading URL...</span
-        >
-        <span v-else-if="!url" class="absolute text-error text-sm z-0">Failed to load</span>
+      <div class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
+        <span v-if="hasError" class="absolute text-error text-sm z-0">Failed to render</span>
 
         <img
-          v-if="url"
-          :src="url"
+          v-if="fullOgUrl && !hasError"
+          :src="fullOgUrl"
           :alt="`OG Image for ${label}`"
           class="w-full h-full object-cover relative z-10 transition-transform duration-500 group-hover:scale-[1.02]"
           loading="lazy"
+          @error="onImageError"
         />
       </div>
-      <div
-        class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed"
-      >
+      <div class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed">
         <span class="truncate pr-4">{{ displayUrl || '...' }}</span>
         <UButton
-          v-if="url"
-          :to="url"
+          v-if="fullOgUrl"
+          :to="fullOgUrl"
           target="_blank"
           variant="ghost"
           color="neutral"
