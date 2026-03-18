@@ -287,6 +287,85 @@ function parseJsonArray(raw: string) {
   return []
 }
 
+/**
+ * Event context for resolving pick outcomes at read time.
+ * Only provided when the wager is backed by an event with live score data.
+ */
+interface EventResultContext {
+  state: string
+  homeTeamName: string
+  awayTeamName: string
+  homeScore: string
+  awayScore: string
+  /** ESPN-provided winner flag on home team */
+  homeWinner: boolean
+  /** ESPN-provided winner flag on away team */
+  awayWinner: boolean
+}
+
+/**
+ * Resolve pick outcomes at leaderboard-read time by comparing each
+ * participant's sideLabel / pickValue against the winning team.
+ *
+ * This is a pure function — it returns enriched pick copies and does NOT
+ * mutate the database. Picks with an already-resolved outcome (not 'pending')
+ * are passed through unchanged.
+ */
+function resolveEventPickOutcomes(
+  picks: Array<typeof napkinbetsPicks.$inferSelect>,
+  participants: Array<typeof napkinbetsParticipants.$inferSelect>,
+  eventContext: EventResultContext | null,
+) {
+  // Only resolve when the event is finished
+  if (!eventContext || eventContext.state !== 'post') return picks
+
+  // Determine the winning team name from ESPN winner flags or score comparison
+  let winningTeamName: string | null = null
+  if (eventContext.homeWinner) {
+    winningTeamName = eventContext.homeTeamName
+  } else if (eventContext.awayWinner) {
+    winningTeamName = eventContext.awayTeamName
+  } else {
+    // Fallback: compare scores numerically
+    const home = Number(eventContext.homeScore)
+    const away = Number(eventContext.awayScore)
+    if (!Number.isNaN(home) && !Number.isNaN(away) && home !== away) {
+      winningTeamName = home > away ? eventContext.homeTeamName : eventContext.awayTeamName
+    }
+  }
+
+  // If we can't determine a winner (actual tie / missing data), leave picks as-is
+  if (!winningTeamName) return picks
+
+  // Build participant id → sideLabel lookup
+  const sideLabelByParticipantId = new Map(
+    participants.map((p) => [p.id, (p.sideLabel ?? '').toLowerCase()]),
+  )
+
+  const winnerLower = winningTeamName.toLowerCase()
+
+  return picks.map((pick) => {
+    // Only resolve picks that are still pending
+    if (pick.outcome !== 'pending') return pick
+
+    // Check pickValue first, fall back to participant's sideLabel
+    const pickTeam =
+      (pick.pickValue ?? '').toLowerCase() || sideLabelByParticipantId.get(pick.participantId) || ''
+
+    if (!pickTeam) return pick
+
+    // Match against winning team name (exact or substring/contains for partial names)
+    const isWinner =
+      pickTeam === winnerLower || winnerLower.includes(pickTeam) || pickTeam.includes(winnerLower)
+
+    return {
+      ...pick,
+      outcome: isWinner ? 'won' : 'lost',
+      liveScore: isWinner ? pick.liveScore + 10 : 0,
+    }
+  })
+}
+
 function computeLeaderboard(
   participants: Array<typeof napkinbetsParticipants.$inferSelect>,
   picks: Array<typeof napkinbetsPicks.$inferSelect>,
@@ -295,10 +374,14 @@ function computeLeaderboard(
   legs: Array<typeof napkinbetsWagerLegs.$inferSelect> = [],
   scoringRule = 'proportional',
   scoringConfigJson = '{}',
+  eventContext: EventResultContext | null = null,
 ) {
   const acceptedParticipants = participants.filter(
     (participant) => participant.joinStatus !== 'pending',
   )
+
+  // Resolve pick outcomes from event result before scoring
+  const resolvedPicks = resolveEventPickOutcomes(picks, participants, eventContext)
 
   // Use scoring engine for all rules (proportional strategy matches legacy math)
   const result = computeScoringResult(
@@ -308,7 +391,7 @@ function computeLeaderboard(
       joinStatus: p.joinStatus,
       draftOrder: p.draftOrder ?? null,
     })),
-    picks.map((p) => ({
+    resolvedPicks.map((p) => ({
       participantId: p.participantId,
       wagerLegId: p.wagerLegId ?? null,
       pickValue: p.pickValue ?? null,
@@ -561,6 +644,21 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       .filter((settlement) => settlement.wagerId === wager.id)
       .sort((left, right) => right.recordedAt.localeCompare(left.recordedAt))
     const wagerLegRows = wagerLegs.filter((leg) => leg.wagerId === wager.id)
+    const eventContext = wager.eventId ? (cachedEventsById.get(wager.eventId) ?? null) : null
+
+    // Build event result context for pick outcome resolution
+    const eventResultContext: EventResultContext | null = eventContext
+      ? {
+          state: eventContext.state,
+          homeTeamName: wager.homeTeamName ?? '',
+          awayTeamName: wager.awayTeamName ?? '',
+          homeScore: eventContext.homeTeam.score,
+          awayScore: eventContext.awayTeam.score,
+          homeWinner: eventContext.homeTeam.winner,
+          awayWinner: eventContext.awayTeam.winner,
+        }
+      : null
+
     const leaderboard = computeLeaderboard(
       wagerParticipants,
       wagerPicks,
@@ -569,9 +667,9 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       wagerLegRows,
       wager.scoringRule,
       wager.scoringConfigJson,
+      eventResultContext,
     )
     const weatherKey = `${wager.latitude ?? ''}:${wager.longitude ?? ''}:${wager.venueName ?? ''}`
-    const eventContext = wager.eventId ? (cachedEventsById.get(wager.eventId) ?? null) : null
 
     serializedWagers.push({
       id: wager.id,

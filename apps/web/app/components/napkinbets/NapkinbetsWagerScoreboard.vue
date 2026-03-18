@@ -56,7 +56,7 @@ const showPickDistribution = computed(() => {
   return totalTeamPicks.value > 0 && props.wager.homeTeamName && props.wager.awayTeamName
 })
 
-const winningSideLabel = computed(() => {
+const winnerInfo = computed(() => {
   if (!isFinished.value || props.wager.leaderboard.length === 0) return null
 
   // Sort leaderboard by score descending
@@ -67,16 +67,28 @@ const winningSideLabel = computed(() => {
   const winners = sortedLeaderboard.filter((row) => row.score === topScore)
 
   if (winners.length === 1) {
-    return winners[0]!.sideLabel
+    return {
+      isTie: false,
+      displayName: winners[0]!.displayName,
+      sideLabel: winners[0]!.sideLabel,
+    }
   }
 
   // Find unique sides that won
   const winningSides = new Set(winners.map((w) => w.sideLabel))
   if (winningSides.size === 1) {
-    return winners[0]!.sideLabel
+    return {
+      isTie: false,
+      displayName: winners.map((w) => w.displayName).join(' & '),
+      sideLabel: winners[0]!.sideLabel,
+    }
   }
 
-  return 'Tie / Push'
+  return {
+    isTie: true,
+    displayName: winners.map((w) => w.displayName).join(' & '),
+    sideLabel: 'Tie / Push',
+  }
 })
 </script>
 
@@ -132,9 +144,53 @@ const winningSideLabel = computed(() => {
       </template>
     </NapkinbetsBoxScore>
 
-    <!-- COMPLETED STATE NEXT STEPS -->
+    <!-- COMPLETED STATE: Winner announcement -->
     <UAlert
-      v-if="isFinished && wager.pots.length > 0"
+      v-if="isFinished && wager.pots.length > 0 && winnerInfo && !winnerInfo.isTie"
+      color="success"
+      variant="soft"
+      icon="i-lucide-trophy"
+      class="border border-success/20 napkinbets-panel"
+    >
+      <template #title>
+        <span class="text-success">{{ winnerInfo.displayName }} wins!</span>
+      </template>
+      <template #description>
+        <div class="space-y-2 mt-1">
+          <p>
+            <strong>{{ winnerInfo.displayName }}</strong> won this bet on
+            <strong>{{ winnerInfo.sideLabel }}</strong
+            >. Use the settlement ledger below to close out the bet.
+          </p>
+        </div>
+      </template>
+    </UAlert>
+
+    <!-- COMPLETED STATE: Tie / Push -->
+    <UAlert
+      v-else-if="isFinished && wager.pots.length > 0 && winnerInfo && winnerInfo.isTie"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-scale"
+      class="border border-warning/20 napkinbets-panel"
+    >
+      <template #title>
+        <span class="text-warning">Tie / Push</span>
+      </template>
+      <template #description>
+        <div class="space-y-2 mt-1">
+          <p>
+            The leaderboard shows a tie between
+            <strong>{{ winnerInfo.displayName }}</strong
+            >. Settle as a push or use the ledger to split the pot.
+          </p>
+        </div>
+      </template>
+    </UAlert>
+
+    <!-- COMPLETED STATE: No leaderboard data -->
+    <UAlert
+      v-else-if="isFinished && wager.pots.length > 0"
       color="success"
       variant="soft"
       icon="i-lucide-party-popper"
@@ -143,11 +199,6 @@ const winningSideLabel = computed(() => {
     >
       <template #description>
         <div class="space-y-2 mt-1">
-          <p v-if="winningSideLabel">
-            Based on the current leaderboard, the winning side was
-            <strong>{{ winningSideLabel }}</strong
-            >.
-          </p>
           <p>
             Ensure all your picks are logged correctly, and record your payments using the manual
             settlement ledger below to close out the bet.
