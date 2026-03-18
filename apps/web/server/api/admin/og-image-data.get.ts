@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
         napkinType: napkinbetsWagers.napkinType,
         sport: napkinbetsWagers.sport,
         category: napkinbetsWagers.category,
-        stakeCents: napkinbetsWagers.stakeCents,
+        stakeCents: napkinbetsWagers.entryFeeCents,
       })
       .from(napkinbetsWagers)
       .orderBy(desc(napkinbetsWagers.createdAt))
