@@ -22,7 +22,7 @@ const ogSections = computed(() => {
   if (data.value.wagers.length > 0) {
     sections.push({
       category: `Wagers (${data.value.wagers.length})`,
-      items: data.value.wagers.map(w => ({
+      items: data.value.wagers.map((w) => ({
         label: w.title,
         path: `/wagers/${w.slug}`,
       })),
@@ -32,7 +32,7 @@ const ogSections = computed(() => {
   if (data.value.groups.length > 0) {
     sections.push({
       category: `Groups (${data.value.groups.length})`,
-      items: data.value.groups.map(g => ({
+      items: data.value.groups.map((g) => ({
         label: g.name,
         path: `/groups/${g.slug}`,
       })),
@@ -42,7 +42,7 @@ const ogSections = computed(() => {
   if (data.value.events.length > 0) {
     sections.push({
       category: `Events (${data.value.events.length})`,
-      items: data.value.events.map(e => ({
+      items: data.value.events.map((e) => ({
         label: e.eventTitle,
         path: `/events/${e.id}`,
       })),
@@ -58,7 +58,8 @@ const ogSections = computed(() => {
     <div class="max-w-2xl">
       <h2 class="napkinbets-section-title">OG Images Explorer</h2>
       <p class="napkinbets-text-muted mt-2">
-        Preview Open Graph images across the application. Data is loaded from the connected database — local D1 in dev, production D1 when deployed.
+        Preview Open Graph images across the application. Data is loaded from the connected database
+        — local D1 in dev, production D1 when deployed.
       </p>
     </div>
 

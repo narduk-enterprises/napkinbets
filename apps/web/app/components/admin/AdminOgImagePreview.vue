@@ -33,12 +33,16 @@ const displayUrl = computed(() => {
         {{ path }}
       </UButton>
     </div>
-    
+
     <div class="card-base p-1 overflow-hidden group">
-      <div class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
-        <span v-if="status === 'pending'" class="absolute text-muted text-sm z-0">Loading URL...</span>
+      <div
+        class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center"
+      >
+        <span v-if="status === 'pending'" class="absolute text-muted text-sm z-0"
+          >Loading URL...</span
+        >
         <span v-else-if="!url" class="absolute text-error text-sm z-0">Failed to load</span>
-        
+
         <img
           v-if="url"
           :src="url"
@@ -47,7 +51,9 @@ const displayUrl = computed(() => {
           loading="lazy"
         />
       </div>
-      <div class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed">
+      <div
+        class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed"
+      >
         <span class="truncate pr-4">{{ displayUrl || '...' }}</span>
         <UButton
           v-if="url"

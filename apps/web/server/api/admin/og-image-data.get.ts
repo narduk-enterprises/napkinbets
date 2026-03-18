@@ -4,7 +4,7 @@ import {
   napkinbetsWagers,
   napkinbetsGroups,
   napkinbetsEvents,
-} from '~/server/database/schema'
+} from '../../database/schema'
 
 /**
  * Returns real wagers, groups, and events from the database
