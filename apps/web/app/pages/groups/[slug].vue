@@ -71,6 +71,7 @@ useSeo({
   },
 })
 
+// @ts-expect-error — nuxt-og-image v6 types do not support arbitrary template props
 defineOgImage({
   component: 'OgImageDefault',
   tag: `Group · ${data.value?.members.length || 0} members`,
