@@ -18,11 +18,7 @@ test.describe('routing', () => {
   test('demo page signs into the seeded workspace', async ({ page }) => {
     await page.goto('/demo')
     await expect(page).toHaveURL(/\/dashboard$/)
-    await expect(
-      page.getByRole('heading', {
-        name: 'Everything you started, joined, or still need to settle.',
-      }),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
   })
 
   test('legacy wager routes redirect to napkins', async ({ page }) => {

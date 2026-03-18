@@ -12,6 +12,7 @@ const props = defineProps<{
     startTime?: string
     status?: string
   }
+  friendNames?: string[]
 }>()
 
 const emit = defineEmits<{
@@ -26,7 +27,7 @@ async function handleGenerate() {
   if (!prompt.value.trim() || generating.value) return
   const currentPrompt = prompt.value
   prompt.value = '' // Clear input immediately
-  await generateNapkin(currentPrompt, props.eventContext)
+  await generateNapkin(currentPrompt, props.eventContext, props.friendNames)
   // Revert prompt if it failed
   if (error.value) {
     prompt.value = currentPrompt
@@ -42,6 +43,21 @@ function handleUse() {
 function handleStartOver() {
   clear()
   prompt.value = ''
+}
+
+const randomPrompts = [
+  'Come up with a totally random, fun, and creative bet idea for me and my friends. Surprise us!',
+  'Invent a weird and hilarious bet that would be fun at a hangout. Be creative!',
+  'Think of the most unexpected thing friends could bet on right now. Make it fun!',
+  'Create a unique bet that nobody would ever think of. Something totally random and entertaining!',
+  'Surprise me with a ridiculous but fun bet idea. The weirder the better!',
+]
+
+async function handleRandom() {
+  if (generating.value) return
+  const randomPrompt = randomPrompts[Math.floor(Math.random() * randomPrompts.length)]!
+  prompt.value = ''
+  await generateNapkin(randomPrompt, props.eventContext, props.friendNames)
 }
 
 const placeholders = [
@@ -241,6 +257,16 @@ const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)
               @click="handleUse"
             >
               Use this Napkin
+            </UButton>
+            <UButton
+              v-if="messages.length === 0"
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-dice-5"
+              :loading="generating"
+              @click="handleRandom"
+            >
+              Surprise me
             </UButton>
             <UButton
               color="primary"

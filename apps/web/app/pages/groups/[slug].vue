@@ -128,7 +128,11 @@ useWebPageSchema({
                 class="napkinbets-surface flex items-center justify-between gap-3"
               >
                 <div class="flex items-center gap-3">
-                  <UAvatar :alt="member.displayName" size="sm" />
+                  <UAvatar
+                    :src="member.avatarUrl || undefined"
+                    :alt="member.displayName"
+                    size="sm"
+                  />
                   <p class="text-default font-semibold">{{ member.displayName }}</p>
                 </div>
                 <UBadge color="neutral" variant="subtle">{{ member.role }}</UBadge>

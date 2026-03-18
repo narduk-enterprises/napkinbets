@@ -38,8 +38,17 @@ export const DEMO_SIMPLE_BET_SLUG = 'demo-simple-bet'
 /** Slug for E2E open (pool): demo-golf-draft has status open. */
 export const DEMO_OPEN_POOL_SLUG = 'demo-golf-draft'
 
+/** Slug for E2E golf PGA draft (existing open pool). */
+export const DEMO_GOLF_PGA_SLUG = 'demo-golf-draft'
+/** Slug for E2E golf LPGA pool (extended seed). */
+export const DEMO_GOLF_LPGA_SLUG = 'demo-golf-lpga-open'
+/** Slug for E2E golf PGA locked pool (extended seed). */
+export const DEMO_GOLF_PGA_LOCKED_SLUG = 'demo-golf-pga-locked'
+
 /** Slug for E2E group detail (ensureDemoSocialGraph). Demo user is member. */
 export const DEMO_GROUP_SLUG = 'friday-night-watch'
+/** Slug for Augusta Text Chain (golf-focused group; extended seed attaches pools). */
+export const DEMO_AUGUSTA_GROUP_SLUG = 'augusta-text-chain'
 
 /** Invalid event id for E2E "event not found" coverage. */
 export const EVENT_NOT_FOUND_ID = 'event-not-found-e2e'
@@ -85,7 +94,20 @@ export async function loginAsDemo(page: Page, redirectPath = '/dashboard') {
     timeout: LOGIN_READY_TIMEOUT_MS,
   })
   if (PATHS_WITH_IMMEDIATE_H1.has(redirectPath)) {
-    await page.locator('h1').first().waitFor({ state: 'visible', timeout: LOGIN_READY_TIMEOUT_MS })
+    if (redirectPath === '/dashboard') {
+      await page
+        .getByRole('heading', { name: 'Your bets' })
+        .waitFor({ state: 'visible', timeout: LOGIN_READY_TIMEOUT_MS })
+    } else if (redirectPath === '/admin') {
+      await page
+        .getByRole('heading', { name: /Run the product|Admin/i })
+        .waitFor({ state: 'visible', timeout: LOGIN_READY_TIMEOUT_MS })
+    } else {
+      await page
+        .locator('h1')
+        .first()
+        .waitFor({ state: 'visible', timeout: LOGIN_READY_TIMEOUT_MS })
+    }
   }
   await waitForHydration(page)
 }

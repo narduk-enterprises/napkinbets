@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { and, asc, desc, eq, inArray, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { users } from '#layer/server/database/schema'
 import { requireAuth } from '#layer/server/utils/auth'
 import { hashUserPassword } from '#layer/server/utils/password'
@@ -322,6 +322,7 @@ export async function loadNapkinbetsFriendsBundle(event: H3Event) {
             id: users.id,
             email: users.email,
             name: users.name,
+            avatarUrl: sql<string>`avatar_url`.as('avatar_url'),
           })
           .from(users)
           .where(inArray(users.id, userIds))
@@ -345,6 +346,7 @@ export async function loadNapkinbetsFriendsBundle(event: H3Event) {
       friendshipId: row.id,
       displayName: toDisplayName(counterpart),
       email: counterpart.email,
+      avatarUrl: counterpart.avatarUrl ?? '',
       createdAt: row.createdAt,
     }
 
@@ -397,6 +399,7 @@ export async function searchNapkinbetsUsers(event: H3Event, query: string) {
       id: users.id,
       email: users.email,
       name: users.name,
+      avatarUrl: sql<string>`avatar_url`.as('avatar_url'),
     })
     .from(users)
     .orderBy(asc(users.name), asc(users.email))
@@ -415,6 +418,7 @@ export async function searchNapkinbetsUsers(event: H3Event, query: string) {
       id: user.id,
       displayName: toDisplayName(user),
       email: user.email,
+      avatarUrl: user.avatarUrl ?? '',
     }))
 }
 
@@ -605,26 +609,24 @@ export async function loadNapkinbetsGroupsBundle(event: H3Event) {
     membersByGroupId.set(member.groupId, groupMembers)
   }
 
-  const allGroups = groups
-    .filter((group) => group.visibility === 'public' || group.ownerUserId === authUser.id)
-    .map((group) => {
-      const groupMembers = membersByGroupId.get(group.id) ?? []
-      const membership = groupMembers.find((member) => member.userId === authUser.id) ?? null
-      const owner = ownersById.get(group.ownerUserId) ?? null
+  const allGroups = groups.map((group) => {
+    const groupMembers = membersByGroupId.get(group.id) ?? []
+    const membership = groupMembers.find((member) => member.userId === authUser.id) ?? null
+    const owner = ownersById.get(group.ownerUserId) ?? null
 
-      return {
-        id: group.id,
-        slug: group.slug,
-        name: group.name,
-        description: group.description ?? '',
-        visibility: group.visibility,
-        joinPolicy: group.joinPolicy,
-        memberCount: groupMembers.length,
-        ownerName: owner ? toDisplayName(owner) : 'Unknown',
-        userRole: membership?.role ?? null,
-        joinedAt: membership?.createdAt ?? null,
-      }
-    })
+    return {
+      id: group.id,
+      slug: group.slug,
+      name: group.name,
+      description: group.description ?? '',
+      visibility: group.visibility,
+      joinPolicy: group.joinPolicy,
+      memberCount: groupMembers.length,
+      ownerName: owner ? toDisplayName(owner) : 'Unknown',
+      userRole: membership?.role ?? null,
+      joinedAt: membership?.createdAt ?? null,
+    }
+  })
 
   return {
     groups: allGroups.filter((group) => group.visibility === 'public'),
@@ -662,7 +664,12 @@ export async function loadNapkinbetsGroup(event: H3Event, slug: string) {
   const userRows =
     memberUserIds.length > 0
       ? await db
-          .select({ id: users.id, email: users.email, name: users.name })
+          .select({
+            id: users.id,
+            email: users.email,
+            name: users.name,
+            avatarUrl: sql<string>`avatar_url`.as('avatar_url'),
+          })
           .from(users)
           .where(inArray(users.id, memberUserIds))
       : []
@@ -676,6 +683,7 @@ export async function loadNapkinbetsGroup(event: H3Event, slug: string) {
       id: member.id,
       userId: member.userId,
       displayName: user ? toDisplayName(user) : 'Unknown User',
+      avatarUrl: user?.avatarUrl ?? '',
       role: member.role as 'owner' | 'admin' | 'member',
       joinedAt: member.createdAt,
     }

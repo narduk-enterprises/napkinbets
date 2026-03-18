@@ -125,6 +125,7 @@ export interface NapkinbetsGeneratedNapkin {
     options: string[]
     numericUnit: string | null
   }>
+  participants: string[]
   message: string
 }
 
@@ -142,6 +143,7 @@ export async function generateNapkinBet(
       startTime?: string
       status?: string
     }
+    friendNames?: string[]
   },
 ): Promise<NapkinbetsGeneratedNapkin> {
   const ai = await requireAi(event, 'napkin-generator')
@@ -158,10 +160,19 @@ export async function generateNapkinBet(
     const msg = input.messages[i]
     if (!msg) continue
 
-    if (i === 0 && msg.role === 'user' && input.eventContext) {
+    if (i === 0 && msg.role === 'user') {
+      const extras: string[] = []
+      if (input.eventContext) {
+        extras.push(`Event Context:\n${JSON.stringify(input.eventContext, null, 2)}`)
+      }
+      if (input.friendNames && input.friendNames.length > 0) {
+        extras.push(
+          `The user's friends: ${input.friendNames.join(', ')}\nIf the user mentions people by name, include them in the "participants" array. Use the exact friend name if it matches.`,
+        )
+      }
       formattedMessages.push({
         role: msg.role,
-        content: `${msg.content}\n\nEvent Context:\n${JSON.stringify(input.eventContext, null, 2)}`,
+        content: extras.length > 0 ? `${msg.content}\n\n${extras.join('\n\n')}` : msg.content,
       })
     } else {
       formattedMessages.push({
@@ -194,8 +205,100 @@ export async function generateNapkinBet(
           numericUnit: null,
         },
       ],
+      participants: [],
       message:
         'I had trouble structuring the response. Here is what I came up with — feel free to edit!',
     }
   }
+}
+
+export interface SuggestedLeg {
+  questionText: string
+  legType: 'categorical' | 'numeric'
+  options: string[]
+  numericUnit: string | null
+}
+
+export async function suggestNapkinbetsLegs(
+  event: H3Event,
+  input: {
+    title: string
+    format: string
+    existingLegs: Array<{ questionText: string }>
+    eventContext?: {
+      eventTitle: string
+      sport: string
+      league: string
+      homeTeamName?: string
+      awayTeamName?: string
+    }
+  },
+): Promise<SuggestedLeg[]> {
+  const ai = await requireAi(event, 'napkin-generator')
+
+  const systemPrompt = `You are a friendly betting assistant for Napkinbets, a social betting app for friends.
+Given a bet title, format, and optional event/game context, suggest 3-5 fun additional questions (legs) that would make the bet more interesting.
+Each leg should be a clear question with either categorical options (2-6 choices) or a numeric answer.
+Return ONLY a JSON array of leg objects. No markdown, no explanation, just the JSON array.
+Each leg object must have: questionText (string), legType ("categorical" or "numeric"), options (string array, empty for numeric), numericUnit (string or null).
+Keep questions fun, creative, and appropriate for friendly social betting.`
+
+  const userContent: string[] = [`Bet title: "${input.title}"`, `Format: ${input.format}`]
+
+  if (input.existingLegs.length > 0) {
+    userContent.push(
+      `Existing questions (suggest different ones):\n${input.existingLegs.map((l) => `- ${l.questionText}`).join('\n')}`,
+    )
+  }
+
+  if (input.eventContext) {
+    userContent.push(
+      `Event: ${input.eventContext.eventTitle}`,
+      `Sport: ${input.eventContext.sport}, League: ${input.eventContext.league}`,
+    )
+    if (input.eventContext.homeTeamName && input.eventContext.awayTeamName) {
+      userContent.push(
+        `Teams: ${input.eventContext.awayTeamName} vs ${input.eventContext.homeTeamName}`,
+      )
+    }
+  }
+
+  const content = await grokChat(
+    ai.apiKey,
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent.join('\n') },
+    ],
+    ai.model,
+  )
+
+  try {
+    const cleaned = content.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '')
+    const parsed = JSON.parse(cleaned) as unknown
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (item): item is SuggestedLeg =>
+          typeof item === 'object' &&
+          item !== null &&
+          typeof (item as SuggestedLeg).questionText === 'string',
+      )
+    }
+  } catch {
+    // Fallback if Grok doesn't return valid JSON
+  }
+
+  return [
+    {
+      questionText: 'Who will be the MVP?',
+      legType: 'categorical',
+      options: ['Player A', 'Player B', 'Other'],
+      numericUnit: null,
+    },
+    {
+      questionText: 'What will the final combined score be?',
+      legType: 'numeric',
+      options: [],
+      numericUnit: 'points',
+    },
+  ]
 }

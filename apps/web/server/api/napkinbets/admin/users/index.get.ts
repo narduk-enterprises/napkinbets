@@ -26,9 +26,16 @@ export default defineEventHandler(async (event): Promise<NapkinbetsAdminUsersRes
   const countResult = await db.select({ count: sql<number>`count(*)` }).from(users)
   const total = countResult[0]?.count ?? 0
 
-  // 2. Fetch paginated users
+  // 2. Fetch paginated users (avatar_url is not in the Drizzle layer schema, use raw SQL)
   const userRows = await db
-    .select()
+    .select({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      isAdmin: users.isAdmin,
+      createdAt: users.createdAt,
+      avatarUrl: sql<string>`avatar_url`.as('avatar_url'),
+    })
     .from(users)
     .orderBy(users.createdAt)
     .limit(limit)
@@ -75,6 +82,7 @@ export default defineEventHandler(async (event): Promise<NapkinbetsAdminUsersRes
       id: user.id,
       email: user.email,
       name: user.name,
+      avatarUrl: user.avatarUrl ?? '',
       isAdmin: Boolean(user.isAdmin),
       createdAt: user.createdAt,
       ownedWagerCount: ownedCountByUser.get(user.id) ?? 0,

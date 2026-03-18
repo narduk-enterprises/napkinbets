@@ -83,12 +83,19 @@ async function toggleAdmin(userId: string, isAdmin: boolean) {
               :key="adminUser.id"
               class="napkinbets-note-row"
             >
-              <div>
-                <p class="font-semibold text-default">{{ adminUser.name || adminUser.email }}</p>
-                <p class="text-sm text-muted">
-                  {{ adminUser.email }} • {{ adminUser.ownedWagerCount }} owned •
-                  {{ adminUser.joinedWagerCount }} joined
-                </p>
+              <div class="flex items-center gap-3">
+                <UAvatar
+                  :src="adminUser.avatarUrl || undefined"
+                  :alt="adminUser.name || adminUser.email"
+                  size="sm"
+                />
+                <div>
+                  <p class="font-semibold text-default">{{ adminUser.name || adminUser.email }}</p>
+                  <p class="text-sm text-muted">
+                    {{ adminUser.email }} • {{ adminUser.ownedWagerCount }} owned •
+                    {{ adminUser.joinedWagerCount }} joined
+                  </p>
+                </div>
               </div>
 
               <UButton

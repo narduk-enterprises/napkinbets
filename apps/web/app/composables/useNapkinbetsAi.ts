@@ -46,6 +46,7 @@ export function useNapkinbetsAiGenerator() {
       startTime?: string
       status?: string
     },
+    friendNames?: string[],
   ) {
     if (!userPrompt.trim()) return null
 
@@ -59,6 +60,7 @@ export function useNapkinbetsAiGenerator() {
       const napkin = await api.generateNapkin({
         messages: messages.value,
         eventContext,
+        friendNames,
       })
       result.value = napkin
       messages.value.push({

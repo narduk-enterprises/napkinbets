@@ -41,10 +41,10 @@ async function ensureSettingsRow(event: H3Event) {
   await db.insert(napkinbetsAppSettings).values({
     id: 1,
     chatModel: 'grok-3-mini',
-    aiRecommendationsEnabled: false,
-    aiPropSuggestionsEnabled: false,
-    aiTermsAssistEnabled: false,
-    aiCloseoutAssistEnabled: false,
+    aiRecommendationsEnabled: true,
+    aiPropSuggestionsEnabled: true,
+    aiTermsAssistEnabled: true,
+    aiCloseoutAssistEnabled: true,
     updatedAt: createdAt,
   })
 

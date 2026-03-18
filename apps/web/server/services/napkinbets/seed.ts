@@ -78,6 +78,8 @@ const DEMO_POOL_SLUGS = [
   'demo-wager-locked',
   'demo-wager-live',
   'demo-simple-bet',
+  'demo-golf-pga-locked',
+  'demo-golf-lpga-open',
 ]
 /** Slug for E2E join flow: pool wager owned by layer user (Pat), demo user is not a participant. */
 export const DEMO_JOIN_POOL_SLUG = 'demo-join-pool'
@@ -87,6 +89,10 @@ export const DEMO_INVITATION_SLUG = 'demo-invitation'
 const DEMO_GROUP_SLUG = 'friday-night-watch'
 /** Pool slugs that appear under the demo group on the group detail page. */
 const DEMO_GROUP_POOL_SLUGS = ['demo-hoops-night', 'demo-soccer-watch', 'demo-golf-draft']
+/** Augusta Text Chain group slug — extended seed attaches golf pools here. */
+const DEMO_AUGUSTA_GROUP_SLUG = 'augusta-text-chain'
+/** Pool slugs attached to Augusta Text Chain (golf-focused group). */
+const DEMO_AUGUSTA_POOL_SLUGS = ['demo-golf-pga-locked', 'demo-golf-lpga-open']
 const DEMO_USER_EMAIL = 'demo@napkinbets.app'
 const DEMO_USER_PASSWORD = 'DemoBoard123!'
 const DEMO_USER_NAME = 'Demo Host'
@@ -854,6 +860,187 @@ function buildDemoStatePools(): DemoPoolDef[] {
   ]
 }
 
+/** Extended golf seed: PGA locked, LPGA open; attached to Augusta Text Chain. */
+function buildGolfSeedPools(): DemoPoolDef[] {
+  return [
+    {
+      slug: 'demo-golf-pga-locked',
+      title: 'PGA Weekend Locked',
+      description: 'Golf draft locked before round; golfer picks in, settlements partial.',
+      category: 'golf',
+      format: 'golf-draft',
+      sport: 'golf',
+      league: 'pga',
+      contextKey: 'tournament',
+      customContextName: 'Augusta side pot',
+      status: 'locked',
+      eventState: 'pre',
+      creatorName: DEMO_USER_NAME,
+      sideOptions: ['Lowest round', 'Closest-to-pin', 'Birdie streak'],
+      entryFeeCents: 2000,
+      paymentService: 'Venmo',
+      paymentHandle: '@DemoHost',
+      terms: 'Settle via Venmo after final round.',
+      venueName: 'Patio range',
+      latitude: '33.5037',
+      longitude: '-82.0209',
+      eventFallbackTitle: 'PGA Weekend Locked',
+      manualHomeTeam: 'Field',
+      manualAwayTeam: 'N/A',
+      participants: [
+        {
+          displayName: 'Demo Host',
+          sideLabel: 'Lowest round',
+          joinStatus: 'accepted',
+          draftOrder: 1,
+          paymentStatus: 'confirmed',
+          paymentReference: 'VENMO-PGA-001',
+          avatarUrl: DEMO_AVATAR_URLS.demoHost,
+          useDemoUser: true,
+        },
+        {
+          displayName: 'Mara Kim',
+          sideLabel: 'Closest-to-pin',
+          joinStatus: 'accepted',
+          draftOrder: 2,
+          paymentStatus: 'submitted',
+          paymentReference: 'VENMO-MARA-002',
+          avatarUrl: DEMO_AVATAR_URLS.mara,
+        },
+        {
+          displayName: 'Leo Ortega',
+          sideLabel: 'Birdie streak',
+          joinStatus: 'accepted',
+          draftOrder: 3,
+          paymentStatus: 'pending',
+          avatarUrl: DEMO_AVATAR_URLS.leo,
+        },
+      ],
+      pots: [
+        { label: 'Draft winner', amountCents: 3500, sortOrder: 0 },
+        { label: 'Low round', amountCents: 1500, sortOrder: 1 },
+        { label: 'Closest pin', amountCents: 1000, sortOrder: 2 },
+      ],
+      picks: [
+        {
+          participantIndex: 0,
+          pickLabel: 'Scheffler anchor',
+          pickType: 'golfer',
+          pickValue: 'Scottie Scheffler',
+          confidence: 5,
+          liveScore: 10,
+          outcome: 'pending',
+          sortOrder: 0,
+        },
+        {
+          participantIndex: 1,
+          pickLabel: 'Hovland run',
+          pickType: 'golfer',
+          pickValue: 'Viktor Hovland',
+          confidence: 4,
+          liveScore: 8,
+          outcome: 'pending',
+          sortOrder: 1,
+        },
+        {
+          participantIndex: 2,
+          pickLabel: 'Rahm',
+          pickType: 'golfer',
+          pickValue: 'Jon Rahm',
+          confidence: 3,
+          liveScore: 6,
+          outcome: 'pending',
+          sortOrder: 2,
+        },
+      ],
+      settlements: [
+        {
+          participantIndex: 0,
+          amountCents: 2000,
+          method: 'Venmo',
+          handle: '@DemoHost',
+          confirmationCode: 'VENMO-PGA-001',
+          note: 'Entry locked.',
+          verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
+        },
+      ],
+      eventSource: 'manual',
+    },
+    {
+      slug: 'demo-golf-lpga-open',
+      title: 'LPGA Major Side Pot',
+      description: 'LPGA draft open; Zelle for entry.',
+      category: 'golf',
+      format: 'golf-draft',
+      sport: 'golf',
+      league: 'lpga',
+      contextKey: 'tournament',
+      customContextName: 'LPGA major',
+      status: 'open',
+      creatorName: DEMO_USER_NAME,
+      sideOptions: ['Draft winner', 'Low round', 'Closest to pin'],
+      entryFeeCents: 1500,
+      paymentService: 'Zelle',
+      paymentHandle: 'demo@napkinbets.app',
+      terms: 'Zelle to host before first round.',
+      venueName: 'Watch party',
+      latitude: '33.7490',
+      longitude: '-84.3880',
+      eventFallbackTitle: 'LPGA Major Side Pot',
+      manualHomeTeam: 'Field',
+      manualAwayTeam: 'N/A',
+      participants: [
+        {
+          displayName: 'Demo Host',
+          sideLabel: 'Draft winner',
+          joinStatus: 'accepted',
+          draftOrder: 1,
+          paymentStatus: 'confirmed',
+          paymentReference: 'ZELLE-DEMO-001',
+          avatarUrl: DEMO_AVATAR_URLS.demoHost,
+          useDemoUser: true,
+        },
+        {
+          displayName: 'Mara Kim',
+          sideLabel: 'Low round',
+          joinStatus: 'accepted',
+          draftOrder: 2,
+          paymentStatus: 'pending',
+          avatarUrl: DEMO_AVATAR_URLS.mara,
+        },
+        {
+          displayName: 'Leo Ortega',
+          sideLabel: 'Closest to pin',
+          joinStatus: 'pending',
+          draftOrder: 3,
+          paymentStatus: 'pending',
+          avatarUrl: DEMO_AVATAR_URLS.leo,
+        },
+      ],
+      pots: [
+        { label: 'Draft winner', amountCents: 2500, sortOrder: 0 },
+        { label: 'Low round', amountCents: 1500, sortOrder: 1 },
+        { label: 'Closest pin', amountCents: 1000, sortOrder: 2 },
+      ],
+      picks: [],
+      settlements: [
+        {
+          participantIndex: 0,
+          amountCents: 1500,
+          method: 'Zelle',
+          handle: 'demo@napkinbets.app',
+          confirmationCode: 'ZELLE-DEMO-001',
+          note: 'Entry sent.',
+          verificationStatus: 'confirmed',
+          proofImageUrl: null,
+        },
+      ],
+      eventSource: 'manual',
+    },
+  ]
+}
+
 // ---------------------------------------------------------------------------
 // Join-pool wager for E2E (demo user is not a participant; owned by layer user)
 // ---------------------------------------------------------------------------
@@ -1054,9 +1241,15 @@ export async function ensureSeedData(event: H3Event) {
     .where(eq(napkinbetsGroups.slug, DEMO_GROUP_SLUG))
     .get()
 
+  const augustaTextChain = await db
+    .select({ id: napkinbetsGroups.id })
+    .from(napkinbetsGroups)
+    .where(eq(napkinbetsGroups.slug, DEMO_AUGUSTA_GROUP_SLUG))
+    .get()
+
   const now = nowIso()
   const events = await loadUpcomingEventRows(db, now)
-  const demoPools = [...buildDemoPools(events), ...buildDemoStatePools()]
+  const demoPools = [...buildDemoPools(events), ...buildDemoStatePools(), ...buildGolfSeedPools()]
   const demoTitleBySlug = new Map(demoPools.map((pool) => [pool.slug, pool.title]))
 
   const existingDemoWagers = await db
@@ -1082,6 +1275,17 @@ export async function ensureSeedData(event: H3Event) {
           ),
         )
     }
+    if (augustaTextChain) {
+      await db
+        .update(napkinbetsWagers)
+        .set({ groupId: augustaTextChain.id, updatedAt: now })
+        .where(
+          and(
+            inArray(napkinbetsWagers.slug, DEMO_AUGUSTA_POOL_SLUGS),
+            isNull(napkinbetsWagers.groupId),
+          ),
+        )
+    }
     return
   }
 
@@ -1097,7 +1301,11 @@ export async function ensureSeedData(event: H3Event) {
       (pool as DemoPoolDef).eventState ??
       (pool.eventRow?.status === 'in' ? 'in' : pool.eventRow?.status === 'post' ? 'post' : '')
     const groupId =
-      fridayNightWatch && DEMO_GROUP_POOL_SLUGS.includes(pool.slug) ? fridayNightWatch.id : null
+      augustaTextChain && DEMO_AUGUSTA_POOL_SLUGS.includes(pool.slug)
+        ? augustaTextChain.id
+        : fridayNightWatch && DEMO_GROUP_POOL_SLUGS.includes(pool.slug)
+          ? fridayNightWatch.id
+          : null
 
     const eventMismatchHoops =
       pool.slug === 'demo-hoops-night' && (!pool.eventRow || pool.eventRow.sport !== 'basketball')

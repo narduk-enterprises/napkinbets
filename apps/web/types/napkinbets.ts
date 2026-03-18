@@ -10,6 +10,8 @@ export type NapkinbetsNapkinType = 'simple-bet' | 'pool'
 export type NapkinbetsWagerStatus =
   | 'open'
   | 'locked'
+  | 'calling'
+  | 'disputed'
   | 'live'
   | 'settling'
   | 'settled'
@@ -72,6 +74,8 @@ export interface NapkinbetsParticipant {
   draftOrder: number | null
   paymentStatus: string
   paymentReference: string | null
+  outcomeAcknowledged: boolean
+  outcomeAcknowledgedAt: string | null
 }
 
 export interface NapkinbetsPot {
@@ -138,6 +142,7 @@ export interface NapkinbetsPaymentProfile {
 export interface NapkinbetsLeaderboardRow {
   participantId: string
   displayName: string
+  avatarUrl: string
   sideLabel: string
   draftOrder: number | null
   score: number
@@ -462,6 +467,7 @@ export interface NapkinbetsAdminUser {
   id: string
   email: string
   name: string | null
+  avatarUrl: string
   isAdmin: boolean
   createdAt: string
   ownedWagerCount: number
@@ -538,6 +544,7 @@ export interface NapkinbetsFriend {
   friendshipId: string
   displayName: string
   email: string
+  avatarUrl: string
   createdAt: string
 }
 
@@ -546,6 +553,7 @@ export interface NapkinbetsFriendRequest {
   friendshipId: string
   displayName: string
   email: string
+  avatarUrl: string
   createdAt: string
 }
 
@@ -553,6 +561,7 @@ export interface NapkinbetsFriendSearchResult {
   id: string
   displayName: string
   email: string
+  avatarUrl: string
 }
 
 export interface NapkinbetsFriendsResponse {
@@ -587,6 +596,7 @@ export interface NapkinbetsGroupMember {
   id: string
   userId: string
   displayName: string
+  avatarUrl: string
   role: 'owner' | 'admin' | 'member'
   joinedAt: string
 }
@@ -1101,8 +1111,25 @@ export interface NapkinbetsLedgerCounterparty {
   preferredPaymentHandle: string | null
 }
 
+export interface NapkinbetsPaymentHistoryEntry {
+  settlementId: string
+  wagerId: string
+  wagerSlug: string
+  wagerTitle: string
+  amountCents: number
+  method: string
+  handle: string | null
+  confirmationCode: string | null
+  verificationStatus: string
+  note: string | null
+  recordedAt: string
+  direction: 'sent' | 'received'
+  counterpartyName: string
+}
+
 export interface NapkinbetsLedgerResponse {
   counterparties: NapkinbetsLedgerCounterparty[]
+  paymentHistory: NapkinbetsPaymentHistoryEntry[]
   totalOwedCents: number
   totalOwedToYouCents: number
   refreshedAt: string
@@ -1123,6 +1150,7 @@ export interface NapkinbetsGeneratedNapkin {
     options: string[]
     numericUnit: string | null
   }>
+  participants: string[]
   message: string
 }
 

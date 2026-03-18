@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { asc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray, lt, sql } from 'drizzle-orm'
 import {
   napkinbetsGroups,
   napkinbetsNotifications,
@@ -107,6 +107,7 @@ interface LoadPoolDataOptions {
 interface SerializedLeaderboardRow {
   participantId: string
   displayName: string
+  avatarUrl: string
   sideLabel: string
   draftOrder: number | null
   score: number
@@ -426,6 +427,7 @@ function computeLeaderboard(
     rows.push({
       participantId: participant.id,
       displayName: participant.displayName,
+      avatarUrl: participant.avatarUrl ?? '',
       sideLabel: participant.sideLabel ?? 'Open side',
       draftOrder: participant.draftOrder ?? null,
       score: standing.score,
@@ -724,6 +726,8 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       participants: wagerParticipants.map((p) => ({
         ...p,
         avatarUrl: p.avatarUrl || (p.userId ? (userAvatars.get(p.userId) ?? '') : ''),
+        outcomeAcknowledged: Boolean(p.outcomeAcknowledged),
+        outcomeAcknowledgedAt: p.outcomeAcknowledgedAt ?? null,
       })),
       pots: wagerPots,
       picks: wagerPicks,
@@ -1134,6 +1138,8 @@ export async function savePick(event: H3Event, wagerId: string, input: SavePickI
       draftOrder: draftOrder + 1,
       paymentStatus: 'pending',
       paymentReference: null,
+      outcomeAcknowledged: false,
+      outcomeAcknowledgedAt: null,
       createdAt,
       updatedAt: createdAt,
     }
@@ -1517,4 +1523,256 @@ export async function clearPoolData(event: H3Event, wagerId: string) {
   await db.delete(napkinbetsWagers).where(eq(napkinbetsWagers.id, wagerId))
 
   return { ok: true }
+}
+
+// ─── Custom Bet Outcome Calling ──────────────────────────────
+
+const OUTCOME_REVIEW_WINDOW_MS = 24 * 60 * 60 * 1000 // 24 hours
+
+export interface CallResultInput {
+  outcomes: Array<{ legId: string; outcomeOptionKey?: string; outcomeNumericValue?: number }>
+  note?: string
+}
+
+export async function callCustomWagerResult(
+  event: H3Event,
+  wagerId: string,
+  input: CallResultInput,
+) {
+  const { user, wager } = await requireOwnerOrAdmin(event, wagerId)
+  const db = useAppDatabase(event)
+  const now = nowIso()
+
+  // Only allow calling from open, locked, or disputed (re-call after dispute)
+  const allowedStatuses = new Set(['open', 'locked', 'disputed'])
+  if (!allowedStatuses.has(wager.status)) {
+    throw createError({
+      statusCode: 400,
+      message: `Cannot call results when wager is in '${wager.status}' status.`,
+    })
+  }
+
+  if (!input.outcomes.length) {
+    throw createError({ statusCode: 400, message: 'At least one leg outcome is required.' })
+  }
+
+  // Verify all legs belong to this wager
+  const wagerLegs = await db
+    .select()
+    .from(napkinbetsWagerLegs)
+    .where(eq(napkinbetsWagerLegs.wagerId, wagerId))
+
+  const legIds = new Set(wagerLegs.map((l) => l.id))
+  for (const outcome of input.outcomes) {
+    if (!legIds.has(outcome.legId)) {
+      throw createError({
+        statusCode: 400,
+        message: `Leg '${outcome.legId}' does not belong to this wager.`,
+      })
+    }
+  }
+
+  // Settle all provided legs
+  await Promise.all(
+    input.outcomes.map((outcome) =>
+      db
+        .update(napkinbetsWagerLegs)
+        .set({
+          outcomeStatus: 'settled',
+          outcomeOptionKey: outcome.outcomeOptionKey ?? null,
+          outcomeNumericValue: outcome.outcomeNumericValue ?? null,
+          updatedAt: now,
+        })
+        .where(eq(napkinbetsWagerLegs.id, outcome.legId)),
+    ),
+  )
+
+  // Reset participant acknowledgements (important for re-calls after dispute)
+  await db
+    .update(napkinbetsParticipants)
+    .set({ outcomeAcknowledged: false, outcomeAcknowledgedAt: null, updatedAt: now })
+    .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+  // Transition wager to 'calling'
+  const reviewExpiry = new Date(Date.now() + OUTCOME_REVIEW_WINDOW_MS).toISOString()
+  await db
+    .update(napkinbetsWagers)
+    .set({
+      status: 'calling',
+      outcomeCalledAt: now,
+      outcomeReviewExpiresAt: reviewExpiry,
+      outcomeNote: input.note?.trim() || null,
+      disputeReason: null,
+      disputedByUserId: null,
+      updatedAt: now,
+    })
+    .where(eq(napkinbetsWagers.id, wagerId))
+
+  await createNotification(
+    event,
+    wagerId,
+    'Results called',
+    `${user.name || user.email} declared the results — review within 24h.${input.note ? ` Note: ${input.note.trim()}` : ''}`,
+    'system',
+  )
+
+  return { ok: true, status: 'calling', reviewExpiresAt: reviewExpiry }
+}
+
+export async function disputeCustomWagerResult(event: H3Event, wagerId: string, reason: string) {
+  const user = await requireAuth(event)
+  const db = useAppDatabase(event)
+  const wager = await getWagerOrThrow(event, wagerId)
+  const now = nowIso()
+
+  if (wager.status !== 'calling') {
+    throw createError({
+      statusCode: 400,
+      message: 'Results can only be disputed while in review.',
+    })
+  }
+
+  // Verify caller is an accepted participant (and not the host)
+  const participants = await db
+    .select()
+    .from(napkinbetsParticipants)
+    .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+  const myParticipant = participants.find((p) => p.userId === user.id)
+  if (!myParticipant || myParticipant.joinStatus !== 'accepted') {
+    throw createError({
+      statusCode: 403,
+      message: 'Only accepted participants can dispute results.',
+    })
+  }
+
+  if (wager.ownerUserId === user.id) {
+    throw createError({
+      statusCode: 400,
+      message: 'The host cannot dispute their own results. Edit and re-call instead.',
+    })
+  }
+
+  await db
+    .update(napkinbetsWagers)
+    .set({
+      status: 'disputed',
+      disputeReason: reason.trim(),
+      disputedByUserId: user.id,
+      updatedAt: now,
+    })
+    .where(eq(napkinbetsWagers.id, wagerId))
+
+  await createNotification(
+    event,
+    wagerId,
+    'Results disputed',
+    `${myParticipant.displayName} contested the results: ${reason.trim()}`,
+    'system',
+  )
+
+  return { ok: true, status: 'disputed' }
+}
+
+export async function acceptCustomWagerResult(event: H3Event, wagerId: string) {
+  const user = await requireAuth(event)
+  const db = useAppDatabase(event)
+  const wager = await getWagerOrThrow(event, wagerId)
+  const now = nowIso()
+
+  if (wager.status !== 'calling') {
+    throw createError({
+      statusCode: 400,
+      message: 'Results can only be accepted while in review.',
+    })
+  }
+
+  const participants = await db
+    .select()
+    .from(napkinbetsParticipants)
+    .where(eq(napkinbetsParticipants.wagerId, wagerId))
+
+  const myParticipant = participants.find((p) => p.userId === user.id)
+  if (!myParticipant || myParticipant.joinStatus !== 'accepted') {
+    throw createError({
+      statusCode: 403,
+      message: 'Only accepted participants can accept results.',
+    })
+  }
+
+  await db
+    .update(napkinbetsParticipants)
+    .set({ outcomeAcknowledged: true, outcomeAcknowledgedAt: now, updatedAt: now })
+    .where(eq(napkinbetsParticipants.id, myParticipant.id))
+
+  // Check if all accepted participants have acknowledged
+  const acceptedParticipants = participants.filter((p) => p.joinStatus === 'accepted')
+  const acknowledgedCount = acceptedParticipants.filter((p) => p.outcomeAcknowledged).length
+  // +1 because current user's update hasn't been reflected in the stale read
+  const totalAcknowledged = acknowledgedCount + (myParticipant.outcomeAcknowledged ? 0 : 1)
+
+  if (totalAcknowledged >= acceptedParticipants.length) {
+    await db
+      .update(napkinbetsWagers)
+      .set({ status: 'settling', updatedAt: now })
+      .where(eq(napkinbetsWagers.id, wagerId))
+
+    await createNotification(
+      event,
+      wagerId,
+      'Results confirmed',
+      'All participants accepted the results — ready for financial settlement.',
+      'system',
+    )
+
+    return { ok: true, status: 'settling', allConfirmed: true }
+  }
+
+  return {
+    ok: true,
+    status: 'calling',
+    allConfirmed: false,
+    acknowledgedCount: totalAcknowledged,
+    totalParticipants: acceptedParticipants.length,
+  }
+}
+
+// Auto-finalize wagers whose outcome review window has expired.
+// Called by the cron job on the every-10-minute schedule.
+export async function finalizeExpiredOutcomeReviews(event: H3Event) {
+  const db = useAppDatabase(event)
+  const now = nowIso()
+
+  const expiredWagers = await db
+    .select({ id: napkinbetsWagers.id, title: napkinbetsWagers.title })
+    .from(napkinbetsWagers)
+    .where(
+      and(eq(napkinbetsWagers.status, 'calling'), lt(napkinbetsWagers.outcomeReviewExpiresAt, now)),
+    )
+
+  if (expiredWagers.length === 0) {
+    return { ok: true, finalized: 0 }
+  }
+
+  const expiredIds = expiredWagers.map((w) => w.id)
+
+  await db
+    .update(napkinbetsWagers)
+    .set({ status: 'settling', updatedAt: now })
+    .where(inArray(napkinbetsWagers.id, expiredIds))
+
+  // Create notifications for each finalized wager
+  await Promise.all(
+    expiredWagers.map((w) =>
+      createNotification(
+        event,
+        w.id,
+        'Results finalized',
+        'Review window expired — results are now final. Ready for financial settlement.',
+        'system',
+      ),
+    ),
+  )
+
+  return { ok: true, finalized: expiredWagers.length }
 }

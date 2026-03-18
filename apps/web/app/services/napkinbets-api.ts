@@ -370,6 +370,39 @@ export function useNapkinbetsApi() {
         body: { message },
       })
     },
+    // ─── Custom Bet Outcome Calling ─────────────────────────────
+    callResult(
+      wagerId: string,
+      payload: {
+        outcomes: Array<{ legId: string; outcomeOptionKey?: string; outcomeNumericValue?: number }>
+        note?: string
+      },
+    ) {
+      return fetch<{ ok: true; status: string; reviewExpiresAt: string }>(
+        '/api/napkinbets/wagers/' + wagerId + '/call-result',
+        {
+          method: 'POST',
+          body: payload,
+        },
+      )
+    },
+    disputeResult(wagerId: string, reason: string) {
+      return fetch<{ ok: true; status: string }>(
+        '/api/napkinbets/wagers/' + wagerId + '/dispute-result',
+        {
+          method: 'POST',
+          body: { reason },
+        },
+      )
+    },
+    acceptResult(wagerId: string) {
+      return fetch<{ ok: true; status: string; allConfirmed: boolean }>(
+        '/api/napkinbets/wagers/' + wagerId + '/accept-result',
+        {
+          method: 'POST',
+        },
+      )
+    },
     clearWager(wagerId: string) {
       return fetch('/api/napkinbets/wagers/' + wagerId, {
         method: 'DELETE',
@@ -456,8 +489,33 @@ export function useNapkinbetsApi() {
         startTime?: string
         status?: string
       }
+      friendNames?: string[]
     }) {
       return fetch<NapkinbetsGeneratedNapkin>('/api/napkinbets/ai/generate-napkin', {
+        method: 'POST',
+        body: payload,
+      })
+    },
+    suggestLegs(payload: {
+      title: string
+      format: string
+      existingLegs: Array<{ questionText: string }>
+      eventContext?: {
+        eventTitle: string
+        sport: string
+        league: string
+        homeTeamName?: string
+        awayTeamName?: string
+      }
+    }) {
+      return fetch<{
+        legs: Array<{
+          questionText: string
+          legType: 'categorical' | 'numeric'
+          options: string[]
+          numericUnit: string | null
+        }>
+      }>('/api/napkinbets/ai/suggest-legs', {
         method: 'POST',
         body: payload,
       })

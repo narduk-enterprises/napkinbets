@@ -1,3 +1,4 @@
+html,
 body {
   background:
     radial-gradient(circle at 10% 8%, rgb(27 124 71 / 0.18), transparent 26%),
@@ -14,6 +15,8 @@ body {
   font-feature-settings:
     'liga' 1,
     'tnum' 1;
+  margin: 0;
+  padding: 0;
 }
 
 .napkinbets-app-shell {

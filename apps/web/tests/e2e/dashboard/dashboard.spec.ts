@@ -17,6 +17,16 @@ test.describe('dashboard', () => {
       await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
       await expect(page.getByRole('link', { name: 'Create Napkin' }).first()).toBeVisible()
     })
+
+    test('dashboard shows at least one golf napkin from extended seed', async ({ page }) => {
+      await loginAsDemo(page, '/dashboard')
+      await waitForHydration(page)
+      await expect(page.getByRole('heading', { name: 'Your bets' })).toBeVisible()
+      await expect(page.locator('a[href*="/napkins/"]').first()).toBeVisible({ timeout: 10_000 })
+      await expect(
+        page.getByText(/Weekend Golf Draft|LPGA Major Side Pot|PGA Weekend Locked/i).first(),
+      ).toBeVisible()
+    })
   })
 
   test.describe('visual', () => {

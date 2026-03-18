@@ -259,6 +259,23 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         secondaryHint: props.wager.eventStatus || 'Waiting for first pitch.',
         supportCopy: 'Payment shortcuts stay hidden until the result is official.',
       }
+    case 'calling':
+      return {
+        badgeLabel: 'Results under review',
+        badgeColor: 'info' as const,
+        icon: 'i-lucide-eye',
+        title: 'Outcome declared — awaiting review',
+        description:
+          'The host has called the result. Participants have 24 hours to accept or dispute before it becomes final.',
+        emphasis: participantContext,
+        primaryLabel: 'Winner paid via',
+        primaryValue: paymentRoute.value,
+        primaryHint: 'Financial settlement opens after all participants accept.',
+        secondaryLabel: 'Stake each',
+        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryHint: 'Review the called outcomes in the panel above.',
+        supportCopy: 'Payment shortcuts appear once the outcome is finalized.',
+      }
     case 'live':
       return {
         badgeLabel: 'Live game',
@@ -395,6 +412,10 @@ function statusBadgeColor(status: string) {
       return 'primary'
     case 'open':
       return 'info'
+    case 'calling':
+      return 'warning'
+    case 'disputed':
+      return 'error'
     case 'settling':
       return 'warning'
     case 'settled':
@@ -652,15 +673,17 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                     <span v-if="!isOneOnOne" class="napkinbets-order-pill"
                       >#{{ participant.draftOrder ?? '—' }}</span
                     >
-                    <span class="napkinbets-event-avatar">
-                      <img
-                        v-if="participant.avatarUrl"
-                        :src="participant.avatarUrl"
-                        :alt="participant.displayName"
-                        class="napkinbets-event-avatar-image"
-                      />
-                      <span v-else>{{ participant.displayName.slice(0, 2).toUpperCase() }}</span>
-                    </span>
+                    <UAvatar
+                      :src="participant.avatarUrl || undefined"
+                      :alt="participant.displayName"
+                      :text="
+                        participant.displayName
+                          ? participant.displayName.slice(0, 2).toUpperCase()
+                          : '?'
+                      "
+                      size="md"
+                      class="shrink-0"
+                    />
                     <div>
                       <p class="font-semibold text-default">{{ participant.displayName }}</p>
                       <p class="text-sm text-muted">
@@ -705,13 +728,22 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   :key="row.participantId"
                   class="napkinbets-list-row"
                 >
-                  <div>
-                    <p class="font-semibold text-default">{{ row.displayName }}</p>
-                    <p class="text-sm text-muted">
-                      {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{
-                        row.pickCount === 1 ? '' : 's'
-                      }}
-                    </p>
+                  <div class="flex items-center gap-3">
+                    <UAvatar
+                      :src="row.avatarUrl || undefined"
+                      :alt="row.displayName"
+                      :text="row.displayName ? row.displayName.slice(0, 2).toUpperCase() : '?'"
+                      size="sm"
+                      class="shrink-0"
+                    />
+                    <div>
+                      <p class="font-semibold text-default">{{ row.displayName }}</p>
+                      <p class="text-sm text-muted">
+                        {{ row.sideLabel }} &bull; {{ row.pickCount }} pick{{
+                          row.pickCount === 1 ? '' : 's'
+                        }}
+                      </p>
+                    </div>
                   </div>
                   <div class="text-right">
                     <p class="font-semibold text-default">{{ row.score }} pts</p>
@@ -1101,25 +1133,20 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                         class="h-16 w-16 hover:opacity-80 transition-opacity rounded object-cover shadow-sm bg-muted border border-default"
                       />
                     </ULink>
-                    <span
+                    <UAvatar
                       v-else
-                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0 bg-muted border border-default rounded"
-                      :title="
-                        participantNames.get(settlement.participantId)
-                          ? participantNames.get(settlement.participantId)
-                          : 'No proof'
-                      "
-                    >
-                      <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
-                      {{
+                      :alt="participantNames.get(settlement.participantId) || 'No proof'"
+                      :text="
                         displayNameToInitials(
                           participantNames.get(settlement.participantId) ?? '',
                         ) ||
                         (settlement.participantId
                           ? settlement.participantId.slice(0, 2).toUpperCase()
                           : '—')
-                      }}
-                    </span>
+                      "
+                      size="lg"
+                      class="shrink-0"
+                    />
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="font-semibold text-default truncate">

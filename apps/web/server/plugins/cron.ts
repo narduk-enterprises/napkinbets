@@ -23,6 +23,7 @@
 import type { H3Event } from 'h3'
 import { refreshDiscoverEventCache } from '#server/services/napkinbets/events'
 import { refreshAllActivelyTradedOdds } from '#server/services/napkinbets/odds'
+import { finalizeExpiredOutcomeReviews } from '#server/services/napkinbets/pools'
 import { useAppDatabase } from '#server/utils/database'
 
 interface CloudflareScheduledHookPayload {
@@ -82,6 +83,16 @@ export default defineNitroPlugin((nitroApp) => {
         console.log(
           `[napkinbets-cron] Completed ${job.label}. ${result.runs.length} leagues, ${totalEvents} events.`,
         )
+
+        // Piggyback on the 10-minute cron: auto-finalize expired outcome reviews
+        if (job.tier === 'next-48h') {
+          const reviewResult = await finalizeExpiredOutcomeReviews(h3Event)
+          if (reviewResult.finalized > 0) {
+            console.log(
+              `[napkinbets-cron] Auto-finalized ${reviewResult.finalized} expired outcome review(s).`,
+            )
+          }
+        }
       }
     } catch (error) {
       console.error(`[napkinbets-cron] Failed ${job.label}.`, error)

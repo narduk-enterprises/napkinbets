@@ -3,6 +3,7 @@ import type { NapkinbetsSettlement, NapkinbetsWager } from '../../types/napkinbe
 export type NapkinbetsWagerSettlementStage =
   | 'upcoming'
   | 'live'
+  | 'calling'
   | 'ready'
   | 'submitted'
   | 'rejected'
@@ -19,6 +20,7 @@ type NapkinbetsSettlementStageWager = Pick<NapkinbetsWager, 'status' | 'eventSta
 
 const COMPLETED_WAGER_STATUSES = new Set(['settled', 'closed', 'archived'])
 const FINISHED_WAGER_STATUSES = new Set(['settling', 'settled', 'closed', 'archived'])
+const OUTCOME_CALLING_STATUSES = new Set(['calling', 'disputed'])
 
 export function getNapkinbetsWagerSettlementStage(
   wager: NapkinbetsSettlementStageWager,
@@ -26,6 +28,11 @@ export function getNapkinbetsWagerSettlementStage(
 ): NapkinbetsWagerSettlementStage {
   if (COMPLETED_WAGER_STATUSES.has(wager.status)) {
     return 'settled'
+  }
+
+  // Custom bet is in outcome review — not yet ready for financial settlement
+  if (OUTCOME_CALLING_STATUSES.has(wager.status)) {
+    return 'calling'
   }
 
   const participantSettlement = participantId

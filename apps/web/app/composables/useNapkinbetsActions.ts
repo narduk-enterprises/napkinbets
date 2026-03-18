@@ -128,6 +128,32 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         api.queueReminder(wagerId, message),
       )
     },
+    // ─── Custom Bet Outcome Calling ─────────────────────────────
+    callResult(
+      wagerId: string,
+      payload: {
+        outcomes: Array<{ legId: string; outcomeOptionKey?: string; outcomeNumericValue?: number }>
+        note?: string
+      },
+    ) {
+      return runAction(
+        `outcome:call:${wagerId}`,
+        'Results declared — participants can now review.',
+        () => api.callResult(wagerId, payload),
+      )
+    },
+    disputeResult(wagerId: string, reason: string) {
+      return runAction(
+        `outcome:dispute:${wagerId}`,
+        'Dispute submitted — the host has been notified.',
+        () => api.disputeResult(wagerId, reason),
+      )
+    },
+    acceptResult(wagerId: string) {
+      return runAction(`outcome:accept:${wagerId}`, 'Results accepted.', () =>
+        api.acceptResult(wagerId),
+      )
+    },
     clearWager(wagerId: string) {
       return runAction(`clear:${wagerId}`, 'Bet cleared.', () => api.clearWager(wagerId))
     },

@@ -312,15 +312,145 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-2">
-              <div v-for="cp in settledCounterparties" :key="cp.userId" class="napkinbets-list-row">
-                <div class="flex items-center gap-3">
-                  <UAvatar :src="cp.avatarUrl || undefined" :alt="cp.displayName" size="xs" />
-                  <p class="text-sm text-muted">{{ cp.displayName }}</p>
+              <UCard
+                v-for="cp in settledCounterparties"
+                :key="cp.userId"
+                class="napkinbets-panel opacity-80 hover:opacity-100 transition-opacity"
+              >
+                <div class="space-y-3">
+                  <!-- Counterparty header row -->
+                  <div
+                    class="flex items-center justify-between gap-3 cursor-pointer"
+                    @click="toggleExpanded(cp.userId)"
+                  >
+                    <div class="flex items-center gap-3">
+                      <UAvatar :src="cp.avatarUrl || undefined" :alt="cp.displayName" size="sm" />
+                      <div>
+                        <p class="font-semibold text-default">{{ cp.displayName }}</p>
+                        <p class="text-sm text-muted">
+                          {{ cp.wagerEntries.length }} bet{{
+                            cp.wagerEntries.length === 1 ? '' : 's'
+                          }}
+                          • all confirmed
+                        </p>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                      <div class="text-right">
+                        <p class="text-lg font-bold text-success">Settled</p>
+                      </div>
+                      <UIcon
+                        :name="
+                          expandedCounterparties.has(cp.userId)
+                            ? 'i-lucide-chevron-up'
+                            : 'i-lucide-chevron-down'
+                        "
+                        class="size-5 text-dimmed"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Expanded wager breakdown -->
+                  <div
+                    v-if="expandedCounterparties.has(cp.userId)"
+                    class="space-y-2 pt-2 border-t border-default"
+                  >
+                    <div
+                      v-for="entry in cp.wagerEntries"
+                      :key="entry.wagerId"
+                      class="napkinbets-list-row"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <NuxtLink
+                          :to="`/napkins/${entry.wagerSlug}`"
+                          class="font-medium text-default hover:text-primary truncate block"
+                        >
+                          {{ entry.wagerTitle }}
+                        </NuxtLink>
+                        <p class="text-xs text-muted">
+                          <template v-if="entry.method">via {{ entry.method }}</template>
+                          <template v-else>no payment recorded</template>
+                        </p>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span
+                          class="text-sm font-semibold"
+                          :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
+                        >
+                          {{ entry.amountCents > 0 ? '-' : '+'
+                          }}{{ formatCurrency(entry.amountCents) }}
+                        </span>
+                        <UBadge
+                          :color="getVerificationBadgeColor(entry.verificationStatus)"
+                          variant="soft"
+                          size="xs"
+                        >
+                          {{ entry.verificationStatus || entry.paymentStatus }}
+                        </UBadge>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p class="text-sm text-muted">
-                  {{ cp.wagerEntries.length }} bet{{ cp.wagerEntries.length === 1 ? '' : 's' }} •
-                  all confirmed
-                </p>
+              </UCard>
+            </div>
+          </div>
+          <!-- Payment History -->
+          <div v-if="ledger.paymentHistory.length" class="space-y-3">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-history" class="size-5 text-info" />
+              <h2 class="text-sm font-bold tracking-wide text-info uppercase">Payment History</h2>
+              <UBadge color="info" variant="soft" size="xs">
+                {{ ledger.paymentHistory.length }}
+              </UBadge>
+            </div>
+
+            <div class="space-y-2">
+              <div
+                v-for="entry in ledger.paymentHistory"
+                :key="entry.settlementId"
+                class="napkinbets-list-row"
+              >
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                  <UIcon
+                    :name="
+                      entry.direction === 'sent'
+                        ? 'i-lucide-arrow-up-right'
+                        : 'i-lucide-arrow-down-left'
+                    "
+                    :class="entry.direction === 'sent' ? 'text-error' : 'text-success'"
+                    class="size-5 shrink-0"
+                  />
+                  <div class="min-w-0 flex-1">
+                    <NuxtLink
+                      :to="`/napkins/${entry.wagerSlug}`"
+                      class="font-medium text-default hover:text-primary truncate block"
+                    >
+                      {{ entry.wagerTitle }}
+                    </NuxtLink>
+                    <p class="text-xs text-muted">
+                      {{ entry.direction === 'sent' ? 'Paid' : 'Received from' }}
+                      {{ entry.counterpartyName }}
+                      <template v-if="entry.method"> via {{ entry.method }}</template>
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span
+                    class="text-sm font-semibold"
+                    :class="entry.direction === 'sent' ? 'text-error' : 'text-success'"
+                  >
+                    {{ entry.direction === 'sent' ? '-' : '+'
+                    }}{{ formatCurrency(entry.amountCents) }}
+                  </span>
+                  <UBadge
+                    :color="getVerificationBadgeColor(entry.verificationStatus)"
+                    variant="soft"
+                    size="xs"
+                  >
+                    {{ entry.verificationStatus }}
+                  </UBadge>
+                </div>
               </div>
             </div>
           </div>

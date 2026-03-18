@@ -3,6 +3,7 @@ import { useNapkinbetsApi } from '../services/napkinbets-api'
 
 const EMPTY_LEDGER: NapkinbetsLedgerResponse = {
   counterparties: [],
+  paymentHistory: [],
   totalOwedCents: 0,
   totalOwedToYouCents: 0,
   refreshedAt: '',

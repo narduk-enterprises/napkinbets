@@ -52,6 +52,9 @@ const eventPrefill = computed(() => ({
 const manualPrefill = computed<CreateWagerInput>(() => ({
   ...NAPKINBETS_DEFAULT_CREATE_INPUT,
   ...sharedDefaults.value,
+  sport: '',
+  league: '',
+  contextKey: '',
   eventSource: '',
   eventId: '',
   eventTitle: '',
@@ -118,7 +121,9 @@ useWebPageSchema({
       <div class="space-y-3">
         <p class="napkinbets-kicker">Create</p>
         <h1 class="napkinbets-section-title">Create a Napkin</h1>
-        <p class="napkinbets-hero-lede">Pick a game, choose your side, challenge a friend.</p>
+        <p class="napkinbets-hero-lede">
+          Pick a game or make it up — choose your side, challenge a friend.
+        </p>
       </div>
     </div>
 

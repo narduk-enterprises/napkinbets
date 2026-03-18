@@ -97,6 +97,7 @@ export async function computeLedger(event: H3Event, userId: string) {
   if (myParticipantRows.length === 0) {
     return {
       counterparties: [],
+      paymentHistory: [],
       totalOwedCents: 0,
       totalOwedToYouCents: 0,
       refreshedAt: nowIso(),
@@ -279,7 +280,6 @@ export async function computeLedger(event: H3Event, userId: string) {
 
   // 6. Build final response
   const counterparties = [...counterpartyMap.values()]
-    .filter((cp) => cp.netBalanceCents !== 0)
     .map((cp) => {
       const user = userById.get(cp.userId)
       const profile = defaultProfileByUserId.get(cp.userId)
@@ -313,8 +313,65 @@ export async function computeLedger(event: H3Event, userId: string) {
     .filter((cp) => cp.netBalanceCents < 0)
     .reduce((sum, cp) => sum + Math.abs(cp.netBalanceCents), 0)
 
+  // 7. Build payment history from all settlements involving the current user
+  const myParticipantIds = new Set(myParticipantRows.map((row) => row.id))
+  const wagerById = new Map(wagerRows.map((w) => [w.id, w]))
+  const participantById = new Map(allParticipants.map((p) => [p.id, p]))
+
+  const paymentHistory = allSettlements
+    .filter((s) => {
+      // Include settlements where the current user is the payer (their participant row)
+      // or where the current user is the counterparty receiving
+      const participant = participantById.get(s.participantId)
+      if (!participant) return false
+      // Include if this settlement is on a wager the user participates in
+      return myParticipantIds.has(s.participantId) || participant.userId !== userId
+    })
+    .map((s) => {
+      const wager = wagerById.get(s.wagerId)
+      const participant = participantById.get(s.participantId)
+      const payerUserId = participant?.userId ?? null
+      const isMyPayment = payerUserId === userId
+      const counterpartyUserId = isMyPayment
+        ? null // We need to figure out who they paid — use the wager owner or other participant
+        : payerUserId
+      const counterpartyUser = counterpartyUserId ? userById.get(counterpartyUserId) : null
+
+      // For "my payments": find who I'm paying (the other side in a 1v1, or the wager owner)
+      let counterpartyName = counterpartyUser?.name || 'Unknown'
+      if (isMyPayment && wager) {
+        const otherParticipants = allParticipants.filter(
+          (p) => p.wagerId === wager.id && p.userId && p.userId !== userId,
+        )
+        if (otherParticipants.length === 1 && otherParticipants[0]!.userId) {
+          counterpartyName =
+            userById.get(otherParticipants[0]!.userId)?.name || otherParticipants[0]!.displayName
+        } else {
+          counterpartyName = wager.creatorName
+        }
+      }
+
+      return {
+        settlementId: s.id,
+        wagerId: s.wagerId,
+        wagerSlug: wager?.slug ?? '',
+        wagerTitle: wager?.title ?? 'Unknown bet',
+        amountCents: s.amountCents,
+        method: s.method,
+        handle: s.handle,
+        confirmationCode: s.confirmationCode,
+        verificationStatus: s.verificationStatus,
+        note: s.note,
+        recordedAt: s.recordedAt,
+        direction: isMyPayment ? ('sent' as const) : ('received' as const),
+        counterpartyName,
+      }
+    })
+    .sort((a, b) => (b.recordedAt ?? '').localeCompare(a.recordedAt ?? ''))
+
   return {
     counterparties,
+    paymentHistory,
     totalOwedCents,
     totalOwedToYouCents,
     refreshedAt: nowIso(),

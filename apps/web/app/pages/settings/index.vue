@@ -172,16 +172,12 @@ useWebPageSchema({
 
             <div class="flex items-center gap-4">
               <div class="napkinbets-settings-avatar-wrapper">
-                <span v-if="previewAvatarUrl" class="napkinbets-settings-avatar">
-                  <img
-                    :src="previewAvatarUrl"
-                    alt="Avatar preview"
-                    class="napkinbets-user-avatar-img"
-                  />
-                </span>
-                <span v-else class="napkinbets-settings-avatar napkinbets-user-avatar-initials">
-                  {{ initials }}
-                </span>
+                <UAvatar
+                  :src="previewAvatarUrl || undefined"
+                  :text="initials"
+                  size="3xl"
+                  class="shrink-0"
+                />
               </div>
 
               <div class="space-y-2">

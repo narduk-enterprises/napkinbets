@@ -32,6 +32,7 @@ import {
   toCachedEvent,
   parseJsonValue,
 } from '#server/services/napkinbets/event-queries'
+import { autoSettleWagersForEvents } from '#server/services/napkinbets/settlement'
 
 // -- Re-export from extracted modules for backward compatibility -------------
 export {
@@ -723,7 +724,20 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }
 
   await pruneExpiredEvents(event)
-  await syncCachedOdds(event, [...refreshedEvents.values()])
+  const refreshedArray = [...refreshedEvents.values()]
+  await syncCachedOdds(event, refreshedArray)
+
+  const newlyFinalEvents = refreshedArray.filter((e) => e.state === 'post')
+  if (newlyFinalEvents.length > 0) {
+    try {
+      await autoSettleWagersForEvents(event, newlyFinalEvents)
+    } catch (settleError) {
+      console.error(
+        `[napkinbets-ingest] autoSettleWagersForEvents failed:`,
+        settleError instanceof Error ? settleError.message : settleError,
+      )
+    }
+  }
 
   return {
     refreshedAt: syncedAt,

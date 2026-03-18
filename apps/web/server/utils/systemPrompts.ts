@@ -32,6 +32,7 @@ Return this exact JSON shape:
       "numericUnit": null
     }
   ],
+  "participants": ["Name1", "Name2"],
   "message": "A brief friendly note to the user about the bet you created or what you changed"
 }
 
@@ -45,6 +46,13 @@ CONTENT RULES:
 - For numeric legs, specify the numericUnit (e.g. "points", "yards", "minutes")
 - Terms should be 1-3 sentences, casual but unambiguous
 - The "message" field should be conversational — acknowledge what you changed on follow-ups
+
+PARTICIPANT RULES:
+- If the user mentions people by name, ALWAYS include them in the "participants" array
+- If a list of the user's friends is provided, use the EXACT friend name from that list when matching
+- The "participants" array lists everyone involved EXCEPT the creator/user
+- For head-to-head (2 people), include 1 participant. For group bets (3+), include all and set format to "pool"
+- If no names are mentioned, return an empty participants array
 
 ITERATION EXAMPLES:
 - User: "Make it about the halftime show instead" → Keep the same structure, change the topic

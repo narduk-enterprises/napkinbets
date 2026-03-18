@@ -50,6 +50,13 @@ export const napkinbetsWagers = sqliteTable('napkinbets_wagers', {
   awayScore: text('away_score').notNull().default(''),
   scoringRule: text('scoring_rule').notNull().default('proportional'),
   scoringConfigJson: text('scoring_config_json').notNull().default('{}'),
+  outcomeCalledAt: text('outcome_called_at'),
+  outcomeReviewExpiresAt: text('outcome_review_expires_at'),
+  outcomeNote: text('outcome_note'),
+  disputeReason: text('dispute_reason'),
+  disputedByUserId: text('disputed_by_user_id').references(() => users.id, {
+    onDelete: 'set null',
+  }),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -146,6 +153,10 @@ export const napkinbetsParticipants = sqliteTable('napkinbets_participants', {
   draftOrder: integer('draft_order'),
   paymentStatus: text('payment_status').notNull().default('pending'),
   paymentReference: text('payment_reference'),
+  outcomeAcknowledged: integer('outcome_acknowledged', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  outcomeAcknowledgedAt: text('outcome_acknowledged_at'),
   createdAt: text('created_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -265,16 +276,16 @@ export const napkinbetsAppSettings = sqliteTable('napkinbets_app_settings', {
   chatModel: text('chat_model').notNull().default('grok-3-mini'),
   aiRecommendationsEnabled: integer('ai_recommendations_enabled', { mode: 'boolean' })
     .notNull()
-    .default(false),
+    .default(true),
   aiPropSuggestionsEnabled: integer('ai_prop_suggestions_enabled', { mode: 'boolean' })
     .notNull()
-    .default(false),
+    .default(true),
   aiTermsAssistEnabled: integer('ai_terms_assist_enabled', { mode: 'boolean' })
     .notNull()
-    .default(false),
+    .default(true),
   aiCloseoutAssistEnabled: integer('ai_closeout_assist_enabled', { mode: 'boolean' })
     .notNull()
-    .default(false),
+    .default(true),
   updatedAt: text('updated_at')
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

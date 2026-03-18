@@ -10,6 +10,7 @@ import { getNapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wag
 
 /** Stages where the hero "Settle up" button is shown (ready to settle, in progress, or done). Hidden for live/upcoming. */
 const SETTLE_UP_VISIBLE_STAGES: NapkinbetsWagerSettlementStage[] = [
+  'calling',
   'ready',
   'submitted',
   'rejected',
@@ -50,9 +51,16 @@ const showSettleUpInHero = computed(() =>
   ),
 )
 
-const confirmedSettlementsCount = computed(
-  () => wager.value?.settlements.filter((s) => s.verificationStatus === 'confirmed').length ?? 0,
-)
+const detailMetaLine = computed(() => {
+  if (!wager.value) return ''
+  const parts = [
+    wager.value.eventTitle || 'Custom bet',
+    wager.value.groupName,
+    [wager.value.paymentService, wager.value.paymentHandle].filter(Boolean).join(' • ') || null,
+    wager.value.venueName || null,
+  ].filter(Boolean)
+  return parts.join(' · ')
+})
 
 const isInvited = computed(
   () =>
@@ -139,6 +147,24 @@ async function handleDecline(wagerId: string) {
   await navigateTo('/dashboard')
 }
 
+async function handleCallResult(
+  wagerId: string,
+  payload: {
+    outcomes: Array<{ legId: string; outcomeOptionKey?: string; outcomeNumericValue?: number }>
+    note?: string
+  },
+) {
+  await actions.callResult(wagerId, payload)
+}
+
+async function handleAcceptResult(wagerId: string) {
+  await actions.acceptResult(wagerId)
+}
+
+async function handleDisputeResult(wagerId: string, reason: string) {
+  await actions.disputeResult(wagerId, reason)
+}
+
 useSeo({
   title: wager.value?.title || 'Bet',
   description:
@@ -158,7 +184,7 @@ useWebPageSchema({
 </script>
 
 <template>
-  <div class="napkinbets-page">
+  <div class="napkinbets-page napkinbets-detail">
     <UAlert
       v-if="actions.feedback.value"
       :color="actions.feedback.value.type === 'success' ? 'success' : 'error'"
@@ -182,16 +208,16 @@ useWebPageSchema({
     />
 
     <template v-if="wager">
-      <!-- One-on-one: invitation banner with prominent card -->
-      <UCard v-if="isInvited" class="napkinbets-panel">
-        <div class="space-y-4">
-          <div class="space-y-2">
+      <!-- One-on-one: invitation card (compact) -->
+      <UCard v-if="isInvited" class="napkinbets-panel napkinbets-invitation-card">
+        <div class="space-y-3">
+          <div class="space-y-1.5">
             <p class="napkinbets-kicker">Invitation</p>
-            <h2 class="napkinbets-section-title">{{ wager.title }}</h2>
-            <p class="napkinbets-hero-lede">
+            <h2 class="napkinbets-section-heading">{{ wager.title }}</h2>
+            <p class="napkinbets-support-copy">
               {{ wager.creatorName }} challenged you as
-              <strong>{{ myParticipant!.displayName }}</strong> on
-              <strong>{{ myParticipant!.sideLabel || 'Open side' }}</strong
+              <strong class="text-default">{{ myParticipant!.displayName }}</strong> on
+              <strong class="text-default">{{ myParticipant!.sideLabel || 'Open side' }}</strong
               >.
             </p>
           </div>
@@ -214,7 +240,7 @@ useWebPageSchema({
           <div class="flex flex-wrap gap-3">
             <UButton
               color="primary"
-              size="lg"
+              size="md"
               icon="i-lucide-check"
               :loading="actions.activeAction.value === `join:${wager.id}`"
               @click="handleJoin(wager.id, acceptJoinPayload)"
@@ -223,7 +249,7 @@ useWebPageSchema({
             </UButton>
             <UButton
               color="error"
-              size="lg"
+              size="md"
               variant="soft"
               icon="i-lucide-x"
               :loading="actions.activeAction.value === `decline:${wager.id}`"
@@ -235,72 +261,56 @@ useWebPageSchema({
         </div>
       </UCard>
 
-      <!-- One-on-one: skip the hero, go straight to the card -->
-      <!-- Pool bet: show the full hero -->
-      <div v-if="wager.napkinType !== 'simple-bet'" class="napkinbets-hero">
-        <div class="napkinbets-hero-grid">
-          <div class="space-y-4">
-            <div class="flex flex-wrap items-center gap-2">
-              <UBadge :color="wager.status === 'live' ? 'success' : 'info'" variant="soft">
-                {{ wager.status }}
-              </UBadge>
-              <UBadge color="neutral" variant="subtle">
-                {{ wager.format }}
-              </UBadge>
-              <UBadge v-if="wager.league" color="warning" variant="soft">{{
-                wager.league.toUpperCase()
-              }}</UBadge>
-            </div>
-
-            <div class="space-y-3">
-              <p class="napkinbets-kicker">Bet</p>
-              <h1 class="napkinbets-section-title">{{ wager.title }}</h1>
-              <p class="napkinbets-hero-lede">{{ wager.description }}</p>
-            </div>
-
-            <div class="napkinbets-hero-pills">
-              <span class="napkinbets-hero-pill">{{ wager.eventTitle || 'Custom bet' }}</span>
-              <span v-if="wager.groupName" class="napkinbets-hero-pill">{{ wager.groupName }}</span>
-              <span class="napkinbets-hero-pill"
-                >{{ wager.paymentService
-                }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}</span
-              >
-              <span class="napkinbets-hero-pill">{{ wager.venueName || 'Remote group' }}</span>
-            </div>
-
-            <div v-if="showSettleUpInHero" class="napkinbets-card-actions">
-              <UButton
-                :to="`/napkins/${wager.slug}/closeout`"
-                color="primary"
-                variant="soft"
-                icon="i-lucide-clipboard-list"
-              >
-                Settle up
-              </UButton>
-            </div>
+      <!-- Pool bet: compact header (content-first, no hero panel) -->
+      <div
+        v-if="wager.napkinType !== 'simple-bet'"
+        class="napkinbets-detail-header"
+        aria-label="Bet overview"
+      >
+        <div class="napkinbets-detail-header-top">
+          <h1 class="napkinbets-detail-title">{{ wager.title }}</h1>
+          <div class="napkinbets-detail-header-actions">
+            <UBadge :color="wager.status === 'live' ? 'success' : 'info'" variant="soft" size="xs">
+              {{ wager.status }}
+            </UBadge>
+            <UBadge color="neutral" variant="subtle" size="xs">
+              {{ wager.format }}
+            </UBadge>
+            <UBadge v-if="wager.league" color="warning" variant="soft" size="xs">
+              {{ wager.league.toUpperCase() }}
+            </UBadge>
+            <UButton
+              v-if="showSettleUpInHero"
+              :to="`/napkins/${wager.slug}/closeout`"
+              color="primary"
+              variant="soft"
+              size="sm"
+              icon="i-lucide-clipboard-list"
+              class="napkinbets-detail-settle-btn"
+            >
+              Settle up
+            </UButton>
           </div>
-
-          <UCard class="napkinbets-panel">
-            <div class="space-y-3">
-              <p class="napkinbets-kicker">At a glance</p>
-              <div class="napkinbets-summary-grid">
-                <div class="napkinbets-surface">
-                  <p class="napkinbets-surface-label">Players</p>
-                  <p class="napkinbets-surface-value">{{ wager.participants.length }}</p>
-                </div>
-                <div class="napkinbets-surface">
-                  <p class="napkinbets-surface-label">Payouts</p>
-                  <p class="napkinbets-surface-value">{{ wager.pots.length }}</p>
-                </div>
-                <div class="napkinbets-surface">
-                  <p class="napkinbets-surface-label">Paid</p>
-                  <p class="napkinbets-surface-value">{{ confirmedSettlementsCount }}</p>
-                </div>
-              </div>
-            </div>
-          </UCard>
         </div>
+        <p v-if="detailMetaLine" class="napkinbets-detail-meta">
+          {{ detailMetaLine }}
+        </p>
+        <p v-if="wager.description" class="napkinbets-detail-description">
+          {{ wager.description }}
+        </p>
       </div>
+
+      <!-- Custom bet outcome calling (above the main card) -->
+      <NapkinbetsOutcomeCalling
+        :wager="wager"
+        :can-manage="canManage"
+        :is-authenticated="loggedIn"
+        :current-user-id="user?.id ?? null"
+        :active-action="actions.activeAction.value"
+        @call-result="handleCallResult"
+        @accept-result="handleAcceptResult"
+        @dispute-result="handleDisputeResult"
+      />
 
       <NapkinbetsNapkinCard
         :wager="wager"

@@ -4,7 +4,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 0 : 0,
-  maxFailures: process.env.CI ? undefined : 5,
+  maxFailures: process.env.CI ? undefined : 2,
   reporter: [['line'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   timeout: 15_000,
   expect: {

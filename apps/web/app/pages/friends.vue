@@ -126,9 +126,12 @@ useWebPageSchema({
               :key="result.id"
               class="napkinbets-surface flex items-center justify-between gap-3"
             >
-              <div class="min-w-0 space-y-1">
-                <p class="font-semibold text-default">{{ result.displayName }}</p>
-                <p class="truncate text-sm text-muted">{{ result.email }}</p>
+              <div class="flex items-center gap-3 min-w-0">
+                <UAvatar :src="result.avatarUrl || undefined" :alt="result.displayName" size="sm" />
+                <div class="min-w-0 space-y-1">
+                  <p class="font-semibold text-default">{{ result.displayName }}</p>
+                  <p class="truncate text-sm text-muted">{{ result.email }}</p>
+                </div>
               </div>
 
               <UButton
@@ -174,9 +177,16 @@ useWebPageSchema({
                 :key="friend.friendshipId"
                 class="napkinbets-surface flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div class="min-w-0 space-y-1">
-                  <p class="font-semibold text-default">{{ friend.displayName }}</p>
-                  <p class="truncate text-sm text-muted">{{ friend.email }}</p>
+                <div class="flex items-center gap-3 min-w-0">
+                  <UAvatar
+                    :src="friend.avatarUrl || undefined"
+                    :alt="friend.displayName"
+                    size="sm"
+                  />
+                  <div class="min-w-0 space-y-1">
+                    <p class="font-semibold text-default">{{ friend.displayName }}</p>
+                    <p class="truncate text-sm text-muted">{{ friend.email }}</p>
+                  </div>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
@@ -229,9 +239,16 @@ useWebPageSchema({
                     :key="request.friendshipId"
                     class="napkinbets-surface space-y-3"
                   >
-                    <div class="space-y-1">
-                      <p class="font-semibold text-default">{{ request.displayName }}</p>
-                      <p class="text-sm text-muted">{{ request.email }}</p>
+                    <div class="flex items-center gap-3">
+                      <UAvatar
+                        :src="request.avatarUrl || undefined"
+                        :alt="request.displayName"
+                        size="sm"
+                      />
+                      <div class="space-y-1">
+                        <p class="font-semibold text-default">{{ request.displayName }}</p>
+                        <p class="text-sm text-muted">{{ request.email }}</p>
+                      </div>
                     </div>
                     <div class="flex gap-2">
                       <UButton
@@ -271,9 +288,16 @@ useWebPageSchema({
                     :key="request.friendshipId"
                     class="napkinbets-surface flex items-center justify-between gap-3"
                   >
-                    <div class="min-w-0 space-y-1">
-                      <p class="font-semibold text-default">{{ request.displayName }}</p>
-                      <p class="truncate text-sm text-muted">{{ request.email }}</p>
+                    <div class="flex items-center gap-3 min-w-0">
+                      <UAvatar
+                        :src="request.avatarUrl || undefined"
+                        :alt="request.displayName"
+                        size="sm"
+                      />
+                      <div class="min-w-0 space-y-1">
+                        <p class="font-semibold text-default">{{ request.displayName }}</p>
+                        <p class="truncate text-sm text-muted">{{ request.email }}</p>
+                      </div>
                     </div>
 
                     <UBadge color="warning" variant="soft">Pending</UBadge>

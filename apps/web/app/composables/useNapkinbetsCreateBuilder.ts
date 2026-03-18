@@ -3,6 +3,7 @@ import type {
   CreateWagerInput,
   NapkinbetsFriend,
   NapkinbetsGroup,
+  NapkinbetsLegType,
   NapkinbetsTaxonomyResponse,
 } from '../../types/napkinbets'
 
@@ -31,6 +32,14 @@ interface SideTemplateOption {
 interface ParticipantSeedDraft {
   displayName: string
   userId: string | null
+}
+
+export interface LegDraft {
+  questionText: string
+  legType: NapkinbetsLegType
+  options: string[]
+  numericUnit: string
+  optionDraft: string
 }
 
 const POOL_FORMAT_OPTIONS = [
@@ -149,13 +158,14 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
 
   const selectedOpponentId = ref(options.initialFriendId.value)
   const manualOpponentName = ref('')
-  const simpleSideA = ref('Side A')
-  const simpleSideB = ref('Side B')
+  const simpleSideA = ref(options.mode.value === 'manual' ? 'Yes' : 'Side A')
+  const simpleSideB = ref(options.mode.value === 'manual' ? 'No' : 'Side B')
   const selectedSimpleSide = ref(0)
   const participantDraft = ref('')
   const poolParticipants = ref<ParticipantSeedDraft[]>([])
   const sideOptionList = ref<string[]>(parseLines(options.prefill.value.sideOptions))
   const sideOptionDraft = ref('')
+  const legList = ref<LegDraft[]>([])
   const selectedPotTemplate = ref(inferPotTemplate(formState.format, formState.potRules))
   const selectedVenuePreset = ref<VenuePresetValue>('Group chat')
 
@@ -278,7 +288,9 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
       return attachedEventSides.value
     }
 
-    return [simpleSideA.value.trim() || 'Side A', simpleSideB.value.trim() || 'Side B']
+    const fallbackA = options.mode.value === 'manual' ? 'Yes' : 'Side A'
+    const fallbackB = options.mode.value === 'manual' ? 'No' : 'Side B'
+    return [simpleSideA.value.trim() || fallbackA, simpleSideB.value.trim() || fallbackB]
   })
 
   const simpleBetOpponentName = computed(
@@ -294,15 +306,20 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   const boardSummary = computed(() => {
     if (isSimpleBet.value) {
       const opponent = simpleBetOpponentName.value || 'one opponent'
-      const eventLabel =
-        options.mode.value === 'event'
-          ? formState.eventTitle || formState.title
-          : selectedLeague.value?.label || selectedSport.value?.label || 'the room'
 
-      return `One-on-one bet for ${eventLabel}, set against ${opponent}, with one stake and manual settle-up after the result is official.`
+      if (options.mode.value === 'event') {
+        const eventLabel = formState.eventTitle || formState.title
+        return `One-on-one bet for ${eventLabel}, set against ${opponent}, with one stake and manual settle-up after the result is official.`
+      }
+
+      const title = formState.title.trim()
+      return title
+        ? `"${title}" — head-to-head with ${opponent}. Manual settle-up after the outcome is decided.`
+        : `Custom head-to-head with ${opponent}. Manual settle-up after the outcome is decided.`
     }
 
-    return `Group bet for ${formState.title}, with shared sides, tracked entries, and manual settle-up outside the app.`
+    const title = formState.title.trim() || 'this bet'
+    return `Group bet for ${title}, with shared sides, tracked entries, and manual settle-up outside the app.`
   })
 
   const closeoutTerms = computed(() => {
@@ -368,6 +385,14 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
       participantSeeds,
       shuffleParticipants: true,
       potRules: selectedPotRules.value.join('\n'),
+      legs: legList.value
+        .filter((leg) => leg.questionText.trim())
+        .map((leg) => ({
+          questionText: leg.questionText.trim(),
+          legType: leg.legType,
+          options: leg.legType === 'categorical' ? leg.options.filter(Boolean) : undefined,
+          numericUnit: leg.legType === 'numeric' ? leg.numericUnit.trim() || undefined : undefined,
+        })),
     }
   })
 
@@ -378,8 +403,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     selectedSimpleSide.value = 0
     sideOptionList.value = parseLines(prefill.sideOptions)
     const defaultSides = parseLines(prefill.sideOptions)
-    simpleSideA.value = defaultSides[0] ?? 'Side A'
-    simpleSideB.value = defaultSides[1] ?? 'Side B'
+    simpleSideA.value = defaultSides[0] ?? (options.mode.value === 'manual' ? 'Yes' : 'Side A')
+    simpleSideB.value = defaultSides[1] ?? (options.mode.value === 'manual' ? 'No' : 'Side B')
     poolParticipants.value =
       prefill.participantSeeds?.map((participant) => ({
         displayName: participant.displayName,
@@ -456,6 +481,45 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     }
 
     sideOptionList.value = [...template.options]
+  }
+
+  function addLeg() {
+    legList.value = [
+      ...legList.value,
+      {
+        questionText: '',
+        legType: 'categorical',
+        options: [],
+        numericUnit: '',
+        optionDraft: '',
+      },
+    ]
+  }
+
+  function removeLeg(index: number) {
+    legList.value = legList.value.filter((_, i) => i !== index)
+  }
+
+  function addLegOption(legIndex: number) {
+    const leg = legList.value[legIndex]
+    if (!leg || !leg.optionDraft.trim()) {
+      return
+    }
+
+    const value = leg.optionDraft.trim()
+    if (!leg.options.includes(value)) {
+      leg.options = [...leg.options, value]
+    }
+    leg.optionDraft = ''
+  }
+
+  function removeLegOption(legIndex: number, option: string) {
+    const leg = legList.value[legIndex]
+    if (!leg) {
+      return
+    }
+
+    leg.options = leg.options.filter((o) => o !== option)
   }
 
   watch(
@@ -554,6 +618,7 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     participantDraft,
     sideOptionList,
     sideOptionDraft,
+    legList,
     boardSummary,
     payload,
     addPoolParticipant,
@@ -563,5 +628,9 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     addSideOption,
     removeSideOption,
     applySideTemplate,
+    addLeg,
+    removeLeg,
+    addLegOption,
+    removeLegOption,
   }
 }

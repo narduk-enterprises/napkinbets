@@ -349,25 +349,22 @@ useWebPageSchema({
                           alt="Payment proof"
                           class="h-16 w-16 rounded object-cover shadow-sm bg-muted border border-default"
                         />
-                        <span
+                        <UAvatar
                           v-else
-                          class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0 bg-muted border border-default rounded"
-                          :title="
-                            participantById.get(settlement.participantId)?.displayName
-                              ? participantById.get(settlement.participantId)?.displayName
-                              : 'No proof'
-                          "
-                        >
-                          <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
-                          {{
+                          :text="
                             displayNameToInitials(
                               participantById.get(settlement.participantId)?.displayName ?? '',
                             ) ||
                             (settlement.participantId
                               ? settlement.participantId.slice(0, 2).toUpperCase()
                               : '—')
-                          }}
-                        </span>
+                          "
+                          :alt="
+                            participantById.get(settlement.participantId)?.displayName || 'No proof'
+                          "
+                          size="3xl"
+                          class="shrink-0 border border-default"
+                        />
                       </div>
                       <div class="space-y-1">
                         <p class="font-semibold text-default">
@@ -453,12 +450,12 @@ useWebPageSchema({
                   class="napkinbets-list-row"
                 >
                   <div class="flex gap-4 items-center">
-                    <span
-                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0"
-                      :title="participant.displayName || 'No proof'"
-                    >
-                      {{ displayNameToInitials(participant.displayName ?? '') || '—' }}
-                    </span>
+                    <UAvatar
+                      :text="displayNameToInitials(participant.displayName ?? '') || '—'"
+                      :alt="participant.displayName || 'No proof'"
+                      size="3xl"
+                      class="shrink-0 border border-default"
+                    />
                     <div>
                       <p class="font-semibold text-default">{{ participant.displayName }}</p>
                       <p class="text-sm text-muted">{{ participant.sideLabel || 'No side yet' }}</p>

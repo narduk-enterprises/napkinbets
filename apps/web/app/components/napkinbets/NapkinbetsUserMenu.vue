@@ -67,12 +67,7 @@ async function signOut() {
         class="napkinbets-user-menu-trigger"
         aria-label="User menu"
       >
-        <span v-if="avatarUrl" class="napkinbets-user-avatar">
-          <img :src="avatarUrl" alt="" class="napkinbets-user-avatar-img" />
-        </span>
-        <span v-else class="napkinbets-user-avatar napkinbets-user-avatar-initials">
-          {{ initials }}
-        </span>
+        <UAvatar :src="avatarUrl || undefined" :text="initials" size="sm" />
         <span class="napkinbets-user-menu-name hidden sm:inline">{{ displayName }}</span>
         <UIcon name="i-lucide-chevron-down" class="size-3 text-dimmed" />
       </UButton>
@@ -80,15 +75,7 @@ async function signOut() {
       <template #content>
         <div class="napkinbets-user-dropdown">
           <div class="napkinbets-user-dropdown-header">
-            <span v-if="avatarUrl" class="napkinbets-user-avatar napkinbets-user-avatar-lg">
-              <img :src="avatarUrl" alt="" class="napkinbets-user-avatar-img" />
-            </span>
-            <span
-              v-else
-              class="napkinbets-user-avatar napkinbets-user-avatar-initials napkinbets-user-avatar-lg"
-            >
-              {{ initials }}
-            </span>
+            <UAvatar :src="avatarUrl || undefined" :text="initials" size="lg" />
             <div class="min-w-0">
               <p class="font-semibold text-default truncate">{{ displayName }}</p>
               <p class="text-xs text-muted truncate">{{ user?.email }}</p>

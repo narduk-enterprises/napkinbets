@@ -24,6 +24,7 @@ const bodySchema = z.object({
       status: z.string().optional(),
     })
     .optional(),
+  friendNames: z.array(z.string()).max(50).optional(),
 })
 
 export default defineEventHandler(async (event) => {
