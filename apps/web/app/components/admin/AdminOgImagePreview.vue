@@ -4,12 +4,7 @@ const props = defineProps<{
   label: string
 }>()
 
-const { data: ogData, status } = useFetch('/api/admin/og-image-url', {
-  query: { path: props.path },
-  lazy: true,
-  // Cache the response since OG image URLs (path + props) are usually stable
-  key: `og-image-${props.path}`,
-})
+const { ogData, status } = useOgImagePreview(props.path)
 
 const url = computed(() => ogData.value?.url || '')
 const displayUrl = computed(() => {

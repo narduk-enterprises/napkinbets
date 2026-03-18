@@ -17,19 +17,18 @@ const items = [
 const route = useRoute()
 const router = useRouter()
 
-const selectedTabIndex = computed({
+const selectedTab = computed({
   get() {
     const tabParam = route.query.tab as string
-    const index = items.findIndex((item) => item.slot === tabParam)
-    return index === -1 ? 0 : index
+    const item = items.find((i) => i.slot === tabParam)
+    return item ? item.slot : items[0].slot
   },
-  set(newIndex) {
-    const item = items[newIndex]
-    if (item) {
-      router.replace({ query: { ...route.query, tab: item.slot } })
-    }
+  set(newTab) {
+    router.replace({ query: { ...route.query, tab: newTab as string } })
   },
 })
+
+useSeo({
   title: 'Admin controls',
   description: 'Manage registered users, bets, event coverage, and control operator-only features.',
   ogImage: {
@@ -75,7 +74,7 @@ useWebPageSchema({
       :description="actions.feedback.value.text"
     />
 
-    <UTabs v-model="selectedTabIndex" :items="items" class="mt-6">
+    <UTabs v-model="selectedTab" :items="items" class="mt-6" valueKey="slot">
       <template #dashboard>
         <div class="mt-6">
           <AdminDashboardTab />

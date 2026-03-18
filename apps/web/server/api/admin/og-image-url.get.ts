@@ -1,13 +1,19 @@
 import { defineEventHandler, getQuery } from 'h3'
+import { z } from 'zod'
+
+const querySchema = z.object({
+  path: z.string().min(1),
+})
 
 export default defineEventHandler(async (event) => {
   // Enforce admin access if needed, but this is a read-only util
-  const query = getQuery(event)
-  const path = query.path as string
+  const result = querySchema.safeParse(getQuery(event))
   
-  if (!path) {
+  if (!result.success) {
     return { url: null }
   }
+
+  const path = result.data.path
 
   try {
     // Fetch the SSR HTML of the requested path internally via Nitro
