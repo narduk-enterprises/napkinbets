@@ -138,7 +138,7 @@ export interface NapkinbetsGeneratedNapkin {
 export async function generateNapkinBet(
   event: H3Event,
   input: {
-    userPrompt: string
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>
     eventContext?: {
       eventTitle: string
       sport: string
@@ -154,25 +154,31 @@ export async function generateNapkinBet(
   const ai = await requireAi(event, 'napkin-generator')
   const systemContent = await getSystemPrompt(event, 'napkin_generator')
 
-  let userMessage = input.userPrompt
-  if (input.eventContext) {
-    userMessage += `\n\nEvent Context:\n${JSON.stringify(input.eventContext, null, 2)}`
+  const formattedMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
+    {
+      role: 'system',
+      content: systemContent,
+    },
+  ]
+
+  for (let i = 0; i < input.messages.length; i++) {
+    const msg = input.messages[i]
+    if (!msg) continue
+
+    if (i === 0 && msg.role === 'user' && input.eventContext) {
+      formattedMessages.push({
+        role: msg.role,
+        content: `${msg.content}\n\nEvent Context:\n${JSON.stringify(input.eventContext, null, 2)}`,
+      })
+    } else {
+      formattedMessages.push({
+        role: msg.role,
+        content: msg.content,
+      })
+    }
   }
 
-  const content = await grokChat(
-    ai.apiKey,
-    [
-      {
-        role: 'system',
-        content: systemContent,
-      },
-      {
-        role: 'user',
-        content: userMessage,
-      },
-    ],
-    ai.model,
-  )
+  const content = await grokChat(ai.apiKey, formattedMessages, ai.model)
 
   try {
     // Strip potential markdown code fences

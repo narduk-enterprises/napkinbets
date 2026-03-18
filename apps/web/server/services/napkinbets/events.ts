@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, asc, desc, eq, inArray, lt, notInArray, or } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, lt, or } from 'drizzle-orm'
 import {
   napkinbetsEvents,
   napkinbetsEventOdds,
@@ -1155,6 +1155,7 @@ async function recordIngestRunStart(
   config: NapkinbetsLeagueDefinition,
   tier: DiscoverTier,
   windows: IngestWindow[],
+  source: string = 'espn',
 ) {
   const db = useAppDatabase(event)
   const runId = crypto.randomUUID()
@@ -1169,7 +1170,7 @@ async function recordIngestRunStart(
     .insert(napkinbetsIngestRuns)
     .values({
       id: runId,
-      source: 'espn',
+      source,
       sport: config.sportKey,
       league: config.key,
       tier,
@@ -1350,20 +1351,25 @@ async function pruneExpiredEvents(event: H3Event) {
     .from(napkinbetsWagers)
     .where(and(eq(napkinbetsWagers.eventSource, 'espn')))
 
-  const linkedEventIds = linkedEventRows
-    .map((row) => row.eventId)
-    .filter((id): id is string => Boolean(id))
+  const linkedEventIds = new Set(
+    linkedEventRows.map((row) => row.eventId).filter((id): id is string => Boolean(id)),
+  )
 
   const baseCondition = or(
     and(eq(napkinbetsEvents.state, 'post'), lt(napkinbetsEvents.startTime, cutoff)),
     lt(napkinbetsEvents.updatedAt, cutoff),
   )
 
-  if (linkedEventIds.length > 0) {
-    await db
-      .delete(napkinbetsEvents)
-      .where(and(baseCondition, notInArray(napkinbetsEvents.id, linkedEventIds)))
-      .run()
+  if (linkedEventIds.size > 0) {
+    // Fetch candidates first, then delete in batches to avoid large notInArray
+    const candidates = await db
+      .select({ id: napkinbetsEvents.id })
+      .from(napkinbetsEvents)
+      .where(baseCondition)
+    const toDelete = candidates.map((row) => row.id).filter((id) => !linkedEventIds.has(id))
+    for (const chunk of chunkItems(toDelete, EVENT_LOOKUP_BATCH_SIZE)) {
+      await db.delete(napkinbetsEvents).where(inArray(napkinbetsEvents.id, chunk)).run()
+    }
   } else {
     await db.delete(napkinbetsEvents).where(baseCondition).run()
   }
@@ -1377,11 +1383,15 @@ async function syncWagerScoresFromEvents(event: H3Event, events: NapkinbetsCache
   const db = useAppDatabase(event)
   const eventIds = events.map((item) => item.id)
 
-  // Find wagers that reference any of the ingested events
-  const linkedWagers = await db
-    .select({ id: napkinbetsWagers.id, eventId: napkinbetsWagers.eventId })
-    .from(napkinbetsWagers)
-    .where(inArray(napkinbetsWagers.eventId, eventIds))
+  // Find wagers that reference any of the ingested events (batched to stay within D1 limits)
+  const linkedWagers: Array<{ id: string; eventId: string | null }> = []
+  for (const chunk of chunkItems(eventIds, EVENT_LOOKUP_BATCH_SIZE)) {
+    const rows = await db
+      .select({ id: napkinbetsWagers.id, eventId: napkinbetsWagers.eventId })
+      .from(napkinbetsWagers)
+      .where(inArray(napkinbetsWagers.eventId, chunk))
+    linkedWagers.push(...rows)
+  }
 
   if (linkedWagers.length === 0) {
     return
@@ -1803,36 +1813,73 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }> = []
 
   for (const config of activeLeagues) {
-    const runId = await recordIngestRunStart(event, config, tier, windows)
+    const sources = ['espn', 'mysportsfeeds', 'balldontlie']
+    let success = false
+    let lastMessage: string | null = null
 
-    try {
-      const result = await fetchLeagueEvents(config, tier, syncedAt)
-      await upsertLeagueEvents(event, result.events)
-      await syncWagerScoresFromEvents(event, result.events)
-      for (const currentEvent of result.events) {
-        refreshedEvents.set(currentEvent.id, currentEvent)
+    for (const source of sources) {
+      if (source === 'balldontlie' && config.sportKey !== 'basketball') {
+        continue
       }
-      await finishIngestRun(event, runId, 'success', result.events.length)
+      if (
+        source === 'mysportsfeeds' &&
+        !['football', 'basketball', 'baseball', 'hockey'].includes(config.sportKey)
+      ) {
+        continue
+      }
 
-      summaries.push({
-        league: config.key,
-        sport: config.sportKey,
-        tier,
-        status: 'success',
-        eventCount: result.events.length,
-        errorMessage: null,
-      })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown ingest failure.'
-      await finishIngestRun(event, runId, 'failed', 0, message)
+      const runId = await recordIngestRunStart(event, config, tier, windows, source)
 
+      try {
+        let result
+        if (source === 'espn') {
+          result = await fetchLeagueEvents(config, tier, syncedAt)
+        } else if (source === 'mysportsfeeds') {
+          throw new Error('MySportsFeeds API mapping not yet implemented for events.')
+        } else if (source === 'balldontlie') {
+          throw new Error('BALLDONTLIE API mapping not yet implemented for events.')
+        }
+
+        if (result) {
+          await upsertLeagueEvents(event, result.events)
+          try {
+            await syncWagerScoresFromEvents(event, result.events)
+          } catch (syncError) {
+            console.error(
+              `[napkinbets-ingest] Wager score sync failed for ${config.key}:`,
+              syncError instanceof Error ? syncError.message : syncError,
+            )
+          }
+          for (const currentEvent of result.events) {
+            refreshedEvents.set(currentEvent.id, currentEvent)
+          }
+          await finishIngestRun(event, runId, 'success', result.events.length)
+
+          summaries.push({
+            league: config.key,
+            sport: config.sportKey,
+            tier,
+            status: 'success',
+            eventCount: result.events.length,
+            errorMessage: null,
+          })
+          success = true
+          break
+        }
+      } catch (error) {
+        lastMessage = error instanceof Error ? error.message : 'Unknown ingest failure.'
+        await finishIngestRun(event, runId, 'failed', 0, lastMessage)
+      }
+    }
+
+    if (!success) {
       summaries.push({
         league: config.key,
         sport: config.sportKey,
         tier,
         status: 'failed',
         eventCount: 0,
-        errorMessage: message,
+        errorMessage: lastMessage,
       })
     }
   }

@@ -18,13 +18,19 @@ const emit = defineEmits<{
   (e: 'use-napkin', napkin: NapkinbetsGeneratedNapkin): void
 }>()
 
-const { generating, result, error, generateNapkin, clear } = useNapkinbetsAiGenerator()
+const { generating, result, error, generateNapkin, clear, messages } = useNapkinbetsAiGenerator()
 
 const prompt = ref('')
 
 async function handleGenerate() {
-  if (!prompt.value.trim()) return
-  await generateNapkin(prompt.value, props.eventContext)
+  if (!prompt.value.trim() || generating.value) return
+  const currentPrompt = prompt.value
+  prompt.value = '' // Clear input immediately
+  await generateNapkin(currentPrompt, props.eventContext)
+  // Revert prompt if it failed
+  if (error.value) {
+    prompt.value = currentPrompt
+  }
 }
 
 function handleUse() {
@@ -72,56 +78,65 @@ const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)
         :description="`${eventContext.sport} • ${eventContext.league}${eventContext.venueName ? ' • ' + eventContext.venueName : ''}`"
       />
 
-      <!-- Input area -->
-      <div v-if="!result" class="space-y-3">
-        <UTextarea
-          v-model="prompt"
-          :placeholder="placeholder"
-          :rows="3"
-          autoresize
-          class="w-full"
-          :disabled="generating"
-          @keydown.meta.enter="handleGenerate"
-          @keydown.ctrl.enter="handleGenerate"
-        />
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-dimmed">⌘ + Enter to generate</p>
-          <UButton
-            color="primary"
-            :loading="generating"
-            :disabled="!prompt.trim()"
-            icon="i-lucide-sparkles"
-            @click="handleGenerate"
-          >
-            Generate Napkin
-          </UButton>
-        </div>
-      </div>
+      <!-- Chat History -->
+      <div v-if="messages.length > 0" class="space-y-4 max-h-[400px] overflow-y-auto p-1">
+        <template v-for="(msg, index) in messages" :key="index">
+          <!-- User Message -->
+          <div v-if="msg.role === 'user'" class="flex gap-3 justify-end">
+            <div
+              class="bg-muted rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] text-sm text-default"
+            >
+              {{ msg.content }}
+            </div>
+            <UAvatar size="sm" alt="You" class="shrink-0" />
+          </div>
 
-      <!-- Error state -->
-      <UAlert
-        v-if="error"
-        color="error"
-        variant="soft"
-        icon="i-lucide-circle-alert"
-        title="Generation failed"
-        :description="error"
-      />
+          <!-- AI Loading State -->
+          <div
+            v-if="msg.role === 'user' && index === messages.length - 1 && generating"
+            class="flex gap-3 items-start"
+          >
+            <div
+              class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+            >
+              <UIcon name="i-lucide-bot" class="w-4 h-4 text-primary animate-pulse" />
+            </div>
+            <div
+              class="bg-primary/5 rounded-2xl rounded-tl-sm px-4 py-3 min-w-[100px] flex items-center gap-1 mt-1"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce"
+                style="animation-delay: 0ms"
+              ></span>
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce"
+                style="animation-delay: 150ms"
+              ></span>
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-primary/40 animate-bounce"
+                style="animation-delay: 300ms"
+              ></span>
+            </div>
+          </div>
+        </template>
+      </div>
 
       <!-- Result display -->
       <div v-if="result" class="space-y-4">
         <!-- AI message -->
-        <div v-if="result.message" class="flex gap-2 items-start">
-          <div
-            class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5"
-          >
-            <UIcon name="i-lucide-bot" class="w-3.5 h-3.5 text-primary" />
+        <div v-if="result.message" class="flex gap-3 items-start">
+          <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <UIcon name="i-lucide-bot" class="w-4 h-4 text-primary" />
           </div>
-          <p class="text-sm text-muted">{{ result.message }}</p>
+          <div
+            class="bg-primary/5 rounded-2xl rounded-tl-sm px-4 py-3 w-full text-sm text-default mt-1"
+          >
+            {{ result.message }}
+          </div>
         </div>
 
         <!-- Generated napkin preview -->
-        <UCard class="napkinbets-panel ring-primary/20">
+        <UCard class="napkinbets-panel ring-primary/20 ml-11">
           <div class="space-y-3">
             <div class="space-y-1">
               <div class="flex items-center gap-2">
@@ -189,20 +204,54 @@ const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)
             </div>
           </div>
         </UCard>
+      </div>
 
-        <!-- Actions -->
-        <div class="flex gap-2 justify-end">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-lucide-rotate-ccw"
-            @click="handleStartOver"
-          >
-            Start Over
-          </UButton>
-          <UButton color="primary" icon="i-lucide-check" @click="handleUse">
-            Use this Napkin
-          </UButton>
+      <!-- Input area -->
+      <div class="space-y-3 mt-4">
+        <UTextarea
+          v-model="prompt"
+          :placeholder="
+            messages.length === 0 ? placeholder : 'Send a follow up to modify the napkin...'
+          "
+          :rows="2"
+          autoresize
+          class="w-full"
+          :disabled="generating"
+          @keydown.prevent.enter="handleGenerate"
+        />
+        <div class="flex items-center justify-between">
+          <p class="text-xs text-dimmed">Press Enter to send (Shift+Enter for new line)</p>
+          <div class="flex gap-2">
+            <UButton
+              v-if="messages.length > 0"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-rotate-ccw"
+              :disabled="generating"
+              @click="handleStartOver"
+            >
+              Start Over
+            </UButton>
+            <UButton
+              v-if="result"
+              color="primary"
+              variant="soft"
+              icon="i-lucide-check"
+              class="mr-2"
+              @click="handleUse"
+            >
+              Use this Napkin
+            </UButton>
+            <UButton
+              color="primary"
+              :loading="generating"
+              :disabled="!prompt.trim()"
+              icon="i-lucide-sparkles"
+              @click="handleGenerate"
+            >
+              {{ messages.length === 0 ? 'Generate' : 'Update' }}
+            </UButton>
+          </div>
         </div>
       </div>
     </div>

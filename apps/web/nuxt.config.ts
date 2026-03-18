@@ -46,6 +46,9 @@ export default defineNuxtConfig({
     posthogProjectId: process.env.POSTHOG_PROJECT_ID || '',
     apiSportsKey: process.env.API_SPORTS_KEY || '',
     theSportsDbApiKey: process.env.THE_SPORTS_DB_API_KEY || '',
+    ballDontLieApiKey: process.env.BALL_DONT_LIE_API_KEY || '',
+    mySportsFeedsApiKey: process.env.MY_SPORTS_FEEDS_API_KEY || '',
+    theOddsApiKey: process.env.THE_ODDS_API_KEY || '',
     xaiApiKey: process.env.XAI_API_KEY || process.env.GROK_API_KEY || '',
     xaiModel: process.env.XAI_MODEL || 'grok-4-1-fast-non-reasoning',
     public: {

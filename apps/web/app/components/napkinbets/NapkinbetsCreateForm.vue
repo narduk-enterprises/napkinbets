@@ -5,6 +5,7 @@ import type {
   NapkinbetsFriend,
   NapkinbetsGroup,
   NapkinbetsTaxonomyResponse,
+  NapkinbetsGeneratedNapkin,
 } from '../../../types/napkinbets'
 
 interface NapkinbetsCreateEventPreview {
@@ -86,6 +87,27 @@ const {
   groups: computed(() => props.groups),
   initialFriendId: computed(() => props.initialFriendId),
 })
+
+const aiEnabled = useNapkinbetsAi().enabled
+
+function applyGeneratedNapkin(napkin: Partial<NapkinbetsGeneratedNapkin>) {
+  if (napkin.title) {
+    formState.title = napkin.title
+  }
+  if (napkin.format) {
+    formState.format = napkin.format
+  }
+
+  if (napkin.terms) {
+    formState.terms = napkin.terms
+  }
+
+  // Set simple sides if it's head-to-head and there are 2 sides
+  if (napkin.sideOptions && napkin.sideOptions.length >= 2 && isSimpleBet.value) {
+    simpleSideA.value = napkin.sideOptions[0] || ''
+    simpleSideB.value = napkin.sideOptions[1] || ''
+  }
+}
 
 const _showMoreOptions = ref(false)
 
@@ -170,6 +192,16 @@ function submit() {
 
 <template>
   <UCard id="napkinbets-create" class="napkinbets-panel">
+    <!-- AI Generator -->
+    <div v-if="aiEnabled" class="mb-6">
+      <NapkinbetsAiGenerator
+        :event-context="
+          eventPreview ? { ...eventPreview, eventTitle: eventPreview.title } : undefined
+        "
+        @use-napkin="applyGeneratedNapkin"
+      />
+    </div>
+
     <UForm :state="formState" class="space-y-6" @submit.prevent="submit">
       <!-- Step 1: Game attachment -->
       <div class="space-y-3">

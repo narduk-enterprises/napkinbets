@@ -4,7 +4,14 @@ import { enforceRateLimit } from '#layer/server/utils/rateLimit'
 import { generateNapkinBet } from '#server/services/napkinbets/ai'
 
 const bodySchema = z.object({
-  userPrompt: z.string().min(1, 'Please describe the napkin bet you want to create.'),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string(),
+      }),
+    )
+    .min(1, 'Please provide at least one message.'),
   eventContext: z
     .object({
       eventTitle: z.string(),

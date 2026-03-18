@@ -382,7 +382,7 @@ export function useNapkinbetsApi() {
     },
     // ─── AI Napkin Generator ─────────────────────────────────
     generateNapkin(payload: {
-      userPrompt: string
+      messages: Array<{ role: 'user' | 'assistant'; content: string }>
       eventContext?: {
         eventTitle: string
         sport: string

@@ -5,11 +5,21 @@ import {
 } from '#server/services/napkinbets/settings'
 import { z } from 'zod'
 import { enforceRateLimit } from '#layer/server/utils/rateLimit'
-import { buildXaiModelCatalog } from '~/utils/xaiModels'
 
 const bodySchema = z.object({
   chatModel: z.string().min(1, 'Chat model must be selected'),
 })
+
+function buildChatModelCatalog(modelIds: string[]) {
+  const chatModels = [...modelIds]
+    .filter((id) => !id.includes('imagine') && !id.includes('image') && !id.includes('video'))
+    .sort()
+
+  return {
+    chatModels,
+    preferredChatModel: chatModels[0] ?? null,
+  }
+}
 
 export default defineEventHandler(async (event) => {
   const method = getMethod(event)
@@ -19,11 +29,11 @@ export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig(event)
     const aiSettings = await loadNapkinbetsAiSettings(event)
 
-    let catalog = buildXaiModelCatalog([])
+    let catalog = buildChatModelCatalog([])
     if (config.xaiApiKey) {
       try {
         const models = await grokListModels(config.xaiApiKey)
-        catalog = buildXaiModelCatalog(models.map((m) => m.id))
+        catalog = buildChatModelCatalog(models.map((m) => m.id))
       } catch (err) {
         console.warn('[ai-model-settings] Could not fetch xAI models', err)
       }

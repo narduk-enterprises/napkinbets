@@ -28,6 +28,7 @@ export function useNapkinbetsAiGenerator() {
   const generating = ref(false)
   const result = ref<NapkinbetsGeneratedNapkin | null>(null)
   const error = ref<string | null>(null)
+  const messages = ref<Array<{ role: 'user' | 'assistant'; content: string }>>([])
 
   async function generateNapkin(
     userPrompt: string,
@@ -42,19 +43,32 @@ export function useNapkinbetsAiGenerator() {
       status?: string
     },
   ) {
+    if (!userPrompt.trim()) return null
+
     generating.value = true
     error.value = null
     result.value = null
 
+    messages.value.push({ role: 'user', content: userPrompt })
+
     try {
-      const napkin = await api.generateNapkin({ userPrompt, eventContext })
+      const napkin = await api.generateNapkin({
+        messages: messages.value,
+        eventContext,
+      })
       result.value = napkin
+      messages.value.push({
+        role: 'assistant',
+        content: JSON.stringify(napkin),
+      })
       return napkin
     } catch (err: unknown) {
       const e = err as { data?: { message?: string }; message?: string }
       const msg = e.data?.message || e.message || 'Failed to generate napkin bet'
       error.value = msg
       toast.add({ title: 'AI Error', description: msg, color: 'error' })
+      // Remove the last user message if it failed so they can try again
+      messages.value.pop()
       return null
     } finally {
       generating.value = false
@@ -64,12 +78,14 @@ export function useNapkinbetsAiGenerator() {
   function clear() {
     result.value = null
     error.value = null
+    messages.value = []
   }
 
   return {
     generating,
     result,
     error,
+    messages,
     generateNapkin,
     clear,
   }
