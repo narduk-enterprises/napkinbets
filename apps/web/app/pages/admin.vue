@@ -14,7 +14,22 @@ const items = [
   { label: 'OG Images', icon: 'i-lucide-image', slot: 'ogImages' },
 ]
 
-useSeo({
+const route = useRoute()
+const router = useRouter()
+
+const selectedTabIndex = computed({
+  get() {
+    const tabParam = route.query.tab as string
+    const index = items.findIndex((item) => item.slot === tabParam)
+    return index === -1 ? 0 : index
+  },
+  set(newIndex) {
+    const item = items[newIndex]
+    if (item) {
+      router.replace({ query: { ...route.query, tab: item.slot } })
+    }
+  },
+})
   title: 'Admin controls',
   description: 'Manage registered users, bets, event coverage, and control operator-only features.',
   ogImage: {
@@ -60,7 +75,7 @@ useWebPageSchema({
       :description="actions.feedback.value.text"
     />
 
-    <UTabs :items="items" class="mt-6">
+    <UTabs v-model="selectedTabIndex" :items="items" class="mt-6">
       <template #dashboard>
         <div class="mt-6">
           <AdminDashboardTab />
