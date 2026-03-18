@@ -1,24 +1,38 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
 import { useAppDatabase } from '#server/utils/database'
-import { napkinbetsWagers, napkinbetsGroups, napkinbetsEvents } from '../../database/schema'
+import {
+  napkinbetsWagers,
+  napkinbetsGroups,
+  napkinbetsGroupMembers,
+  napkinbetsEvents,
+  napkinbetsParticipants,
+} from '../../database/schema'
 
 /**
  * Builds OG image preview data for the admin tab.
  *
- * Instead of scraping HTML (which fails on auth-gated and redirect pages),
- * we construct the OG URLs directly from the `/_og/d/` route using the
- * same params that `useSeo({ ogImage: { ... } })` would produce.
+ * Constructs /_og/d/ URLs directly with enriched contextual tags
+ * from DB data — no HTML scraping needed.
  */
 
-function buildOgUrl(params: { title: string; description: string; icon: string }): string {
-  const encoded = [
+function buildOgUrl(params: {
+  title: string
+  description: string
+  icon: string
+  tag?: string
+  tagColor?: string
+}): string {
+  const parts = [
     `c_Default`,
     `title_${params.title}`,
     `description_${params.description}`,
     `icon_${params.icon}`,
-  ].join(',')
+  ]
 
-  return `/_og/d/${encoded}.png`
+  if (params.tag) parts.push(`tag_${params.tag}`)
+  if (params.tagColor) parts.push(`tagColor_${params.tagColor}`)
+
+  return `/_og/d/${parts.join(',')}.png`
 }
 
 interface OgPreviewItem {
@@ -32,47 +46,84 @@ interface OgPreviewSection {
   items: OgPreviewItem[]
 }
 
+// eslint-disable-next-line narduk/no-inline-hex -- OG image tag colors for contextual badges
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
   const db = useAppDatabase(event)
 
   const [wagers, groups, events] = await Promise.all([
-    db
-      .select({
-        slug: napkinbetsWagers.slug,
-        title: napkinbetsWagers.title,
-        description: napkinbetsWagers.description,
-        status: napkinbetsWagers.status,
-        napkinType: napkinbetsWagers.napkinType,
-        sport: napkinbetsWagers.sport,
-      })
+    db.select({
+      slug: napkinbetsWagers.slug,
+      title: napkinbetsWagers.title,
+      description: napkinbetsWagers.description,
+      status: napkinbetsWagers.status,
+      napkinType: napkinbetsWagers.napkinType,
+      sport: napkinbetsWagers.sport,
+      category: napkinbetsWagers.category,
+    })
       .from(napkinbetsWagers)
       .orderBy(desc(napkinbetsWagers.createdAt))
       .limit(6),
 
-    db
-      .select({
-        slug: napkinbetsGroups.slug,
-        name: napkinbetsGroups.name,
-        description: napkinbetsGroups.description,
-      })
+    db.select({
+      slug: napkinbetsGroups.slug,
+      name: napkinbetsGroups.name,
+      description: napkinbetsGroups.description,
+      memberCount: sql<number>`(SELECT COUNT(*) FROM napkinbets_group_members WHERE group_id = ${napkinbetsGroups.id})`.as('member_count'),
+    })
       .from(napkinbetsGroups)
       .orderBy(desc(napkinbetsGroups.createdAt))
       .limit(4),
 
-    db
-      .select({
-        id: napkinbetsEvents.id,
-        eventTitle: napkinbetsEvents.eventTitle,
-        summary: napkinbetsEvents.summary,
-        sport: napkinbetsEvents.sport,
-        state: napkinbetsEvents.state,
-      })
+    db.select({
+      id: napkinbetsEvents.id,
+      eventTitle: napkinbetsEvents.eventTitle,
+      summary: napkinbetsEvents.summary,
+      sport: napkinbetsEvents.sport,
+      sportLabel: napkinbetsEvents.sportLabel,
+      leagueLabel: napkinbetsEvents.leagueLabel,
+      state: napkinbetsEvents.state,
+    })
       .from(napkinbetsEvents)
       .where(eq(napkinbetsEvents.state, 'pre'))
       .orderBy(desc(napkinbetsEvents.startTime))
       .limit(4),
   ])
+
+  // Get participant counts for wagers in a single query
+  const wagerIds = wagers.map(w => w.slug)
+  let participantCounts: Record<string, number> = {}
+  if (wagerIds.length > 0) {
+    const slugToId = new Map<string, string>()
+    // We need wager IDs, so let's just fetch counts per slug
+    const wagerRows = await db.select({
+      slug: napkinbetsWagers.slug,
+      id: napkinbetsWagers.id,
+    })
+      .from(napkinbetsWagers)
+      .where(sql`${napkinbetsWagers.slug} IN (${sql.join(wagerIds.map(s => sql`${s}`), sql`, `)})`)
+
+    for (const row of wagerRows) {
+      slugToId.set(row.id, row.slug)
+    }
+
+    const ids = wagerRows.map(r => r.id)
+    if (ids.length > 0) {
+      const counts = await db.select({
+        wagerId: napkinbetsParticipants.wagerId,
+        count: sql<number>`COUNT(*)`.as('count'),
+      })
+        .from(napkinbetsParticipants)
+        .where(sql`${napkinbetsParticipants.wagerId} IN (${sql.join(ids.map(id => sql`${id}`), sql`, `)})`)
+        .groupBy(napkinbetsParticipants.wagerId)
+
+      for (const c of counts) {
+        const slug = slugToId.get(c.wagerId)
+        if (slug) participantCounts[slug] = c.count
+      }
+    }
+  }
 
   // ── Static pages ──────────────────────────────────────────
   const pages: OgPreviewSection = {
@@ -94,6 +145,7 @@ export default defineEventHandler(async (event) => {
           title: 'Dashboard',
           description: 'Manage the bets you started, the ones you joined, and pending invitations.',
           icon: '📊',
+          tag: 'Your bets',
         }),
       },
       {
@@ -103,6 +155,8 @@ export default defineEventHandler(async (event) => {
           title: 'Browse live and upcoming games',
           description: 'Pick a game then start a bet.',
           icon: '📡',
+          tag: 'Live & Upcoming',
+          tagColor: '#22c55e',
         }),
       },
       {
@@ -112,6 +166,8 @@ export default defineEventHandler(async (event) => {
           title: 'How Napkinbets works',
           description: 'Events, bets, settle-up — in plain English.',
           icon: '📘',
+          tag: 'Getting Started',
+          tagColor: '#3b82f6',
         }),
       },
       {
@@ -121,6 +177,7 @@ export default defineEventHandler(async (event) => {
           title: 'All games',
           description: 'Browse a full schedule across all leagues and sports.',
           icon: '🗓️',
+          tag: 'Full Schedule',
         }),
       },
       {
@@ -130,6 +187,8 @@ export default defineEventHandler(async (event) => {
           title: 'See how Napkinbets works',
           description: 'A guided walkthrough for new users.',
           icon: '🎬',
+          tag: 'Walkthrough',
+          tagColor: '#8b5cf6',
         }),
       },
       {
@@ -139,6 +198,8 @@ export default defineEventHandler(async (event) => {
           title: 'Ledger',
           description: 'See who owes what and track settlement history.',
           icon: '📖',
+          tag: 'Settle Up',
+          tagColor: '#f59e0b',
         }),
       },
     ],
@@ -150,15 +211,26 @@ export default defineEventHandler(async (event) => {
   if (wagers.length > 0) {
     sections.push({
       category: `Napkins (${wagers.length})`,
-      items: wagers.map((w) => ({
-        label: w.title,
-        path: `/napkins/${w.slug}`,
-        ogUrl: buildOgUrl({
-          title: w.title,
-          description: w.description || 'Bet detail and picks.',
-          icon: '🧾',
-        }),
-      })),
+      items: wagers.map(w => {
+        const typeLabel = w.napkinType === 'h2h' ? 'Head to Head' : 'Pool'
+        const statusLabel = (w.status || 'open').charAt(0).toUpperCase() + (w.status || 'open').slice(1)
+        const count = participantCounts[w.slug] || 0
+        const countPart = count > 0 ? ` · ${count} players` : ''
+        // eslint-disable-next-line narduk/no-inline-hex -- OG image status-based tag coloring
+        const statusColor = w.status === 'settled' ? '#f59e0b' : w.status === 'closed' ? '#ef4444' : '#22c55e'
+
+        return {
+          label: `${w.title} (${statusLabel})`,
+          path: `/napkins/${w.slug}`,
+          ogUrl: buildOgUrl({
+            title: w.title,
+            description: w.description || 'Bet detail and picks.',
+            icon: w.status === 'settled' ? '🏆' : w.status === 'closed' ? '🔒' : '🧾',
+            tag: `${typeLabel} · ${statusLabel}${countPart}`,
+            tagColor: statusColor,
+          }),
+        }
+      }),
     })
   }
 
@@ -166,13 +238,15 @@ export default defineEventHandler(async (event) => {
   if (groups.length > 0) {
     sections.push({
       category: `Groups (${groups.length})`,
-      items: groups.map((g) => ({
+      items: groups.map(g => ({
         label: g.name,
         path: `/groups/${g.slug}`,
         ogUrl: buildOgUrl({
           title: g.name,
           description: g.description || 'View group details and members.',
           icon: '👥',
+          tag: `Group · ${g.memberCount || 0} members`,
+          tagColor: '#8b5cf6',
         }),
       })),
     })
@@ -182,15 +256,23 @@ export default defineEventHandler(async (event) => {
   if (events.length > 0) {
     sections.push({
       category: `Events (${events.length})`,
-      items: events.map((e) => ({
-        label: e.eventTitle,
-        path: `/events/${e.id}`,
-        ogUrl: buildOgUrl({
-          title: e.eventTitle,
-          description: e.summary || 'View event details, odds, and start a bet.',
-          icon: '⚡',
-        }),
-      })),
+      items: events.map(e => {
+        const stateLabel = e.state === 'in' ? 'Live' : e.state === 'post' ? 'Final' : 'Upcoming'
+        // eslint-disable-next-line narduk/no-inline-hex -- OG image state-based tag coloring
+        const stateColor = e.state === 'in' ? '#22c55e' : e.state === 'post' ? '#64748b' : '#3b82f6'
+
+        return {
+          label: e.eventTitle,
+          path: `/events/${e.id}`,
+          ogUrl: buildOgUrl({
+            title: e.eventTitle,
+            description: e.summary || 'View event details, odds, and start a bet.',
+            icon: e.state === 'in' ? '🔴' : e.state === 'post' ? '🏁' : '⚡',
+            tag: `${e.leagueLabel || e.sportLabel || 'Sports'} · ${stateLabel}`,
+            tagColor: stateColor,
+          }),
+        }
+      }),
     })
   }
 

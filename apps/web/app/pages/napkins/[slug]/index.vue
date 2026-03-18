@@ -149,7 +149,12 @@ useSeo({
   ogImage: {
     title: wager.value?.title || 'Napkinbets bet',
     description: wager.value?.description || 'Bet detail and picks.',
-    icon: '🧾',
+    icon: wager.value?.status === 'settled' ? '🏆' : '🧾',
+    tag: [
+      wager.value?.napkinType === 'h2h' ? 'Head to Head' : 'Pool',
+      (wager.value?.status || 'open').charAt(0).toUpperCase() + (wager.value?.status || 'open').slice(1),
+    ].join(' · '),
+    tagColor: wager.value?.status === 'settled' ? '#f59e0b' : wager.value?.status === 'closed' ? '#ef4444' : '#22c55e',
   },
 })
 

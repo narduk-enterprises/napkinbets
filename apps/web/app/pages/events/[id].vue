@@ -98,7 +98,13 @@ useSeo({
   ogImage: {
     title: eventDetail.value?.eventTitle ?? 'Event details',
     description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
-    icon: '⚡',
+    icon: effectiveState.value === 'in' ? '🔴' : effectiveState.value === 'post' ? '🏁' : '⚡',
+    tag: [
+      eventDetail.value?.leagueLabel || eventDetail.value?.sportLabel || 'Sports',
+      statusLabel.value,
+    ].join(' · '),
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image tag color based on event state
+    tagColor: effectiveState.value === 'in' ? '#22c55e' : effectiveState.value === 'post' ? '#64748b' : '#3b82f6',
   },
 })
 

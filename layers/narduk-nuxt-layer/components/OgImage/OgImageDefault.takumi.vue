@@ -1,8 +1,15 @@
 <!--
-  OG Image Default Template.
+  OG Image Default Template — Napkinbets branded.
 
   Nuxt OG Image v6 resolves renderers by filename suffix, so this template
   is explicitly Takumi via `.takumi.vue`.
+
+  Props:
+  - title / description / icon — core content
+  - tag — contextual metadata badge (e.g. "Pool · Open", "NBA · Upcoming")
+  - tagColor — badge accent color hex (defaults to primary emerald)
+  - siteName — bottom-right branding
+  - primaryColor — brand accent for gradient glow and bar
 -->
 <script setup lang="ts">
 withDefaults(
@@ -10,16 +17,24 @@ withDefaults(
     title?: string
     description?: string
     icon?: string
+    /** Contextual metadata badge — rendered above the title */
+    tag?: string
+    /** Badge accent color hex */
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image prop default; Tailwind unavailable in Takumi
+    tagColor?: string
     siteName?: string
-    /** Brand color hex — defaults to emerald. Override to match your app's primary color. */
+    /** Brand color hex — defaults to emerald */
     primaryColor?: string
   }>(),
   {
     title: 'Napkinbets',
-    description: 'Production-ready Nuxt 4 + Cloudflare Workers',
-    icon: '✨',
-    siteName: 'Napkinbets',
-    // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color; Tailwind utilities are not available in component props defaults
+    description: 'Pick a game. Start a bet. Settle after the final.',
+    icon: '🎯',
+    tag: '',
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color
+    tagColor: '#22c55e',
+    siteName: 'napkinbets',
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color
     primaryColor: '#22c55e',
   },
 )
@@ -34,25 +49,40 @@ withDefaults(
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'flex-start',
-      padding: '80px',
-      background: `linear-gradient(135deg, #0a0f1a 0%, #0f1729 40%, #111d33 100%)`,
+      padding: '72px 80px',
+      background: 'linear-gradient(145deg, #070b14 0%, #0c1220 35%, #111d33 100%)',
       fontFamily: 'Inter, sans-serif',
       position: 'relative',
       overflow: 'hidden',
     }"
   >
+    <!-- Ambient glow: top-right -->
     <div
       :style="{
         position: 'absolute',
-        top: '-120px',
-        right: '-80px',
-        width: '500px',
-        height: '500px',
+        top: '-100px',
+        right: '-60px',
+        width: '480px',
+        height: '480px',
         borderRadius: '50%',
-        background: `radial-gradient(circle, ${primaryColor}26 0%, transparent 70%)`,
+        background: `radial-gradient(circle, ${primaryColor}20 0%, transparent 70%)`,
       }"
     />
 
+    <!-- Ambient glow: bottom-left subtle -->
+    <div
+      :style="{
+        position: 'absolute',
+        bottom: '-160px',
+        left: '-80px',
+        width: '400px',
+        height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, #3b82f615 0%, transparent 70%)',
+      }"
+    />
+
+    <!-- Bottom accent bar -->
     <div
       :style="{
         position: 'absolute',
@@ -64,47 +94,93 @@ withDefaults(
       }"
     />
 
+    <!-- Tag badge (contextual metadata) -->
     <div
+      v-if="tag"
       :style="{
-        fontSize: '48px',
-        marginBottom: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginBottom: '20px',
+      }"
+    >
+      <div
+        :style="{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '6px 16px',
+          borderRadius: '9999px',
+          background: `${tagColor}18`,
+          border: `1px solid ${tagColor}40`,
+        }"
+      >
+        <div
+          :style="{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: tagColor,
+          }"
+        />
+        <span
+          :style="{
+            fontSize: '16px',
+            fontWeight: '600',
+            color: tagColor,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase' as const,
+          }"
+        >
+          {{ tag }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Icon -->
+    <div
+      v-if="icon"
+      :style="{
+        fontSize: '44px',
+        marginBottom: '16px',
       }"
     >
       {{ icon }}
     </div>
 
+    <!-- Title -->
     <div
       :style="{
-        fontSize: '56px',
+        fontSize: '52px',
         fontWeight: '700',
-        // eslint-disable-next-line narduk/no-inline-hex
         color: '#f1f5f9',
         lineHeight: '1.15',
-        marginBottom: '16px',
-        maxWidth: '900px',
-        letterSpacing: '-0.02em',
+        marginBottom: '14px',
+        maxWidth: '920px',
+        letterSpacing: '-0.025em',
       }"
     >
       {{ title }}
     </div>
 
+    <!-- Description -->
     <div
       :style="{
-        fontSize: '24px',
+        fontSize: '22px',
         fontWeight: '400',
-        // eslint-disable-next-line narduk/no-inline-hex
         color: '#94a3b8',
         lineHeight: '1.5',
-        maxWidth: '800px',
+        maxWidth: '820px',
       }"
     >
       {{ description }}
     </div>
 
+    <!-- Bottom-right brand badge -->
     <div
       :style="{
         position: 'absolute',
-        bottom: '40px',
+        bottom: '32px',
         right: '80px',
         display: 'flex',
         alignItems: 'center',
@@ -113,15 +189,15 @@ withDefaults(
     >
       <div
         :style="{
-          width: '32px',
-          height: '32px',
+          width: '30px',
+          height: '30px',
           borderRadius: '8px',
           background: primaryColor,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          fontSize: '14px',
+          fontSize: '13px',
           fontWeight: '700',
         }"
       >
@@ -129,10 +205,10 @@ withDefaults(
       </div>
       <div
         :style="{
-          fontSize: '18px',
+          fontSize: '16px',
           fontWeight: '600',
-          // eslint-disable-next-line narduk/no-inline-hex
-          color: '#64748b',
+          color: '#475569',
+          letterSpacing: '0.02em',
         }"
       >
         {{ siteName }}

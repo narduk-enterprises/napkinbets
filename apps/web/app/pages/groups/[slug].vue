@@ -68,6 +68,7 @@ useSeo({
     title: data.value?.group.name || 'Group Details',
     description: data.value?.group.description || 'View group details and members.',
     icon: '👥',
+    tag: `Group · ${data.value?.members.length || 0} members`,
   },
 })
 
