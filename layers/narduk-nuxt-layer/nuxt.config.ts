@@ -152,6 +152,9 @@ export default defineNuxtConfig({
     : {}),
 
   ogImage: {
+    // Only Inter:400 — Google Fonts variable font fetcher never resolves weight 700
+    // @ts-expect-error — `fonts` works at runtime but is missing from type defs
+    fonts: ['Inter:400'],
     runtimeCacheStorage: {
       driver: 'memory',
     },
