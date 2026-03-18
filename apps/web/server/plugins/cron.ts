@@ -14,20 +14,25 @@
 //
 // Idempotency: All cron handlers MUST be idempotent — duplicate or overlapping
 // invocations must produce the same result without data corruption.
+//
+// Hook shape: Nitro's cloudflare-module preset calls
+//   nitroApp.hooks.callHook('cloudflare:scheduled', { controller, env, context })
+// — see nitropack/dist/presets/cloudflare/runtime/_module-handler.mjs.
 // ─────────────────────────────────────────────────────────────────────────────
+
+interface CloudflareScheduledHookPayload {
+  controller: { cron: string; scheduledTime: number; type: string }
+  env: Record<string, unknown>
+  context: { waitUntil: (promise: Promise<unknown>) => void }
+}
+
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('cloudflare:scheduled', async (scheduledEvent: unknown) => {
-    const cloudflareEvent = scheduledEvent as
-      | {
-          cron?: string
-          scheduledTime?: number
-          env?: Record<string, unknown>
-          context?: unknown
-        }
-      | undefined
+  nitroApp.hooks.hook('cloudflare:scheduled', async (event: unknown) => {
+    const payload = event as CloudflareScheduledHookPayload | undefined
+
     const config = useRuntimeConfig()
-    const env = cloudflareEvent?.env
-    const context = cloudflareEvent?.context
+    const env = payload?.env
+    const cfContext = payload?.context
     const cronSecret =
       (typeof env?.CRON_SECRET === 'string' ? env.CRON_SECRET : null) ?? config.cronSecret
 
@@ -36,10 +41,16 @@ export default defineNitroPlugin((nitroApp) => {
       return
     }
 
-    const cloudflareCtx = {
-      cloudflare: {
-        env,
-        context,
+    // Build the Cloudflare platform context that Nitro's localFetch expects.
+    // This mirrors the shape used in _module-handler.mjs → fetchHandler so
+    // that `useAppDatabase` / `hubDatabase` can resolve the D1 binding.
+    const localFetchContext = {
+      waitUntil: cfContext?.waitUntil ?? (() => {}),
+      _platform: {
+        cloudflare: {
+          env,
+          context: cfContext,
+        },
       },
     }
 
@@ -51,9 +62,14 @@ export default defineNitroPlugin((nitroApp) => {
       '23 */12 * * *': { tier: 'next-8w', label: 'next-8w refresh', type: 'events' },
     } as const
 
-    const job =
-      (cloudflareEvent?.cron ? cronToJob[cloudflareEvent.cron as keyof typeof cronToJob] : null) ??
-      cronToJob['* * * * *']
+    // Nitro wraps the Cloudflare args: { controller, env, context }.
+    // The cron expression lives on controller.cron, not on the root object.
+    const cronExpression = payload?.controller?.cron
+    const job = cronExpression
+      ? (cronToJob[cronExpression as keyof typeof cronToJob] ?? cronToJob['* * * * *'])
+      : cronToJob['* * * * *']
+
+    console.log(`[napkinbets-cron] Triggered: cron="${cronExpression ?? 'unknown'}" → ${job.label}`)
 
     try {
       if (job.type === 'odds') {
@@ -62,7 +78,7 @@ export default defineNitroPlugin((nitroApp) => {
           headers: {
             Authorization: `Bearer ${cronSecret}`,
           },
-          context: cloudflareCtx,
+          context: localFetchContext,
         })
       } else {
         await nitroApp.localFetch(`/api/cron/napkinbets/events?tier=${job.tier}`, {
@@ -70,7 +86,7 @@ export default defineNitroPlugin((nitroApp) => {
           headers: {
             Authorization: `Bearer ${cronSecret}`,
           },
-          context: cloudflareCtx,
+          context: localFetchContext,
         })
       }
       console.log(`[napkinbets-cron] Completed ${job.label}.`)
