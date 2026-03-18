@@ -1,10 +1,6 @@
 import { desc, eq } from 'drizzle-orm'
 import { useAppDatabase } from '#server/utils/database'
-import {
-  napkinbetsWagers,
-  napkinbetsGroups,
-  napkinbetsEvents,
-} from '../../database/schema'
+import { napkinbetsWagers, napkinbetsGroups, napkinbetsEvents } from '../../database/schema'
 
 /**
  * Builds OG image preview data for the admin tab.
@@ -41,34 +37,37 @@ export default defineEventHandler(async (event) => {
   const db = useAppDatabase(event)
 
   const [wagers, groups, events] = await Promise.all([
-    db.select({
-      slug: napkinbetsWagers.slug,
-      title: napkinbetsWagers.title,
-      description: napkinbetsWagers.description,
-      status: napkinbetsWagers.status,
-      napkinType: napkinbetsWagers.napkinType,
-      sport: napkinbetsWagers.sport,
-    })
+    db
+      .select({
+        slug: napkinbetsWagers.slug,
+        title: napkinbetsWagers.title,
+        description: napkinbetsWagers.description,
+        status: napkinbetsWagers.status,
+        napkinType: napkinbetsWagers.napkinType,
+        sport: napkinbetsWagers.sport,
+      })
       .from(napkinbetsWagers)
       .orderBy(desc(napkinbetsWagers.createdAt))
       .limit(6),
 
-    db.select({
-      slug: napkinbetsGroups.slug,
-      name: napkinbetsGroups.name,
-      description: napkinbetsGroups.description,
-    })
+    db
+      .select({
+        slug: napkinbetsGroups.slug,
+        name: napkinbetsGroups.name,
+        description: napkinbetsGroups.description,
+      })
       .from(napkinbetsGroups)
       .orderBy(desc(napkinbetsGroups.createdAt))
       .limit(4),
 
-    db.select({
-      id: napkinbetsEvents.id,
-      eventTitle: napkinbetsEvents.eventTitle,
-      summary: napkinbetsEvents.summary,
-      sport: napkinbetsEvents.sport,
-      state: napkinbetsEvents.state,
-    })
+    db
+      .select({
+        id: napkinbetsEvents.id,
+        eventTitle: napkinbetsEvents.eventTitle,
+        summary: napkinbetsEvents.summary,
+        sport: napkinbetsEvents.sport,
+        state: napkinbetsEvents.state,
+      })
       .from(napkinbetsEvents)
       .where(eq(napkinbetsEvents.state, 'pre'))
       .orderBy(desc(napkinbetsEvents.startTime))
@@ -151,7 +150,7 @@ export default defineEventHandler(async (event) => {
   if (wagers.length > 0) {
     sections.push({
       category: `Napkins (${wagers.length})`,
-      items: wagers.map(w => ({
+      items: wagers.map((w) => ({
         label: w.title,
         path: `/napkins/${w.slug}`,
         ogUrl: buildOgUrl({
@@ -167,7 +166,7 @@ export default defineEventHandler(async (event) => {
   if (groups.length > 0) {
     sections.push({
       category: `Groups (${groups.length})`,
-      items: groups.map(g => ({
+      items: groups.map((g) => ({
         label: g.name,
         path: `/groups/${g.slug}`,
         ogUrl: buildOgUrl({
@@ -183,7 +182,7 @@ export default defineEventHandler(async (event) => {
   if (events.length > 0) {
     sections.push({
       category: `Events (${events.length})`,
-      items: events.map(e => ({
+      items: events.map((e) => ({
         label: e.eventTitle,
         path: `/events/${e.id}`,
         ogUrl: buildOgUrl({

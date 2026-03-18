@@ -9,7 +9,8 @@ const ogSections = computed(() => data.value?.sections ?? [])
     <div class="max-w-2xl">
       <h2 class="napkinbets-section-title">OG Images Explorer</h2>
       <p class="napkinbets-text-muted mt-2">
-        Preview Open Graph images across the application. Wagers, groups, and events are loaded from the connected database.
+        Preview Open Graph images across the application. Wagers, groups, and events are loaded from
+        the connected database.
       </p>
     </div>
 

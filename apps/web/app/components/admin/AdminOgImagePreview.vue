@@ -50,7 +50,9 @@ function onImageError() {
     </div>
 
     <div class="card-base p-1 overflow-hidden group">
-      <div class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center">
+      <div
+        class="aspect-1200/630 relative bg-muted rounded-md overflow-hidden flex items-center justify-center"
+      >
         <span v-if="hasError" class="absolute text-error text-sm z-0">Failed to render</span>
 
         <img
@@ -62,7 +64,9 @@ function onImageError() {
           @error="onImageError"
         />
       </div>
-      <div class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed">
+      <div
+        class="p-3 bg-elevated border-t border-default flex items-center justify-between text-xs text-dimmed"
+      >
         <span class="truncate pr-4">{{ displayUrl || '...' }}</span>
         <UButton
           v-if="fullOgUrl"
