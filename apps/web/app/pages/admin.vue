@@ -74,7 +74,7 @@ useWebPageSchema({
       :description="actions.feedback.value.text"
     />
 
-    <UTabs v-model="selectedTab" :items="items" class="mt-6" valueKey="slot">
+    <UTabs v-model="selectedTab" :items="items" class="mt-6" value-key="slot">
       <template #dashboard>
         <div class="mt-6">
           <AdminDashboardTab />

@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
   // Map the static font filenames to our bundled server assets
   // Each file must be served in its correct binary format
-  const assetMap: Record<string, { key: string, contentType: string }> = {
+  const assetMap: Record<string, { key: string; contentType: string }> = {
     'Inter-400-normal.woff': { key: 'inter-400.woff', contentType: 'font/woff' },
     'Inter-400-normal.ttf': { key: 'inter-400.ttf', contentType: 'font/ttf' },
     'inter-400-latin.ttf': { key: 'inter-400.ttf', contentType: 'font/ttf' },
@@ -32,9 +32,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const storage = useStorage('assets:fonts')
-  const data = await storage.getItemRaw(asset.key) as ArrayBuffer | null
+  const data = (await storage.getItemRaw(asset.key)) as ArrayBuffer | null
   if (!data) {
-    throw createError({ statusCode: 500, statusMessage: `Font asset "${asset.key}" not found in server storage` })
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Font asset "${asset.key}" not found in server storage`,
+    })
   }
 
   setResponseHeaders(event, {
