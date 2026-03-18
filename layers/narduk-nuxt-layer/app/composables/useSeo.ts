@@ -31,11 +31,13 @@
  * ```
  */
 
+import type { MaybeRefOrGetter } from 'vue'
+
 interface SeoOptions {
   /** Page title (used in <title>, og:title, twitter:title) */
-  title: string
+  title: MaybeRefOrGetter<string>
   /** Page description (used in <meta name="description">, og:description, twitter:description) */
-  description: string
+  description: MaybeRefOrGetter<string>
   /** Static image URL for og:image / twitter:image. Overridden by `ogImage` if set. */
   image?: string
   /** Open Graph type — defaults to 'website'. Use 'article' for blog posts. */
@@ -109,14 +111,17 @@ export function useSeo(options: SeoOptions) {
     })
   }
 
+  const resolvedTitle = toValue(title)
+  const resolvedDescription = toValue(description)
+
   // --- Dynamic OG Image ---
   if (ogImage) {
     const componentName = ogImage.component || (type === 'article' ? 'Article' : 'Default')
     // @ts-expect-error OgImage components are provided by this layer but OgImageComponents
     // types aren't populated until the consuming app runs nuxt prepare.
     defineOgImage(componentName, {
-      title: ogImage.title || title,
-      description: ogImage.description || description,
+      title: ogImage.title || resolvedTitle,
+      description: ogImage.description || resolvedDescription,
       icon: ogImage.icon || '✨',
       ...(ogImage.category && { category: ogImage.category }),
     })

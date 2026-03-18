@@ -38,6 +38,9 @@ useWebPageSchema({
           <p class="napkinbets-hero-lede">
             Choose a live or upcoming game, then fill in the people, side, and stake.
           </p>
+          <UButton to="/games" color="neutral" variant="soft" size="sm" icon="i-lucide-list">
+            View all as timeline
+          </UButton>
         </div>
 
         <div class="napkinbets-hero-stack napkinbets-hero-stack-compact">
@@ -66,9 +69,9 @@ useWebPageSchema({
     />
 
     <div v-if="discover.spotlights.length" class="napkinbets-section-stack">
-      <div class="space-y-1">
-        <p class="napkinbets-kicker">Featured</p>
-        <h2 class="napkinbets-subsection-title">Big events worth a closer look</h2>
+      <div class="space-y-0.5">
+        <h2 class="napkinbets-section-title">Featured</h2>
+        <p class="napkinbets-section-description">Big events worth a closer look</p>
       </div>
 
       <div class="napkinbets-scroll-strip">
@@ -81,89 +84,34 @@ useWebPageSchema({
     </div>
 
     <ClientOnly>
-      <UCard class="napkinbets-panel napkinbets-filter-panel">
-        <div class="space-y-3">
-          <div class="space-y-1">
-            <p class="napkinbets-kicker">Filters</p>
-            <h2 class="napkinbets-subsection-title">Filter games</h2>
-          </div>
-
-          <div class="space-y-2.5">
-            <div v-if="sportOptions.length > 1">
-              <p class="napkinbets-filter-chip-label">Sport</p>
-              <div class="napkinbets-filter-chip-row">
-                <UButton
-                  v-for="opt in sportOptions"
-                  :key="opt.value"
-                  size="xs"
-                  :color="selectedSport === opt.value ? 'primary' : 'neutral'"
-                  :variant="selectedSport === opt.value ? 'solid' : 'soft'"
-                  @click="selectedSport = selectedSport === opt.value ? 'all' : opt.value"
-                >
-                  {{ opt.label }}
-                </UButton>
-              </div>
-            </div>
-
-            <div v-if="leagueOptions.length > 1">
-              <p class="napkinbets-filter-chip-label">League</p>
-              <div class="napkinbets-filter-chip-row">
-                <UButton
-                  v-for="opt in leagueOptions"
-                  :key="opt.value"
-                  size="xs"
-                  :color="selectedLeague === opt.value ? 'primary' : 'neutral'"
-                  :variant="selectedLeague === opt.value ? 'solid' : 'soft'"
-                  @click="selectedLeague = selectedLeague === opt.value ? 'all' : opt.value"
-                >
-                  {{ opt.label }}
-                </UButton>
-              </div>
-            </div>
-
-            <div v-if="stateOptions.length > 1">
-              <p class="napkinbets-filter-chip-label">Status</p>
-              <div class="napkinbets-filter-chip-row">
-                <UButton
-                  v-for="opt in stateOptions"
-                  :key="opt.value"
-                  size="xs"
-                  :color="selectedState === opt.value ? 'primary' : 'neutral'"
-                  :variant="selectedState === opt.value ? 'solid' : 'soft'"
-                  @click="selectedState = selectedState === opt.value ? 'all' : opt.value"
-                >
-                  {{ opt.label }}
-                </UButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </UCard>
+      <NapkinbetsEventsGamesFilters
+        :sport-options="sportOptions"
+        :league-options="leagueOptions"
+        :state-options="stateOptions"
+        :selected-sport="selectedSport"
+        :selected-league="selectedLeague"
+        :selected-state="selectedState"
+        @update:selected-sport="selectedSport = $event"
+        @update:selected-league="selectedLeague = $event"
+        @update:selected-state="selectedState = $event"
+      />
 
       <template #fallback>
         <div class="napkinbets-panel napkinbets-filter-panel space-y-2 p-4">
-          <p class="napkinbets-kicker">Filters</p>
-          <h2 class="napkinbets-subsection-title">Filter games</h2>
-          <p class="text-sm text-muted">Filters load with the interactive schedule.</p>
+          <h2 class="napkinbets-section-title">Filters</h2>
+          <p class="napkinbets-section-description">Filters load with the interactive schedule.</p>
         </div>
       </template>
     </ClientOnly>
 
     <div class="space-y-6">
-      <div v-for="section in filteredSections" :key="section.key" class="napkinbets-section-stack">
-        <div class="flex items-end justify-between gap-3">
-          <div class="space-y-1">
-            <p class="napkinbets-kicker">{{ section.label }}</p>
-            <h2 class="napkinbets-subsection-title">{{ section.description }}</h2>
-          </div>
-
-          <span class="text-sm text-default">{{ section.events.length }} games</span>
-        </div>
-
-        <div class="napkinbets-scroll-strip">
-          <NapkinbetsEventCard v-for="event in section.events" :key="event.id" :event="event" />
-        </div>
-      </div>
+      <NapkinbetsEventSection
+        v-for="section in filteredSections"
+        :key="section.key"
+        :label="section.label"
+        :description="section.description"
+        :events="section.events"
+      />
 
       <UAlert
         v-if="!hasFilteredResults && !discoverState.pending.value"

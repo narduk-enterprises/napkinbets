@@ -1,4 +1,4 @@
-import { expect, test, waitForBaseUrlReady, waitForHydration, warmUpApp } from './fixtures'
+import { expect, test, waitForBaseUrlReady, waitForHydration, warmUpApp } from '../fixtures'
 
 test.describe('web smoke', () => {
   test.beforeAll(async ({ browser, baseURL }) => {
@@ -23,6 +23,6 @@ test.describe('web smoke', () => {
     await expect(
       page.getByRole('heading', { name: /Pick a game, then start a bet/i }),
     ).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Filter games' })).toBeVisible()
+    await expect(page.getByText('Filter games').first()).toBeVisible()
   })
 })

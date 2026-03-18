@@ -34,8 +34,10 @@ const props = defineProps<{
 }>()
 
 const now = ref(new Date())
+const isClient = ref(false)
 let timer: ReturnType<typeof setInterval>
 onMounted(() => {
+  isClient.value = true
   timer = setInterval(() => {
     now.value = new Date()
   }, 1000)
@@ -164,7 +166,8 @@ function _formatLocalTime(isoString: string) {
             {{ badgeLabel }}
           </UBadge>
           <span v-if="isUpcoming" class="text-sm font-medium text-warning tabular-nums">
-            {{ countdownString }}
+            <template v-if="isClient">{{ countdownString }}</template>
+            <template v-else>Starts soon</template>
           </span>
           <span v-else class="text-sm font-medium text-muted">
             {{ status }}

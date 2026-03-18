@@ -666,8 +666,10 @@ export function normalizeMatchupEspnEvent(
     },
     leaders: buildCompetitorLeaders(competitors),
     ideas: getLeagueIdeas(config.sportKey, homeName, awayName),
+    importanceScore: 0,
+    importanceReason: '',
     lastSyncedAt: syncedAt,
-    sourceUpdatedAt: null,
+    sourceUpdatedAt: '',
     rawPayload: event,
   }
 }
@@ -721,8 +723,10 @@ export function normalizeTournamentEspnEvent(
       featuredTeams.homeTeam.name,
       featuredTeams.awayTeam.name,
     ),
+    importanceScore: 0,
+    importanceReason: '',
     lastSyncedAt: syncedAt,
-    sourceUpdatedAt: null,
+    sourceUpdatedAt: '',
     rawPayload: event,
   }
 }

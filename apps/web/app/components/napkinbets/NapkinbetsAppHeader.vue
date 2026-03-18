@@ -53,6 +53,10 @@ function closeMobileMenu() {
 
 async function signOut() {
   closeMobileMenu()
+  const groupsStore = useNapkinbetsGroupsStore()
+  groupsStore.myGroups.value = []
+  groupsStore.groups.value = []
+  groupsStore.error.value = null
   await logout()
   await navigateTo('/login', { replace: true })
 }

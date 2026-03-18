@@ -47,6 +47,10 @@ const menuLinks = computed(() => {
 
 async function signOut() {
   isOpen.value = false
+  const groupsStore = useNapkinbetsGroupsStore()
+  groupsStore.myGroups.value = []
+  groupsStore.groups.value = []
+  groupsStore.error.value = null
   await logout()
   await navigateTo('/login', { replace: true })
 }

@@ -1,0 +1,204 @@
+.napkinbets-header-wrap {
+  padding: 0.35rem 0.55rem 0;
+  position: relative;
+  z-index: 50;
+}
+
+.napkinbets-header {
+  backdrop-filter: blur(18px);
+  background: rgb(255 252 245 / 0.92);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 0.9rem;
+  box-shadow: var(--napkinbets-panel-shadow);
+  display: flex;
+  flex-direction: row;
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: 0.34rem 0.48rem;
+}
+
+.napkinbets-header-top,
+.napkinbets-header-actions,
+.napkinbets-footer-inner {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.napkinbets-header-top,
+.napkinbets-footer-inner {
+  justify-content: space-between;
+}
+
+.napkinbets-header-top {
+  flex: 1 1 auto;
+}
+
+.napkinbets-header-brand {
+  color: inherit;
+  display: block;
+  min-width: 0;
+  text-decoration: none;
+}
+
+.napkinbets-header-nav {
+  display: none;
+  gap: 0.25rem;
+  margin-inline: auto;
+}
+
+.napkinbets-nav-link,
+.napkinbets-user-pill,
+.napkinbets-mobile-nav-link {
+  align-items: center;
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 9999px;
+  color: var(--napkinbets-ink);
+  display: inline-flex;
+  font-size: 0.79rem;
+  font-weight: 600;
+  gap: 0.45rem;
+  padding: 0.4rem 0.62rem;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.napkinbets-nav-link {
+  background: rgb(255 255 255 / 0.78);
+}
+
+.napkinbets-nav-link-active {
+  background: rgb(27 124 71 / 0.1);
+  border-color: rgb(27 124 71 / 0.24);
+  color: var(--napkinbets-accent-strong);
+}
+
+.napkinbets-user-pill {
+  background: rgb(255 255 255 / 0.9);
+}
+
+.napkinbets-header-status {
+  align-items: center;
+  background: rgb(27 124 71 / 0.08);
+  border: 1px solid rgb(27 124 71 / 0.12);
+  border-radius: 9999px;
+  display: none;
+  gap: 0.45rem;
+  padding: 0.4rem 0.7rem;
+}
+
+.napkinbets-header-status .napkinbets-kicker {
+  color: var(--napkinbets-accent-strong);
+  font-size: 0.62rem;
+}
+
+.napkinbets-header-status-dot {
+  background: var(--napkinbets-accent);
+  border-radius: 9999px;
+  height: 0.5rem;
+  width: 0.5rem;
+}
+
+.napkinbets-mobile-menu-panel {
+  backdrop-filter: blur(18px);
+  background: rgb(255 252 245 / 0.96);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 1rem;
+  box-shadow: var(--napkinbets-panel-shadow);
+  margin: 0.45rem auto 0;
+  max-width: 80rem;
+  padding: 0.4rem;
+}
+
+.napkinbets-mobile-menu-section {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.napkinbets-mobile-menu-section + .napkinbets-mobile-menu-section {
+  border-top: 1px solid var(--napkinbets-border);
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+}
+
+.napkinbets-mobile-nav {
+  background: rgb(255 252 245 / 0.96);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--napkinbets-border);
+  bottom: 0;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  left: 0;
+  max-width: 100vw;
+  overflow-x: clip;
+  padding: 0.55rem 0.65rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  right: 0;
+  z-index: 50;
+}
+
+.napkinbets-mobile-nav-link {
+  background: transparent;
+  flex-direction: column;
+  font-size: 0.64rem;
+  justify-content: center;
+  min-height: 3.1rem;
+  padding: 0.4rem;
+}
+
+.napkinbets-mobile-nav-link-active {
+  background: rgb(27 124 71 / 0.1);
+  border-color: rgb(27 124 71 / 0.16);
+  color: var(--napkinbets-accent-strong);
+}
+
+.napkinbets-footer {
+  padding: 0 0.7rem 0.85rem;
+}
+
+.napkinbets-footer-inner {
+  background: var(--napkinbets-surface-soft);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 1.2rem;
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: 1rem 1.1rem;
+}
+
+@media (min-width: 640px) {
+  .napkinbets-header {
+    padding: 0.55rem 0.8rem;
+  }
+
+  .napkinbets-header-status {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .napkinbets-layout-body {
+    padding-bottom: 0;
+  }
+
+  .napkinbets-header-wrap {
+    position: sticky;
+    top: 0;
+  }
+
+  .napkinbets-mobile-nav {
+    display: none;
+  }
+
+  .napkinbets-header-nav {
+    display: inline-flex;
+  }
+
+  .napkinbets-footer-inner {
+    padding: 1.1rem 1.35rem;
+  }
+}

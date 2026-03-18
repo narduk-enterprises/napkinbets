@@ -258,17 +258,30 @@ function scoreCandidate(candidate: PolymarketEvent, event: NapkinbetsOddsEventIn
     return Number.NEGATIVE_INFINITY
   }
 
-  const haystack = normalizeText(`${candidate.title ?? ''} ${candidate.slug ?? ''}`)
   const awayTerms = buildTeamTerms(event.awayTeam)
   const homeTerms = buildTeamTerms(event.homeTeam)
-  const awayMatch = awayTerms.some((term) => haystack.includes(term))
-  const homeMatch = homeTerms.some((term) => haystack.includes(term))
 
-  if (!awayMatch || !homeMatch) {
+  const haystack = normalizeText(`${candidate.title ?? ''} ${candidate.slug ?? ''}`)
+  const isDirectEventMatch =
+    awayTerms.some((term) => haystack.includes(term)) &&
+    homeTerms.some((term) => haystack.includes(term))
+
+  let targetMarket: PolymarketMarket | undefined
+  if (candidate.markets) {
+    targetMarket = candidate.markets.find((m) => {
+      const mh = normalizeText(
+        `${m.groupItemTitle ?? ''} ${m.description ?? ''} ${m.outcomes ?? ''}`,
+      )
+      return awayTerms.some((t) => mh.includes(t)) && homeTerms.some((t) => mh.includes(t))
+    })
+  }
+
+  if (!isDirectEventMatch && !targetMarket) {
     return Number.NEGATIVE_INFINITY
   }
 
   const candidateStartValue =
+    targetMarket?.gameStartTime ??
     candidate.markets?.find((market) => market.gameStartTime)?.gameStartTime ??
     candidate.updatedAt ??
     ''
@@ -298,6 +311,10 @@ function scoreCandidate(candidate: PolymarketEvent, event: NapkinbetsOddsEventIn
 
   score += awayTerms.filter((term) => haystack.includes(term)).length
   score += homeTerms.filter((term) => haystack.includes(term)).length
+
+  if (targetMarket) {
+    score += 10
+  }
 
   return score
 }
@@ -450,12 +467,34 @@ async function findPolymarketOddsForEvent(event: NapkinbetsOddsEventInput) {
   }
 
   const coreTypes = new Set(['moneyline', 'spreads', 'totals'])
+  const awayTerms = buildTeamTerms(event.awayTeam)
+  const homeTerms = buildTeamTerms(event.homeTeam)
 
-  const moneylineMarket = matchedEvent.markets?.find(
-    (market) => market.sportsMarketType === 'moneyline',
-  )
-  const spreadMarket = matchedEvent.markets?.find((market) => market.sportsMarketType === 'spreads')
-  const totalMarket = matchedEvent.markets?.find((market) => market.sportsMarketType === 'totals')
+  const eventMarkets = matchedEvent.markets
+
+  function findMarket(type?: string) {
+    if (!eventMarkets) return
+    return eventMarkets.find((m) => {
+      if (type && m.sportsMarketType !== type) return false
+      if (eventMarkets.length > 1) {
+        const mh = normalizeText(
+          `${m.groupItemTitle ?? ''} ${m.description ?? ''} ${m.outcomes ?? ''}`,
+        )
+        const hasAway = awayTerms.some((t) => mh.includes(t))
+        const hasHome = homeTerms.some((t) => mh.includes(t))
+        if (!hasAway || !hasHome) return false
+      }
+      return true
+    })
+  }
+
+  let moneylineMarket = findMarket('moneyline')
+  if (!moneylineMarket && eventMarkets && eventMarkets.length > 1) {
+    moneylineMarket = findMarket()
+  }
+
+  const spreadMarket = findMarket('spreads')
+  const totalMarket = findMarket('totals')
 
   const moneyline = buildMoneylineOdds(moneylineMarket, event)
   const spread = buildGenericMarketOdds(

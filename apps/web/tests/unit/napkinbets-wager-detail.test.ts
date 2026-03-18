@@ -48,7 +48,7 @@ describe('getNapkinbetsWagerSettlementStage', () => {
           settlements: [
             {
               participantId: 'pat',
-              verificationStatus: 'pending',
+              verificationStatus: 'submitted',
               recipientAcknowledged: false,
             },
           ],

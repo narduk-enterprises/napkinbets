@@ -8,6 +8,7 @@ const EMPTY_DISCOVERY: NapkinbetsDiscoveryResponse = {
     sports: [],
     contexts: [],
     leagues: [],
+    leaguesBySport: {},
     states: [],
   },
   propIdeas: [],

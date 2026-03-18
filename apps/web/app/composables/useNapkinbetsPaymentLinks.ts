@@ -71,7 +71,11 @@ export function useNapkinbetsPaymentLinks() {
   }
 
   function buildPaymentNote(wagerSlug: string, participantName: string, amountDollars: number) {
-    return `NB ${wagerSlug} • entry $${formatAmount(amountDollars)} • ${participantName}`
+    const base = `NB ${wagerSlug} • entry $${formatAmount(amountDollars)}`
+    if (!participantName || participantName === 'entry') {
+      return base
+    }
+    return `${base} • ${participantName}`
   }
 
   /**

@@ -22,7 +22,6 @@ import {
   isLeagueActive,
   type DiscoverTier,
   type IngestWindow,
-  type CachedDiscoverEventIdea,
 } from '#server/services/napkinbets/espn'
 import {
   type NapkinbetsCachedEvent,
@@ -100,10 +99,16 @@ export interface NapkinbetsDiscoverSection {
   events: NapkinbetsCachedEvent[]
 }
 
+export interface NapkinbetsDiscoverFilterOption {
+  value: string
+  label: string
+}
+
 export interface NapkinbetsDiscoverFilters {
   sports: Array<{ value: string; label: string }>
   contexts: Array<{ value: string; label: string }>
   leagues: Array<{ value: string; label: string }>
+  leaguesBySport: Record<string, Array<{ value: string; label: string }>>
   states: Array<{ value: string; label: string }>
 }
 
@@ -114,13 +119,6 @@ export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'next-8w
 
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 const EVENT_LOOKUP_BATCH_SIZE = 64
-
-const NAPKINBETS_EDITORIAL_IMAGE_PATHS = {
-  auth: '/brand/imagery/auth-table-scene.webp',
-  discovery: '/brand/imagery/discovery-paper-grid.webp',
-  liveRoom: '/brand/imagery/live-room-editorial.webp',
-  masters: '/brand/imagery/masters-week-editorial.webp',
-} as const
 
 export const NAPKINBETS_PROP_IDEAS = [
   {
@@ -168,67 +166,6 @@ export const NAPKINBETS_PROP_IDEAS = [
   },
 ] as const
 
-const NAPKINBETS_GOLF_EDITORIAL = [
-  {
-    id: 'masters-2026',
-    label: 'Major watch',
-    title: 'Masters week room',
-    subtitle: 'Build the Augusta bet before Monday, then let it carry the whole week.',
-    summary:
-      'Cover the full official Masters week with one room for Green Jacket futures, Thursday pace-setters, and Sunday closeout sweats.',
-    windowLabel: 'Apr 6-12, 2026',
-    venueLabel: 'Augusta National Golf Club',
-    accent: 'major',
-    assets: [],
-    prefill: {
-      source: 'curated',
-      eventId: 'masters-2026',
-      eventTitle: 'Masters Tournament',
-      eventStartsAt: '2026-04-06T12:00:00Z',
-      eventStatus: 'Upcoming',
-      sport: 'golf',
-      contextKey: 'tournament',
-      league: 'pga',
-      venueName: 'Augusta National Golf Club',
-      homeTeamName: 'Masters field',
-      awayTeamName: 'Featured golfers',
-      format: 'golf-draft',
-      sideOptions: ['Green Jacket winner', 'Leader after Thursday', 'Playoff yes/no'],
-    },
-  },
-  {
-    id: 'masters-weekend-2026',
-    label: 'Sunday sweat',
-    title: 'Masters weekend closeout',
-    subtitle:
-      'Once the cut is set, shrink the bet and turn the leaderboard into one clean finish lane.',
-    summary:
-      'Use a smaller Augusta bet for best weekend score, final pairing winner, or the biggest Sunday charge once the field is trimmed.',
-    windowLabel: 'Apr 11-12, 2026',
-    venueLabel: 'Augusta National Golf Club',
-    accent: 'watch',
-    assets: [],
-    prefill: {
-      source: 'curated',
-      eventId: 'masters-weekend-2026',
-      eventTitle: 'Masters Tournament Weekend',
-      eventStartsAt: '2026-04-11T14:00:00Z',
-      eventStatus: 'Upcoming',
-      sport: 'golf',
-      contextKey: 'tournament',
-      league: 'pga',
-      venueName: 'Augusta National Golf Club',
-      homeTeamName: 'Masters leaders',
-      awayTeamName: 'Weekend chasers',
-      format: 'sports-prop',
-      sideOptions: ['Leader after Saturday', 'Best Sunday charge', 'Winning score under 280'],
-    },
-  },
-] as const satisfies readonly NapkinbetsDiscoverySpotlight[]
-
-const GOLF_MAJOR_EVENT_PATTERN =
-  /masters|u\.s\. open|us open|open championship|the open|pga championship/i
-
 // -- Shared utilities --------------------------------------------------------
 
 function nowIso() {
@@ -253,10 +190,6 @@ export function chunkItems<T>(items: T[], size: number) {
 
 function isWithinHours(date: Date, hours: number, now: Date) {
   return date.getTime() <= now.getTime() + hours * 60 * 60 * 1000
-}
-
-function isWithinDays(date: Date, days: number, now: Date) {
-  return date.getTime() <= now.getTime() + days * 24 * 60 * 60 * 1000
 }
 
 function readScoreFromJson(value: string) {
@@ -566,11 +499,13 @@ async function syncWagerScoresFromEvents(event: H3Event, events: NapkinbetsCache
 // -- Discover sections & filters ---------------------------------------------
 
 function takeLeagueBalancedEvents(events: NapkinbetsCachedEvent[], limit: number) {
+  // Sort by importance first so high-importance events get league-lead priority
+  const sorted = [...events].sort((a, b) => (b.importanceScore ?? 0) - (a.importanceScore ?? 0))
   const selected: NapkinbetsCachedEvent[] = []
   const overflow: NapkinbetsCachedEvent[] = []
   const seenLeagues = new Set<string>()
 
-  for (const event of events) {
+  for (const event of sorted) {
     if (!seenLeagues.has(event.league)) {
       seenLeagues.add(event.league)
       selected.push(event)
@@ -580,7 +515,9 @@ function takeLeagueBalancedEvents(events: NapkinbetsCachedEvent[], limit: number
     overflow.push(event)
   }
 
-  return [...selected, ...overflow].slice(0, limit)
+  return [...selected, ...overflow]
+    .slice(0, limit)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))
 }
 
 function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDiscoverSection[] {
@@ -588,16 +525,24 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
 
   const liveNow = events
     .filter((event) => event.state === 'in')
-    .sort((left, right) => left.startTime.localeCompare(right.startTime))
-    .slice(0, 8)
+    .sort(
+      (a, b) =>
+        (b.importanceScore ?? 0) - (a.importanceScore ?? 0) ||
+        a.startTime.localeCompare(b.startTime),
+    )
+    .slice(0, 20)
 
   const upcoming = events
     .filter((event) => event.state === 'pre')
-    .sort((left, right) => left.startTime.localeCompare(right.startTime))
+    .sort(
+      (a, b) =>
+        (b.importanceScore ?? 0) - (a.importanceScore ?? 0) ||
+        a.startTime.localeCompare(b.startTime),
+    )
 
   const startingSoon = takeLeagueBalancedEvents(
-    upcoming.filter((event) => isWithinHours(new Date(event.startTime), 4, now)),
-    8,
+    upcoming.filter((event) => isWithinHours(new Date(event.startTime), 6, now)),
+    20,
   )
   const startingSoonIds = new Set(startingSoon.map((event) => event.id))
 
@@ -606,7 +551,7 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
       (event) =>
         !startingSoonIds.has(event.id) && isWithinHours(new Date(event.startTime), 24, now),
     ),
-    10,
+    20,
   )
   const todayIds = new Set(today.map((event) => event.id))
 
@@ -616,31 +561,31 @@ function buildDiscoverSections(events: NapkinbetsCachedEvent[]): NapkinbetsDisco
   const nextUpSource = nextUpWindow.length
     ? nextUpWindow
     : upcoming.filter((event) => !startingSoonIds.has(event.id) && !todayIds.has(event.id))
-  const nextUp = takeLeagueBalancedEvents(nextUpSource, 12)
+  const nextUp = takeLeagueBalancedEvents(nextUpSource, 20)
 
   return [
     {
       key: 'live-now',
       label: 'Live now',
-      description: 'Events already in motion and ready for close-to-live bets.',
+      description: 'Games in progress right now.',
       events: liveNow,
     },
     {
       key: 'starting-soon',
       label: 'Starting soon',
-      description: 'Good bets to set before the first whistle or tip.',
+      description: 'Kicking off in the next few hours.',
       events: startingSoon,
     },
     {
       key: 'today',
       label: 'Today',
-      description: 'The rest of the strongest events inside the next 24 hours.',
+      description: 'More games on the schedule today.',
       events: today,
     },
     {
       key: 'next-up',
       label: 'Next up',
-      description: 'Upcoming events worth planning around this week.',
+      description: 'Games on the horizon beyond today.',
       events: nextUp,
     },
   ]
@@ -650,16 +595,28 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
   const sportMap = new Map<string, string>()
   const contextMap = new Map<string, string>()
   const leagueMap = new Map<string, string>()
+  const leaguesBySportMap = new Map<string, Map<string, string>>()
   const stateMap = new Map<string, string>()
 
   for (const event of events) {
     sportMap.set(event.sport, event.sportLabel)
     contextMap.set(event.contextKey, event.contextLabel)
     leagueMap.set(event.league, event.leagueLabel)
+    if (!leaguesBySportMap.has(event.sport)) {
+      leaguesBySportMap.set(event.sport, new Map())
+    }
+    leaguesBySportMap.get(event.sport)!.set(event.league, event.leagueLabel)
     stateMap.set(
       event.state,
       event.state === 'in' ? 'Live' : event.state === 'pre' ? 'Upcoming' : 'Final',
     )
+  }
+
+  const leaguesBySport: Record<string, NapkinbetsDiscoverFilterOption[]> = {}
+  for (const [sport, leagueToLabel] of leaguesBySportMap) {
+    leaguesBySport[sport] = Array.from(leagueToLabel.entries())
+      .sort((left, right) => left[1].localeCompare(right[1]))
+      .map(([value, label]) => ({ value, label }))
   }
 
   return {
@@ -672,197 +629,11 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
     leagues: Array.from(leagueMap.entries())
       .sort((left, right) => left[1].localeCompare(right[1]))
       .map(([value, label]) => ({ value, label })),
+    leaguesBySport,
     states: Array.from(stateMap.entries())
       .sort((left, right) => left[1].localeCompare(right[1]))
       .map(([value, label]) => ({ value, label })),
   }
-}
-
-// -- Spotlights --------------------------------------------------------------
-
-function buildCreatePrefillFromEvent(
-  event: NapkinbetsCachedEvent,
-  idea?: CachedDiscoverEventIdea,
-): NapkinbetsCreatePrefillQuery {
-  return {
-    source: event.source,
-    eventId: event.id,
-    eventTitle: event.eventTitle,
-    eventStartsAt: event.startTime,
-    eventStatus: event.status,
-    sport: event.sport,
-    contextKey: event.contextKey,
-    league: event.league,
-    venueName: event.venueName,
-    homeTeamName: event.homeTeam.homeAway === 'home' ? event.homeTeam.name : '',
-    awayTeamName: event.awayTeam.homeAway === 'away' ? event.awayTeam.name : '',
-    format: idea?.format || (event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
-    sideOptions: idea?.sideOptions ?? [],
-  }
-}
-
-function isGolfMajorEvent(event: Pick<NapkinbetsCachedEvent, 'sport' | 'eventTitle'>) {
-  return event.sport === 'golf' && GOLF_MAJOR_EVENT_PATTERN.test(event.eventTitle)
-}
-
-function dedupeSpotlightAssets(assets: NapkinbetsDiscoverySpotlightAsset[]) {
-  const unique = new Map<string, NapkinbetsDiscoverySpotlightAsset>()
-
-  for (const asset of assets) {
-    if (!asset.src) {
-      continue
-    }
-
-    const key = `${asset.kind}:${asset.src}`
-    if (!unique.has(key)) {
-      unique.set(key, asset)
-    }
-  }
-
-  return [...unique.values()]
-}
-
-function buildEditorialSpotlightAsset(src: string, alt: string): NapkinbetsDiscoverySpotlightAsset {
-  return {
-    kind: 'editorial',
-    src,
-    alt,
-  }
-}
-
-function buildSpotlightAssetsFromEvent(
-  event: NapkinbetsCachedEvent,
-  options?: { includeMark?: boolean },
-): NapkinbetsDiscoverySpotlightAsset[] {
-  const editorialAsset =
-    event.sport === 'golf'
-      ? [
-          buildEditorialSpotlightAsset(
-            isGolfMajorEvent(event)
-              ? NAPKINBETS_EDITORIAL_IMAGE_PATHS.masters
-              : NAPKINBETS_EDITORIAL_IMAGE_PATHS.liveRoom,
-            `${event.eventTitle} editorial`,
-          ),
-        ]
-      : []
-
-  const markAsset = options?.includeMark
-    ? [
-        {
-          kind: 'mark',
-          src: '/brand/napkinbets-mark.svg',
-          alt: 'Napkinbets spotlight',
-        } satisfies NapkinbetsDiscoverySpotlightAsset,
-      ]
-    : []
-
-  const teamAssets = [event.awayTeam, event.homeTeam]
-    .filter((team) => team.logo)
-    .slice(0, 2)
-    .map(
-      (team) =>
-        ({
-          kind: event.sport === 'golf' ? 'headshot' : 'logo',
-          src: team.logo,
-          alt: team.name,
-        }) satisfies NapkinbetsDiscoverySpotlightAsset,
-    )
-
-  const assets = dedupeSpotlightAssets([...editorialAsset, ...markAsset, ...teamAssets]).slice(0, 3)
-
-  if (assets.length > 0) {
-    return assets
-  }
-
-  return [
-    buildEditorialSpotlightAsset(
-      NAPKINBETS_EDITORIAL_IMAGE_PATHS.discovery,
-      `${event.leagueLabel} spotlight`,
-    ),
-  ]
-}
-
-function buildEditorialSpotlightAssets(
-  events: NapkinbetsCachedEvent[],
-): NapkinbetsDiscoverySpotlightAsset[] {
-  const assets = events.flatMap((event) =>
-    buildSpotlightAssetsFromEvent(event).filter((asset) => asset.kind !== 'editorial'),
-  )
-
-  return dedupeSpotlightAssets([
-    buildEditorialSpotlightAsset(
-      NAPKINBETS_EDITORIAL_IMAGE_PATHS.masters,
-      'Napkinbets golf spotlight',
-    ),
-    ...assets,
-  ]).slice(0, 3)
-}
-
-function buildTourSpotlightFromEvent(
-  event: NapkinbetsCachedEvent,
-  label: string,
-): NapkinbetsDiscoverySpotlight {
-  const isMajor = isGolfMajorEvent(event)
-  const leaderNames = [event.awayTeam.name, event.homeTeam.name].filter(Boolean).join(' and ')
-
-  return {
-    id: `spotlight:${event.id}`,
-    label: isMajor ? 'Major watch' : label,
-    title: event.eventTitle,
-    subtitle:
-      event.sport === 'golf'
-        ? event.state === 'in'
-          ? `${leaderNames || 'The field'} gives you a live leaderboard lane without needing a sportsbook feed.`
-          : `${leaderNames || 'Featured golfers'} give this tournament a clean featured lane before the round starts.`
-        : event.summary,
-    summary:
-      event.sport === 'golf'
-        ? `${event.summary} Keep the side market tight enough to settle from the official leaderboard.`
-        : event.ideas[0]?.description ||
-          'Use the live event context first, then keep the side market small enough to settle fast.',
-    windowLabel: event.shortStatus,
-    venueLabel: event.venueName,
-    accent: isMajor ? 'major' : event.sport === 'golf' ? 'tour' : 'tour',
-    assets: buildSpotlightAssetsFromEvent(event, { includeMark: event.state === 'in' }),
-    prefill: buildCreatePrefillFromEvent(event, event.ideas[0]),
-  }
-}
-
-export function buildDiscoverSpotlights(events: NapkinbetsCachedEvent[], now = new Date()) {
-  const spotlights: NapkinbetsDiscoverySpotlight[] = []
-  const golfEvents = events.filter((event) => event.sport === 'golf')
-  const pgaEvent = golfEvents.find((event) => event.league === 'pga')
-  const lpgaEvent = golfEvents.find((event) => event.league === 'lpga')
-  const editorialAssets = buildEditorialSpotlightAssets(
-    [pgaEvent, lpgaEvent].filter((event): event is NapkinbetsCachedEvent => Boolean(event)),
-  )
-
-  for (const spotlight of NAPKINBETS_GOLF_EDITORIAL) {
-    const start = new Date(spotlight.prefill.eventStartsAt)
-    if (start >= now && isWithinDays(start, 45, now)) {
-      spotlights.push({
-        ...spotlight,
-        assets: editorialAssets,
-      })
-    }
-  }
-
-  if (pgaEvent) {
-    spotlights.push(
-      buildTourSpotlightFromEvent(pgaEvent, pgaEvent.state === 'in' ? 'Live on tour' : 'PGA tour'),
-    )
-  }
-
-  if (lpgaEvent) {
-    spotlights.push(
-      buildTourSpotlightFromEvent(
-        lpgaEvent,
-        lpgaEvent.state === 'in' ? 'Live on tour' : 'LPGA tour',
-      ),
-    )
-  }
-
-  return spotlights.slice(0, 4)
 }
 
 // -- Ingest orchestration ----------------------------------------------------
@@ -1124,7 +895,7 @@ async function loadCachedOdds(
 export async function loadCachedDiscoverData(event: H3Event) {
   const db = useAppDatabase(event)
   const readSnapshot = async () => {
-    const [eventRows, latestRun, latestEventSync] = await Promise.all([
+    const [eventRows, latestRun] = await Promise.all([
       db
         .select(NAPKINBETS_CACHED_EVENT_SELECT)
         .from(napkinbetsEvents)
@@ -1135,17 +906,18 @@ export async function loadCachedDiscoverData(event: H3Event) {
         .from(napkinbetsIngestRuns)
         .orderBy(desc(napkinbetsIngestRuns.startedAt))
         .limit(1),
-      db
-        .select({ lastSyncedAt: napkinbetsEvents.lastSyncedAt })
-        .from(napkinbetsEvents)
-        .orderBy(desc(napkinbetsEvents.lastSyncedAt))
-        .limit(1),
     ])
 
+    const events = eventRows.map((row) => toCachedEvent(row))
+    const latestSync =
+      events.length > 0
+        ? events.reduce((latest, e) => (e.lastSyncedAt > latest ? e.lastSyncedAt : latest), '')
+        : ''
+
     return {
-      events: eventRows.map((row) => toCachedEvent(row)),
+      events,
       latestRun: latestRun[0] ?? null,
-      latestSync: latestEventSync[0]?.lastSyncedAt ?? '',
+      latestSync,
     }
   }
 
@@ -1176,8 +948,6 @@ export async function loadCachedDiscoverData(event: H3Event) {
       odds: oddsByEventId.get(cachedEvent.id) ?? null,
     })),
   }))
-
-  const spotlights = buildDiscoverSpotlights(snapshot.events)
 
   const dbSpotlights: NapkinbetsDiscoverySpotlight[] = featuredBetRows.map((row) => {
     let prefill: NapkinbetsCreatePrefillQuery
@@ -1217,15 +987,9 @@ export async function loadCachedDiscoverData(event: H3Event) {
     }
   })
 
-  const existingIds = new Set(dbSpotlights.map((s) => s.id))
-  const mergedSpotlights = [
-    ...dbSpotlights,
-    ...spotlights.filter((s) => !existingIds.has(s.id)),
-  ].slice(0, 6)
-
   return {
     sections,
-    spotlights: mergedSpotlights,
+    spotlights: dbSpotlights.slice(0, 6),
     filters: buildDiscoverFilters(snapshot.events),
     propIdeas: [...NAPKINBETS_PROP_IDEAS],
     refreshedAt: freshestSync || nowIso(),

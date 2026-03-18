@@ -7,6 +7,14 @@ async function runIngest(tier: 'live-window' | 'next-48h' | 'next-7d' | 'next-8w
   await actions.runAdminIngest(tier)
 }
 
+async function runImportance(forceAll = false) {
+  await actions.runImportanceScoring(forceAll)
+}
+
+async function refreshOdds() {
+  await actions.refreshAllOdds()
+}
+
 const TIER_META = [
   {
     key: 'live-window' as const,
@@ -165,22 +173,109 @@ const ingestRunRows = computed(() =>
             </div>
           </UCard>
 
-          <UCard class="napkinbets-panel border-dashed ring-0 bg-transparent">
-            <div class="flex flex-col items-center justify-center p-6 text-center space-y-3">
-              <div
-                class="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-dimmed"
-              >
-                <UIcon name="i-lucide-database-zap" class="w-5 h-5" />
+          <UCard class="napkinbets-panel">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="space-y-1">
+                  <p class="font-semibold text-default">AI Importance Scoring</p>
+                  <p class="text-sm text-muted">
+                    Score events 0-100 using heuristics + Grok AI for sort priority on the discover
+                    page.
+                  </p>
+                </div>
+                <UBadge color="neutral" variant="subtle" class="shrink-0"> On-demand </UBadge>
               </div>
-              <div class="space-y-1">
-                <p class="font-semibold text-default">TheSportsDB Reference Sync</p>
-                <p class="text-xs text-muted max-w-[200px]">
-                  Sync league metadata and team assets from TheSportsDB.
-                </p>
+
+              <UPopover>
+                <UButton
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                  icon="i-lucide-sparkles"
+                  :loading="actions.activeAction.value === 'admin-importance'"
+                  block
+                >
+                  Score events
+                </UButton>
+                <template #content>
+                  <div class="p-3 space-y-3 max-w-xs">
+                    <div>
+                      <p class="text-sm font-semibold text-default">Run importance scoring?</p>
+                      <p class="text-xs text-muted mt-1">
+                        Scoring evaluates narrative impact using Grok AI.
+                      </p>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                      <UButton
+                        color="primary"
+                        size="xs"
+                        :loading="actions.activeAction.value === 'admin-importance'"
+                        @click="runImportance()"
+                        block
+                      >
+                        Score stale/new events
+                      </UButton>
+                      <UButton
+                        color="error"
+                        variant="soft"
+                        size="xs"
+                        :loading="actions.activeAction.value === 'admin-importance-force'"
+                        @click="runImportance(true)"
+                        block
+                      >
+                        Force score all (Dev)
+                      </UButton>
+                    </div>
+                  </div>
+                </template>
+              </UPopover>
+            </div>
+          </UCard>
+
+          <UCard class="napkinbets-panel">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="space-y-1">
+                  <p class="font-semibold text-default">Odds Integrations</p>
+                  <p class="text-sm text-muted">
+                    Refresh Polymarket lines for actively traded upcoming events.
+                  </p>
+                </div>
+                <UBadge color="neutral" variant="subtle" class="shrink-0"> On-demand </UBadge>
               </div>
-              <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-info" disabled>
-                Waiting for ingest logic
-              </UButton>
+
+              <UPopover>
+                <UButton
+                  color="primary"
+                  variant="soft"
+                  size="sm"
+                  icon="i-lucide-refresh-cw"
+                  :loading="actions.activeAction.value === 'admin-odds-refresh'"
+                  block
+                >
+                  Refresh odds
+                </UButton>
+                <template #content>
+                  <div class="p-3 space-y-3 max-w-xs">
+                    <div>
+                      <p class="text-sm font-semibold text-default">Refresh Polymarket odds?</p>
+                      <p class="text-xs text-muted mt-1">
+                        Queries Polymarket and updates the DB for upcoming events.
+                      </p>
+                    </div>
+                    <UButton
+                      color="primary"
+                      size="xs"
+                      :loading="actions.activeAction.value === 'admin-odds-refresh'"
+                      @click="refreshOdds()"
+                      block
+                    >
+                      Confirm mapping sync
+                    </UButton>
+                  </div>
+                </template>
+              </UPopover>
             </div>
           </UCard>
         </div>

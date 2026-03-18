@@ -99,6 +99,7 @@ const winnerInfo = computed(() => {
       :status="wager.eventStatus"
       :start-time="wager.eventStartsAt"
       :venue-name="wager.venueName"
+      :league-label="wager.league ? wager.league.toUpperCase() : undefined"
       :weather="wager.weather"
       :away-team-name="wager.awayTeamName"
       :away-team-logo="wager.awayTeamLogo"
@@ -124,7 +125,7 @@ const winnerInfo = computed(() => {
                 class="absolute inset-y-0 right-0 bg-info/80 transition-all duration-500"
                 :style="{ width: `${homePickPercentage}%` }"
               ></div>
-              <div class="absolute inset-y-0 left-1/2 w-px bg-white/50 -translate-x-1/2"></div>
+              <div class="absolute inset-y-0 left-1/2 w-px bg-default/50 -translate-x-1/2"></div>
             </div>
           </div>
 

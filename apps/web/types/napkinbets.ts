@@ -357,6 +357,8 @@ export interface NapkinbetsEventCard {
   awayTeam: NapkinbetsEventTeam
   leaders: NapkinbetsEventLeader[]
   ideas: NapkinbetsEventIdea[]
+  importanceScore: number
+  importanceReason: string
   lastSyncedAt: string
   odds?: NapkinbetsEventOdds | null
 }
@@ -377,6 +379,8 @@ export interface NapkinbetsDiscoverFilters {
   sports: NapkinbetsDiscoverFilterOption[]
   contexts: NapkinbetsDiscoverFilterOption[]
   leagues: NapkinbetsDiscoverFilterOption[]
+  /** Leagues grouped by sport key for contextual filter (e.g. only show baseball leagues when baseball selected) */
+  leaguesBySport: Record<string, NapkinbetsDiscoverFilterOption[]>
   states: NapkinbetsDiscoverFilterOption[]
 }
 
@@ -574,6 +578,19 @@ export interface NapkinbetsGroup {
 export interface NapkinbetsGroupsResponse {
   groups: NapkinbetsGroup[]
   myGroups: NapkinbetsGroup[]
+}
+
+export interface NapkinbetsGroupMember {
+  id: string
+  userId: string
+  displayName: string
+  role: 'owner' | 'admin' | 'member'
+  joinedAt: string
+}
+
+export interface NapkinbetsGroupDetailResponse {
+  group: NapkinbetsGroup
+  members: NapkinbetsGroupMember[]
 }
 
 export interface CreateNapkinbetsGroupInput {
@@ -1119,4 +1136,19 @@ export interface NapkinbetsSystemPromptEntry {
   content: string
   description: string
   updatedAt: string
+}
+
+export interface NapkinbetsAdminEventsResponse {
+  events: NapkinbetsEventCard[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+export interface NapkinbetsGamesResponse {
+  events: NapkinbetsEventCard[]
+  nextCursor: string | null
 }

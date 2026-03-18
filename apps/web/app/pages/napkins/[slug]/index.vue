@@ -5,6 +5,16 @@ import type {
   WagerSettlementInput,
   WagerSettlementReviewInput,
 } from '../../../../types/napkinbets'
+import type { NapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
+import { getNapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
+
+/** Stages where the hero "Settle up" button is shown (ready to settle, in progress, or done). Hidden for live/upcoming. */
+const SETTLE_UP_VISIBLE_STAGES: NapkinbetsWagerSettlementStage[] = [
+  'ready',
+  'submitted',
+  'rejected',
+  'settled',
+]
 
 const route = useRoute()
 const { user, loggedIn } = useUserSession()
@@ -24,6 +34,24 @@ const myParticipant = computed(() =>
   wager.value && user.value?.id
     ? (wager.value.participants.find((p) => p.userId === user.value!.id) ?? null)
     : null,
+)
+
+const settlementStage = computed(() =>
+  wager.value
+    ? getNapkinbetsWagerSettlementStage(wager.value, myParticipant.value?.id ?? null)
+    : null,
+)
+
+const showSettleUpInHero = computed(() =>
+  Boolean(
+    canManage.value &&
+    settlementStage.value != null &&
+    SETTLE_UP_VISIBLE_STAGES.includes(settlementStage.value),
+  ),
+)
+
+const confirmedSettlementsCount = computed(
+  () => wager.value?.settlements.filter((s) => s.verificationStatus === 'confirmed').length ?? 0,
 )
 
 const isInvited = computed(
@@ -240,7 +268,7 @@ useWebPageSchema({
               <span class="napkinbets-hero-pill">{{ wager.venueName || 'Remote group' }}</span>
             </div>
 
-            <div v-if="canManage" class="napkinbets-card-actions">
+            <div v-if="showSettleUpInHero" class="napkinbets-card-actions">
               <UButton
                 :to="`/napkins/${wager.slug}/closeout`"
                 color="primary"
@@ -266,7 +294,7 @@ useWebPageSchema({
                 </div>
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Paid</p>
-                  <p class="napkinbets-surface-value">{{ wager.settlements.length }}</p>
+                  <p class="napkinbets-surface-value">{{ confirmedSettlementsCount }}</p>
                 </div>
               </div>
             </div>

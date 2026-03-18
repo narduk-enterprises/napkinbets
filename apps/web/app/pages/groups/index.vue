@@ -161,7 +161,12 @@ useWebPageSchema({
               >
                 <div class="min-w-0 space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="font-semibold text-default">{{ group.name }}</p>
+                    <NuxtLink
+                      :to="`/groups/${group.slug}`"
+                      class="font-semibold text-default hover:underline"
+                    >
+                      {{ group.name }}
+                    </NuxtLink>
                     <UBadge color="neutral" variant="subtle">{{
                       group.userRole || 'member'
                     }}</UBadge>
@@ -169,15 +174,20 @@ useWebPageSchema({
                   <p class="text-sm text-muted">{{ group.description || 'No group note yet.' }}</p>
                 </div>
 
-                <UButton
-                  :to="`/napkins/create?groupId=${group.id}`"
-                  color="primary"
-                  variant="soft"
-                  size="sm"
-                  icon="i-lucide-ticket-plus"
-                >
-                  Start group bet
-                </UButton>
+                <div class="flex items-center gap-2">
+                  <UButton :to="`/groups/${group.slug}`" color="neutral" variant="soft" size="sm">
+                    View details
+                  </UButton>
+                  <UButton
+                    :to="`/napkins/create?groupId=${group.id}`"
+                    color="primary"
+                    variant="soft"
+                    size="sm"
+                    icon="i-lucide-ticket-plus"
+                  >
+                    Start group bet
+                  </UButton>
+                </div>
               </div>
             </div>
 
@@ -207,7 +217,12 @@ useWebPageSchema({
               >
                 <div class="min-w-0 space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
-                    <p class="font-semibold text-default">{{ group.name }}</p>
+                    <NuxtLink
+                      :to="`/groups/${group.slug}`"
+                      class="font-semibold text-default hover:underline"
+                    >
+                      {{ group.name }}
+                    </NuxtLink>
                     <UBadge color="neutral" variant="subtle"
                       >{{ group.memberCount }} members</UBadge
                     >
@@ -215,8 +230,11 @@ useWebPageSchema({
                   <p class="text-sm text-muted">{{ group.description || 'Public room' }}</p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                  <UBadge color="info" variant="soft">{{ group.joinPolicy }}</UBadge>
+                <div class="flex flex-wrap items-center gap-2">
+                  <UBadge color="neutral" variant="soft">{{ group.joinPolicy }}</UBadge>
+                  <UButton :to="`/groups/${group.slug}`" color="neutral" variant="soft" size="sm">
+                    View
+                  </UButton>
                   <UButton
                     v-if="!group.userRole && group.joinPolicy === 'open'"
                     color="primary"

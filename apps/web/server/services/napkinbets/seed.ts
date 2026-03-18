@@ -3,9 +3,10 @@
  * Extracted from pools.ts for maintainability (no runtime production callers).
  */
 import type { H3Event } from 'h3'
-import { asc, eq, gte, inArray } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, isNull } from 'drizzle-orm'
 import {
   napkinbetsEvents,
+  napkinbetsGroups,
   napkinbetsNotifications,
   napkinbetsParticipants,
   napkinbetsPicks,
@@ -67,7 +68,25 @@ const _CONCEPT = {
   ],
 }
 
-const DEMO_POOL_SLUGS = ['demo-hoops-night', 'demo-soccer-watch', 'demo-golf-draft']
+const DEMO_POOL_SLUGS = [
+  'demo-hoops-night',
+  'demo-soccer-watch',
+  'demo-golf-draft',
+  'demo-wager-settled',
+  'demo-wager-submitted',
+  'demo-wager-rejected',
+  'demo-wager-locked',
+  'demo-wager-live',
+  'demo-simple-bet',
+]
+/** Slug for E2E join flow: pool wager owned by layer user (Pat), demo user is not a participant. */
+export const DEMO_JOIN_POOL_SLUG = 'demo-join-pool'
+/** Slug for E2E invitation flow: demo user is participant with joinStatus pending. */
+export const DEMO_INVITATION_SLUG = 'demo-invitation'
+/** Demo group slug (Friday Night Watch) — seed assigns some pools to this group. */
+const DEMO_GROUP_SLUG = 'friday-night-watch'
+/** Pool slugs that appear under the demo group on the group detail page. */
+const DEMO_GROUP_POOL_SLUGS = ['demo-hoops-night', 'demo-soccer-watch', 'demo-golf-draft']
 const DEMO_USER_EMAIL = 'demo@napkinbets.app'
 const DEMO_USER_PASSWORD = 'DemoBoard123!'
 const DEMO_USER_NAME = 'Demo Host'
@@ -134,6 +153,10 @@ interface DemoSettlementDef {
   confirmationCode?: string | null
   note: string
   verificationStatus: string
+  proofImageUrl?: string | null
+  rejectedByUserId?: string | null
+  rejectedAt?: string | null
+  rejectionNote?: string | null
 }
 
 interface DemoNotificationDef {
@@ -173,6 +196,10 @@ interface DemoPoolDef {
   notifications?: DemoNotificationDef[]
   eventSource?: string
   eventRow?: DemoEventRow
+  /** For state-coverage pools: explicit event state (pre/in/post). */
+  eventState?: string
+  /** Default 'pool'. Use 'simple-bet' for 1v1 napkin. */
+  napkinType?: 'pool' | 'simple-bet'
 }
 
 // ---------------------------------------------------------------------------
@@ -236,8 +263,8 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
         : 'Sample group bet built around tonight\u2019s featured game.',
       category: 'basketball',
       format: 'sports-game',
-      sport: primaryEvent?.sport ?? 'basketball',
-      league: primaryEvent?.league ?? 'nba',
+      sport: 'basketball',
+      league: 'nba',
       contextKey: 'event',
       customContextName: 'Court-side watch room',
       status: primaryEvent?.status === 'in' ? 'live' : 'open',
@@ -337,6 +364,7 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
           confirmationCode: 'VENMO-DEMO-001',
           note: 'Entry posted before tip-off.',
           verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
         },
       ],
       notifications: [
@@ -358,8 +386,8 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
         : 'Sample prop bet built around a featured soccer match.',
       category: 'soccer',
       format: 'sports-prop',
-      sport: secondaryEvent?.sport ?? 'soccer',
-      league: secondaryEvent?.league ?? 'mls',
+      sport: 'soccer',
+      league: 'mls',
       contextKey: 'prop',
       customContextName: 'Turf watch lounge',
       status: secondaryEvent?.status === 'in' ? 'live' : 'open',
@@ -449,6 +477,7 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
           confirmationCode: 'PAYPAL-DEMO-102',
           note: 'Prop confirmed before kickoff.',
           verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
         },
       ],
       notifications: [
@@ -559,6 +588,7 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
           confirmationCode: 'CASH-DEMO-305',
           note: 'Entry locked in after draft.',
           verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
         },
       ],
       notifications: [
@@ -574,6 +604,441 @@ function buildDemoPools(events: DemoEventRow[]): DemoPoolDef[] {
   ]
 }
 
+/** State-coverage pools for E2E and visual regression (demo user owns all). */
+function buildDemoStatePools(): DemoPoolDef[] {
+  const base = {
+    category: 'basketball',
+    format: 'sports-game',
+    sport: 'basketball',
+    league: 'nba',
+    contextKey: 'event',
+    customContextName: 'E2E state coverage',
+    creatorName: DEMO_USER_NAME,
+    sideOptions: ['Home', 'Away'],
+    entryFeeCents: 1000,
+    paymentService: 'Venmo',
+    paymentHandle: '@DemoHost',
+    terms: 'Friendly wagers only.',
+    venueName: 'Test arena',
+    latitude: '40.7128',
+    longitude: '-74.0060',
+    eventFallbackTitle: 'State coverage game',
+    manualHomeTeam: 'Home',
+    manualAwayTeam: 'Away',
+    participants: [
+      {
+        displayName: DEMO_USER_NAME,
+        sideLabel: 'Home',
+        joinStatus: 'accepted',
+        draftOrder: 1,
+        paymentStatus: 'confirmed',
+        paymentReference: 'VENMO-DEMO',
+        avatarUrl: DEMO_AVATAR_URLS.demoHost,
+        useDemoUser: true,
+      },
+      {
+        displayName: 'Other Player',
+        sideLabel: 'Away',
+        joinStatus: 'accepted',
+        draftOrder: 2,
+        paymentStatus: 'confirmed',
+        paymentReference: 'VENMO-OTHER',
+        avatarUrl: DEMO_AVATAR_URLS.olivia,
+      },
+    ],
+    pots: [{ label: 'Winner', amountCents: 2000, sortOrder: 0 }],
+    picks: [
+      {
+        participantIndex: 0,
+        pickLabel: 'Home',
+        pickType: 'team',
+        pickValue: 'Home',
+        confidence: 5,
+        liveScore: 10,
+        outcome: 'won',
+        sortOrder: 0,
+      },
+      {
+        participantIndex: 1,
+        pickLabel: 'Away',
+        pickType: 'team',
+        pickValue: 'Away',
+        confidence: 3,
+        liveScore: 6,
+        outcome: 'lost',
+        sortOrder: 1,
+      },
+    ],
+  }
+
+  return [
+    {
+      ...base,
+      slug: 'demo-wager-settled',
+      title: 'Demo Wager Settled',
+      description: 'E2E: all settled, all confirmed.',
+      status: 'settled',
+      eventState: 'post',
+      settlements: [
+        {
+          participantIndex: 0,
+          amountCents: 1000,
+          method: 'Venmo',
+          handle: '@DemoHost',
+          confirmationCode: 'VNM-001',
+          note: 'Paid',
+          verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
+        },
+        {
+          participantIndex: 1,
+          amountCents: 1000,
+          method: 'Venmo',
+          handle: '@Other',
+          confirmationCode: 'VNM-002',
+          note: 'Paid',
+          verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-2.png',
+        },
+      ],
+    },
+    {
+      ...base,
+      slug: 'demo-wager-submitted',
+      title: 'Demo Wager Submitted',
+      description: 'E2E: settling, one settlement submitted.',
+      status: 'settling',
+      eventState: 'post',
+      settlements: [
+        {
+          participantIndex: 0,
+          amountCents: 1000,
+          method: 'Venmo',
+          handle: '@DemoHost',
+          confirmationCode: 'VNM-003',
+          note: 'Paid',
+          verificationStatus: 'confirmed',
+          proofImageUrl: 'seed/venmo-1.png',
+        },
+        {
+          participantIndex: 1,
+          amountCents: 1000,
+          method: 'Venmo',
+          handle: '@Other',
+          confirmationCode: 'VNM-004',
+          note: 'Sent',
+          verificationStatus: 'submitted',
+          proofImageUrl: 'seed/venmo-2.png',
+        },
+      ],
+    },
+    {
+      ...base,
+      slug: 'demo-wager-rejected',
+      title: 'Demo Wager Rejected',
+      description: 'E2E: settling, one settlement rejected.',
+      status: 'settling',
+      eventState: 'post',
+      participants: [
+        { ...base.participants[0]! },
+        { ...base.participants[1]!, paymentStatus: 'pending' as const },
+      ],
+      settlements: [
+        {
+          participantIndex: 1,
+          amountCents: 1000,
+          method: 'Venmo',
+          handle: '@Other',
+          confirmationCode: 'VNM-005',
+          note: 'Sent wrong amount',
+          verificationStatus: 'rejected',
+          proofImageUrl: 'seed/venmo-rejected.png',
+          rejectedByUserId: null,
+          rejectedAt: new Date().toISOString(),
+          rejectionNote: 'Wrong amount — please resend.',
+        },
+      ],
+    },
+    {
+      ...base,
+      slug: 'demo-wager-locked',
+      title: 'Demo Wager Locked',
+      description: 'E2E: locked, pregame.',
+      status: 'locked',
+      eventState: 'pre',
+      picks: [
+        {
+          participantIndex: 0,
+          pickLabel: 'Home',
+          pickType: 'team',
+          pickValue: 'Home',
+          confidence: 5,
+          liveScore: 0,
+          outcome: 'pending',
+          sortOrder: 0,
+        },
+        {
+          participantIndex: 1,
+          pickLabel: 'Away',
+          pickType: 'team',
+          pickValue: 'Away',
+          confidence: 3,
+          liveScore: 0,
+          outcome: 'pending',
+          sortOrder: 1,
+        },
+      ],
+      settlements: [],
+    },
+    {
+      ...base,
+      slug: 'demo-wager-live',
+      title: 'Demo Wager Live',
+      description: 'E2E: live, game in progress.',
+      status: 'live',
+      eventState: 'in',
+      picks: [
+        {
+          participantIndex: 0,
+          pickLabel: 'Home',
+          pickType: 'team',
+          pickValue: 'Home',
+          confidence: 5,
+          liveScore: 12,
+          outcome: 'winning',
+          sortOrder: 0,
+        },
+        {
+          participantIndex: 1,
+          pickLabel: 'Away',
+          pickType: 'team',
+          pickValue: 'Away',
+          confidence: 3,
+          liveScore: 8,
+          outcome: 'pending',
+          sortOrder: 1,
+        },
+      ],
+      settlements: [],
+    },
+    {
+      ...base,
+      slug: 'demo-simple-bet',
+      title: 'Demo Simple Bet',
+      description: 'E2E: 1v1 simple-bet; no draft order or leaderboard.',
+      status: 'open',
+      eventState: 'pre',
+      napkinType: 'simple-bet',
+      participants: [
+        {
+          displayName: DEMO_USER_NAME,
+          sideLabel: 'Home',
+          joinStatus: 'accepted',
+          draftOrder: 1,
+          paymentStatus: 'pending',
+          avatarUrl: DEMO_AVATAR_URLS.demoHost,
+          useDemoUser: true,
+        },
+        {
+          displayName: 'Opponent',
+          sideLabel: 'Away',
+          joinStatus: 'accepted',
+          draftOrder: 2,
+          paymentStatus: 'pending',
+          avatarUrl: DEMO_AVATAR_URLS.olivia,
+        },
+      ],
+      picks: [],
+      settlements: [],
+    },
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// Join-pool wager for E2E (demo user is not a participant; owned by layer user)
+// ---------------------------------------------------------------------------
+
+async function ensureJoinPoolWager(db: AppDatabase, now: string) {
+  const existing = await db
+    .select({ id: napkinbetsWagers.id })
+    .from(napkinbetsWagers)
+    .where(eq(napkinbetsWagers.slug, DEMO_JOIN_POOL_SLUG))
+    .get()
+  if (existing) return
+
+  const pat = await db.select().from(users).where(eq(users.email, 'pat@nard.uk')).get()
+  const logan = await db.select().from(users).where(eq(users.email, 'logan@nard.uk')).get()
+  if (!pat || !logan) return
+
+  const wagerId = crypto.randomUUID()
+  await db.insert(napkinbetsWagers).values({
+    id: wagerId,
+    ownerUserId: pat.id,
+    slug: DEMO_JOIN_POOL_SLUG,
+    title: 'Join Pool (E2E)',
+    description: 'Pool bet for E2E join flow; demo user is not a participant.',
+    napkinType: 'pool',
+    boardType: 'manual-curated',
+    category: 'basketball',
+    format: 'sports-game',
+    sport: 'basketball',
+    league: 'nba',
+    contextKey: 'event',
+    customContextName: 'E2E join',
+    status: 'open',
+    creatorName: pat.name ?? 'Pat',
+    sideOptionsJson: '["Home","Away"]',
+    entryFeeCents: 1000,
+    paymentService: 'Venmo',
+    paymentHandle: '@pat-nb',
+    terms: 'Friendly wagers only.',
+    venueName: 'Test arena',
+    latitude: '40.7128',
+    longitude: '-74.0060',
+    eventSource: 'manual',
+    eventId: null,
+    eventTitle: 'Join flow game',
+    eventStartsAt: now,
+    eventStatus: 'Scheduled',
+    eventState: 'pre',
+    homeTeamName: 'Home',
+    awayTeamName: 'Away',
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  const partPatId = crypto.randomUUID()
+  const partLoganId = crypto.randomUUID()
+  await db.insert(napkinbetsParticipants).values([
+    {
+      id: partPatId,
+      wagerId,
+      userId: pat.id,
+      displayName: pat.name ?? 'Pat',
+      avatarUrl: '',
+      sideLabel: 'Home',
+      joinStatus: 'accepted',
+      draftOrder: 1,
+      paymentStatus: 'pending',
+      paymentReference: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: partLoganId,
+      wagerId,
+      userId: logan.id,
+      displayName: logan.name ?? 'Logan',
+      avatarUrl: '',
+      sideLabel: 'Away',
+      joinStatus: 'accepted',
+      draftOrder: 2,
+      paymentStatus: 'pending',
+      paymentReference: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ])
+
+  await db.insert(napkinbetsPots).values({
+    id: crypto.randomUUID(),
+    wagerId,
+    label: 'Winner',
+    amountCents: 2000,
+    sortOrder: 0,
+  })
+}
+
+async function ensureInvitationWager(db: AppDatabase, now: string, demoUserId: string) {
+  const existing = await db
+    .select({ id: napkinbetsWagers.id })
+    .from(napkinbetsWagers)
+    .where(eq(napkinbetsWagers.slug, DEMO_INVITATION_SLUG))
+    .get()
+  if (existing) return
+
+  const pat = await db.select().from(users).where(eq(users.email, 'pat@nard.uk')).get()
+  if (!pat) return
+
+  const wagerId = crypto.randomUUID()
+  await db.insert(napkinbetsWagers).values({
+    id: wagerId,
+    ownerUserId: pat.id,
+    slug: DEMO_INVITATION_SLUG,
+    title: 'Invitation (E2E)',
+    description: 'E2E: demo user is invited; Accept/Decline visible.',
+    napkinType: 'pool',
+    boardType: 'manual-curated',
+    category: 'basketball',
+    format: 'sports-game',
+    sport: 'basketball',
+    league: 'nba',
+    contextKey: 'event',
+    customContextName: 'E2E invitation',
+    status: 'open',
+    creatorName: pat.name ?? 'Pat',
+    sideOptionsJson: '["Home","Away"]',
+    entryFeeCents: 500,
+    paymentService: 'Venmo',
+    paymentHandle: '@pat-nb',
+    terms: 'Friendly wagers only.',
+    venueName: 'Test arena',
+    latitude: '40.7128',
+    longitude: '-74.0060',
+    eventSource: 'manual',
+    eventId: null,
+    eventTitle: 'Invitation game',
+    eventStartsAt: now,
+    eventStatus: 'Scheduled',
+    eventState: 'pre',
+    homeTeamName: 'Home',
+    awayTeamName: 'Away',
+    createdAt: now,
+    updatedAt: now,
+  })
+
+  const partPatId = crypto.randomUUID()
+  const partDemoId = crypto.randomUUID()
+  await db.insert(napkinbetsParticipants).values([
+    {
+      id: partPatId,
+      wagerId,
+      userId: pat.id,
+      displayName: pat.name ?? 'Pat',
+      avatarUrl: '',
+      sideLabel: 'Home',
+      joinStatus: 'accepted',
+      draftOrder: 1,
+      paymentStatus: 'pending',
+      paymentReference: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: partDemoId,
+      wagerId,
+      userId: demoUserId,
+      displayName: DEMO_USER_NAME,
+      avatarUrl: DEMO_AVATAR_URLS.demoHost,
+      sideLabel: 'Away',
+      joinStatus: 'pending',
+      draftOrder: 2,
+      paymentStatus: 'pending',
+      paymentReference: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ])
+
+  await db.insert(napkinbetsPots).values({
+    id: crypto.randomUUID(),
+    wagerId,
+    label: 'Winner',
+    amountCents: 1000,
+    sortOrder: 0,
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Main seed function
 // ---------------------------------------------------------------------------
@@ -583,9 +1048,15 @@ export async function ensureSeedData(event: H3Event) {
   const demoUser = await ensureDemoUser(db)
   await ensureDemoSocialGraph(event, demoUser.id)
 
+  const fridayNightWatch = await db
+    .select({ id: napkinbetsGroups.id })
+    .from(napkinbetsGroups)
+    .where(eq(napkinbetsGroups.slug, DEMO_GROUP_SLUG))
+    .get()
+
   const now = nowIso()
   const events = await loadUpcomingEventRows(db, now)
-  const demoPools = buildDemoPools(events)
+  const demoPools = [...buildDemoPools(events), ...buildDemoStatePools()]
   const demoTitleBySlug = new Map(demoPools.map((pool) => [pool.slug, pool.title]))
 
   const existingDemoWagers = await db
@@ -598,6 +1069,19 @@ export async function ensureSeedData(event: H3Event) {
     existingDemoWagers.every((wager) => demoTitleBySlug.get(wager.slug) === wager.title)
 
   if (hasCurrentDemoSeed) {
+    await ensureJoinPoolWager(db, now)
+    await ensureInvitationWager(db, now, demoUser.id)
+    if (fridayNightWatch) {
+      await db
+        .update(napkinbetsWagers)
+        .set({ groupId: fridayNightWatch.id, updatedAt: now })
+        .where(
+          and(
+            inArray(napkinbetsWagers.slug, DEMO_GROUP_POOL_SLUGS),
+            isNull(napkinbetsWagers.groupId),
+          ),
+        )
+    }
     return
   }
 
@@ -609,17 +1093,40 @@ export async function ensureSeedData(event: H3Event) {
     const boardType = pool.eventRow ? 'event-backed' : 'manual-curated'
     const status = pool.eventRow?.status === 'in' ? 'live' : pool.status
 
+    const eventState =
+      (pool as DemoPoolDef).eventState ??
+      (pool.eventRow?.status === 'in' ? 'in' : pool.eventRow?.status === 'post' ? 'post' : '')
+    const groupId =
+      fridayNightWatch && DEMO_GROUP_POOL_SLUGS.includes(pool.slug) ? fridayNightWatch.id : null
+
+    const eventMismatchHoops =
+      pool.slug === 'demo-hoops-night' && (!pool.eventRow || pool.eventRow.sport !== 'basketball')
+    const eventMismatchSoccer =
+      pool.slug === 'demo-soccer-watch' && (!pool.eventRow || pool.eventRow.sport !== 'soccer')
+    const usePoolSportLeague = eventMismatchHoops || eventMismatchSoccer
+    const effectiveSport = usePoolSportLeague
+      ? pool.sport!
+      : (pool.sport ?? pool.eventRow?.sport)
+    const effectiveLeague = usePoolSportLeague
+      ? pool.league!
+      : (pool.league ?? pool.eventRow?.league)
+    const effectiveEventTitle = usePoolSportLeague
+      ? pool.eventFallbackTitle
+      : (pool.eventRow?.eventTitle ?? pool.eventFallbackTitle)
+
     await db.insert(napkinbetsWagers).values({
       id: wagerId,
       ownerUserId: demoUser.id,
+      groupId,
       slug: pool.slug,
       title: pool.title,
       description: pool.description,
+      napkinType: (pool as DemoPoolDef).napkinType ?? 'pool',
       boardType,
       category: pool.category,
       format: pool.format,
-      sport: pool.eventRow?.sport ?? pool.sport,
-      league: pool.eventRow?.league ?? pool.league,
+      sport: effectiveSport,
+      league: effectiveLeague,
       contextKey: pool.contextKey,
       customContextName: pool.customContextName,
       status,
@@ -634,9 +1141,10 @@ export async function ensureSeedData(event: H3Event) {
       longitude: pool.longitude,
       eventSource: pool.eventRow ? 'espn' : (pool.eventSource ?? 'manual'),
       eventId: pool.eventRow?.id ?? null,
-      eventTitle: pool.eventRow?.eventTitle ?? pool.eventFallbackTitle,
+      eventTitle: effectiveEventTitle,
       eventStartsAt: pool.eventRow?.startTime ?? now,
       eventStatus: pool.eventRow?.status ?? pool.status,
+      eventState: (pool as DemoPoolDef).eventState ?? (eventState || ''),
       homeTeamName: pool.manualHomeTeam,
       awayTeamName: pool.manualAwayTeam,
       createdAt: now,
@@ -718,21 +1226,30 @@ export async function ensureSeedData(event: H3Event) {
           verificationStatus: settlement.verificationStatus,
           verifiedByUserId: settlement.verificationStatus === 'confirmed' ? demoUser.id : null,
           verifiedAt: settlement.verificationStatus === 'confirmed' ? now : null,
-          rejectedByUserId: null,
-          rejectedAt: null,
-          rejectionNote: null,
+          rejectedByUserId:
+            settlement.verificationStatus === 'rejected'
+              ? demoUser.id
+              : (settlement.rejectedByUserId ?? null),
+          rejectedAt: settlement.rejectedAt ?? null,
+          rejectionNote: settlement.rejectionNote ?? null,
+          proofImageUrl: settlement.proofImageUrl ?? null,
           recordedAt: now,
         })
 
-        await db
-          .update(napkinbetsParticipants)
-          .set({
-            paymentStatus:
-              settlement.verificationStatus === 'confirmed' ? 'confirmed' : 'submitted',
-            paymentReference: settlement.confirmationCode ?? settlement.handle ?? null,
-            updatedAt: now,
-          })
-          .where(eq(napkinbetsParticipants.id, participantId))
+        if (
+          settlement.verificationStatus === 'confirmed' ||
+          settlement.verificationStatus === 'submitted'
+        ) {
+          await db
+            .update(napkinbetsParticipants)
+            .set({
+              paymentStatus:
+                settlement.verificationStatus === 'confirmed' ? 'confirmed' : 'submitted',
+              paymentReference: settlement.confirmationCode ?? settlement.handle ?? null,
+              updatedAt: now,
+            })
+            .where(eq(napkinbetsParticipants.id, participantId))
+        }
       }
     }
 
@@ -764,4 +1281,7 @@ export async function ensureSeedData(event: H3Event) {
       }
     }
   }
+
+  await ensureJoinPoolWager(db, now)
+  await ensureInvitationWager(db, now, demoUser.id)
 }

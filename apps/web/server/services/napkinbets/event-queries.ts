@@ -42,6 +42,8 @@ export interface NapkinbetsCachedEvent {
   awayTeam: CachedDiscoverEventTeam
   leaders: CachedDiscoverEventLeader[]
   ideas: CachedDiscoverEventIdea[]
+  importanceScore: number
+  importanceReason: string
   lastSyncedAt: string
   sourceUpdatedAt: string | null
   rawPayload: unknown
@@ -70,6 +72,8 @@ export interface NapkinbetsCachedEventRow {
   awayTeamJson: string
   leadersJson: string
   ideasJson: string
+  importanceScore: number
+  importanceReason: string
   lastSyncedAt: string
   sourceUpdatedAt: string | null
 }
@@ -100,6 +104,8 @@ export const NAPKINBETS_CACHED_EVENT_SELECT = {
   awayTeamJson: napkinbetsEvents.awayTeamJson,
   leadersJson: napkinbetsEvents.leadersJson,
   ideasJson: napkinbetsEvents.ideasJson,
+  importanceScore: napkinbetsEvents.importanceScore,
+  importanceReason: napkinbetsEvents.importanceReason,
   lastSyncedAt: napkinbetsEvents.lastSyncedAt,
   sourceUpdatedAt: napkinbetsEvents.sourceUpdatedAt,
 } as const
@@ -167,6 +173,8 @@ export function toCachedEvent(row: NapkinbetsCachedEventRow): NapkinbetsCachedEv
     }),
     leaders: parseJsonValue<CachedDiscoverEventLeader[]>(row.leadersJson, []),
     ideas: parseJsonValue<CachedDiscoverEventIdea[]>(row.ideasJson, []),
+    importanceScore: row.importanceScore ?? 0,
+    importanceReason: row.importanceReason ?? '',
     lastSyncedAt: row.lastSyncedAt,
     sourceUpdatedAt: row.sourceUpdatedAt ?? null,
     rawPayload: null,

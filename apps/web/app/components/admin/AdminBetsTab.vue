@@ -186,6 +186,7 @@ async function confirmDelete() {
               v-model="searchInput"
               icon="i-lucide-search"
               placeholder="Search by title or slug..."
+              class="w-full"
               @keyup.enter="handleSearch"
             />
             <UButton color="primary" variant="soft" icon="i-lucide-plus" @click="openCreateModal">

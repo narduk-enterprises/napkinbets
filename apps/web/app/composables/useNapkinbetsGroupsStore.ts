@@ -74,5 +74,8 @@ export function useNapkinbetsGroupsStore() {
     joinGroup(groupId: string) {
       return runMutation(() => api.joinGroup(groupId))
     },
+    leaveGroup(groupId: string) {
+      return runMutation(() => api.leaveGroup(groupId))
+    },
   }
 }

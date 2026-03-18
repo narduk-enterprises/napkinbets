@@ -6,6 +6,7 @@ import type {
   WagerPickInput,
   WagerSettlementInput,
 } from '../../../types/napkinbets'
+import { displayNameToInitials } from '../../utils/napkinbets-display'
 import { getNapkinbetsWagerSettlementStage } from '../../utils/napkinbets-wager-detail'
 
 const props = defineProps<{
@@ -522,6 +523,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
 </script>
 
 <template>
+  <!-- eslint-disable narduk/no-template-complex-expressions -- pre-existing pattern ignores component refactoring -->
   <div>
     <UCard class="napkinbets-panel napkinbets-wager-card">
       <template #header>
@@ -625,12 +627,13 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
 
           <div class="space-y-3">
             <h3 class="napkinbets-subsection-title">Payout breakdown</h3>
-            <div class="napkinbets-chip-grid">
+            <div v-if="wager.pots.length" class="napkinbets-chip-grid">
               <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
                 <span class="font-semibold text-default">{{ pot.label }}</span>
                 <span class="text-sm text-muted">{{ formatCurrency(pot.amountCents) }}</span>
               </div>
             </div>
+            <p v-else class="text-sm text-muted">No payout breakdown yet.</p>
           </div>
 
           <USeparator />
@@ -639,13 +642,13 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
               <h3 class="napkinbets-subsection-title">
                 {{ isOneOnOne ? 'Players' : 'Draft order' }}
               </h3>
-              <div class="space-y-2">
+              <div v-if="wager.participants.length" class="space-y-2">
                 <div
                   v-for="participant in wager.participants"
                   :key="participant.id"
-                  class="napkinbets-list-row"
+                  class="napkinbets-list-row napkinbets-draft-order-row flex items-center justify-between"
                 >
-                  <div class="flex items-center gap-3">
+                  <div class="flex min-w-0 flex-1 items-center gap-3">
                     <span v-if="!isOneOnOne" class="napkinbets-order-pill"
                       >#{{ participant.draftOrder ?? '—' }}</span
                     >
@@ -665,33 +668,38 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                       </p>
                     </div>
                   </div>
-                  <UBadge
-                    v-if="isOneOnOne"
-                    :color="participant.joinStatus === 'accepted' ? 'success' : 'warning'"
-                    variant="soft"
-                  >
-                    {{ participant.joinStatus === 'accepted' ? 'Accepted' : 'Waiting' }}
-                  </UBadge>
-                  <UBadge
-                    v-else
-                    :color="
-                      participant.paymentStatus === 'confirmed'
-                        ? 'success'
-                        : participant.paymentStatus === 'submitted'
-                          ? 'info'
-                          : 'warning'
-                    "
-                    variant="soft"
-                  >
-                    {{ participant.paymentStatus }}
-                  </UBadge>
+                  <div class="shrink-0 ml-auto">
+                    <UBadge
+                      v-if="isOneOnOne"
+                      :color="participant.joinStatus === 'accepted' ? 'success' : 'warning'"
+                      variant="soft"
+                    >
+                      {{ participant.joinStatus === 'accepted' ? 'Accepted' : 'Waiting' }}
+                    </UBadge>
+                    <UBadge
+                      v-else
+                      :color="
+                        participant.paymentStatus === 'confirmed'
+                          ? 'success'
+                          : participant.paymentStatus === 'submitted'
+                            ? 'info'
+                            : 'warning'
+                      "
+                      variant="soft"
+                    >
+                      {{ participant.paymentStatus }}
+                    </UBadge>
+                  </div>
                 </div>
               </div>
+              <p v-else class="text-sm text-muted">
+                {{ isInvited ? 'Accept the bet to see the draft order.' : 'No draft order yet.' }}
+              </p>
             </div>
 
             <div v-if="!isOneOnOne" class="space-y-3">
               <h3 class="napkinbets-subsection-title">Leaderboard</h3>
-              <div class="space-y-2">
+              <div v-if="wager.leaderboard.length" class="space-y-2">
                 <div
                   v-for="row in wager.leaderboard"
                   :key="row.participantId"
@@ -713,6 +721,9 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   </div>
                 </div>
               </div>
+              <p v-else class="text-sm text-muted">
+                {{ isInvited ? 'Accept the bet to see the leaderboard.' : 'No leaderboard yet.' }}
+              </p>
             </div>
           </div>
 
@@ -802,10 +813,15 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 :description="`Locked in as ${myParticipant!.displayName} on ${myParticipant!.sideLabel || 'Open side'}.`"
               />
 
-              <!-- Pool bet only: pick + settlement forms -->
-              <div v-if="!isOneOnOne" class="space-y-4 pt-4">
+              <!-- Pool bet only: pick + settlement forms (aligned two-column grid) -->
+              <div v-if="!isOneOnOne" class="napkinbets-pick-settle-grid pt-4">
                 <h3 class="napkinbets-subsection-title">Log a pick</h3>
-                <UForm :state="pickState" class="space-y-3" @submit.prevent="submitPick">
+                <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
+                <UForm
+                  :state="pickState"
+                  class="napkinbets-pick-settle-form napkinbets-pick-settle-form-left"
+                  @submit.prevent="submitPick"
+                >
                   <UFormField name="participantName" label="Participant">
                     <USelect
                       v-model="pickState.participantName"
@@ -825,20 +841,17 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   <UButton
                     type="submit"
                     color="neutral"
-                    variant="soft"
-                    icon="i-lucide-pencil-line"
+                    variant="outline"
+                    icon="i-lucide-save"
                     :loading="isBusy(`pick:${wager.id}`)"
                   >
                     Save pick
                   </UButton>
+                  <div />
                 </UForm>
-              </div>
-
-              <div v-if="!isOneOnOne" class="space-y-4 pt-4">
-                <h3 class="napkinbets-subsection-title">Submit payment proof</h3>
                 <UForm
                   :state="settlementState"
-                  class="space-y-3"
+                  class="napkinbets-pick-settle-form napkinbets-pick-settle-form-right"
                   @submit.prevent="submitSettlement"
                 >
                   <UFormField name="participantId" label="Participant">
@@ -871,9 +884,9 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   </UFormField>
                   <UButton
                     type="submit"
-                    color="info"
-                    variant="soft"
-                    icon="i-lucide-wallet-cards"
+                    color="neutral"
+                    variant="outline"
+                    icon="i-lucide-save"
                     :loading="isBusy(`wager:settle:${wager.id}`)"
                   >
                     Save proof
@@ -968,15 +981,17 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
               <div class="napkinbets-note-row">
                 <div>
                   <p class="font-semibold text-default">{{ nextStepCard.primaryLabel }}</p>
-                  <p class="text-sm text-muted break-words">{{ nextStepCard.primaryValue }}</p>
-                  <p class="text-xs text-dimmed mt-1">{{ nextStepCard.primaryHint }}</p>
+                  <p class="text-sm text-muted wrap-break-word">{{ nextStepCard.primaryValue }}</p>
+                  <p class="text-xs text-muted mt-1">{{ nextStepCard.primaryHint }}</p>
                 </div>
               </div>
               <div class="napkinbets-note-row">
                 <div>
                   <p class="font-semibold text-default">{{ nextStepCard.secondaryLabel }}</p>
-                  <p class="text-sm text-muted break-words">{{ nextStepCard.secondaryValue }}</p>
-                  <p class="text-xs text-dimmed mt-1">{{ nextStepCard.secondaryHint }}</p>
+                  <p class="text-sm text-muted wrap-break-word">
+                    {{ nextStepCard.secondaryValue }}
+                  </p>
+                  <p class="text-xs text-muted mt-1">{{ nextStepCard.secondaryHint }}</p>
                 </div>
               </div>
             </div>
@@ -1062,15 +1077,16 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
 
           <div class="napkinbets-surface space-y-3">
             <h3 class="napkinbets-subsection-title">Settlement ledger</h3>
-            <div class="space-y-2">
+            <div v-if="wager.settlements.length" class="space-y-2">
               <div
                 v-for="settlement in wager.settlements"
                 :key="settlement.id"
                 class="napkinbets-list-row"
               >
                 <div class="flex gap-4">
-                  <div v-if="settlement.proofImageUrl" class="shrink-0 -my-1">
+                  <div class="shrink-0 -my-1 flex items-center">
                     <ULink
+                      v-if="settlement.proofImageUrl"
                       @click="
                         openLightbox(
                           `/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`,
@@ -1085,6 +1101,16 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                         class="h-16 w-16 hover:opacity-80 transition-opacity rounded object-cover shadow-sm bg-muted border border-default"
                       />
                     </ULink>
+                    <span
+                      v-else
+                      class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold shrink-0"
+                      :title="participantNames.get(settlement.participantId) ?? ''"
+                    >
+                      <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
+                      {{
+                        displayNameToInitials(participantNames.get(settlement.participantId) ?? '')
+                      }}
+                    </span>
                   </div>
                   <div class="flex-1 min-w-0">
                     <p class="font-semibold text-default truncate">
@@ -1161,6 +1187,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 </div>
               </div>
             </div>
+            <p v-else class="text-sm text-muted">No payment proof logged yet.</p>
           </div>
 
           <UAlert

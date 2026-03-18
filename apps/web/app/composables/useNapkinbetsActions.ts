@@ -174,6 +174,18 @@ export function useNapkinbetsActions(refresh: () => Promise<unknown>) {
         api.runAdminIngest(tier),
       )
     },
+    runImportanceScoring(forceAll: boolean = false) {
+      return runAction(
+        forceAll ? 'admin-importance-force' : 'admin-importance',
+        'Event importance scoring complete.',
+        () => api.runImportanceScoring(forceAll),
+      )
+    },
+    refreshAllOdds() {
+      return runAction('admin-odds-refresh', 'Polymarket odds refreshed successfully.', () =>
+        api.refreshAllOdds(),
+      )
+    },
     savePaymentProfile(payload: CreatePaymentProfileInput) {
       return runAction('payment-profile:create', 'Payment profile saved.', () =>
         api.savePaymentProfile(payload),

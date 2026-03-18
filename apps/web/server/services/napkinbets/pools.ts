@@ -101,6 +101,7 @@ interface LoadPoolDataOptions {
   includeContext?: boolean
   slug?: string
   userId?: string
+  groupId?: string
 }
 
 interface SerializedLeaderboardRow {
@@ -519,6 +520,12 @@ export async function loadPoolData(event: H3Event, options: LoadPoolDataOptions 
       .from(napkinbetsWagers)
       .where(eq(napkinbetsWagers.slug, options.slug))
       .limit(1)
+  } else if (options.groupId) {
+    wagers = await db
+      .select()
+      .from(napkinbetsWagers)
+      .where(eq(napkinbetsWagers.groupId, options.groupId))
+      .orderBy(asc(napkinbetsWagers.createdAt))
   } else if (options.userId) {
     const [ownedWagers, participantRows] = await Promise.all([
       db

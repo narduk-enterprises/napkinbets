@@ -1,0 +1,21 @@
+@theme {
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+}
+
+:root {
+  --napkinbets-accent: #166534;
+  --napkinbets-accent-strong: #14532d;
+  --napkinbets-on-accent: #ffffff;
+  --napkinbets-gold: #c67a12;
+  --napkinbets-rust: #8a2d14;
+  --napkinbets-ink: #0f1a24;
+  --napkinbets-muted: #334155;
+  --napkinbets-toned: #475569;
+  --napkinbets-paper: #fff8ef;
+  --napkinbets-surface: rgb(255 253 248 / 0.97);
+  --napkinbets-surface-soft: rgb(251 248 241 / 0.96);
+  --napkinbets-surface-muted: rgb(242 236 225 / 0.94);
+  --napkinbets-border: rgb(15 23 42 / 0.12);
+  --napkinbets-panel-shadow: 0 18px 40px -28px rgb(15 23 42 / 0.24);
+}

@@ -27,10 +27,24 @@ export function useNapkinbetsDiscoverPresentation(
   const selectedState = ref('all')
 
   const sportOptions = computed(() => withAllOption('All sports', discovery.value.filters.sports))
-  const leagueOptions = computed(() =>
-    withAllOption('All leagues', discovery.value.filters.leagues),
-  )
+  const leagueOptions = computed(() => {
+    const filters = discovery.value.filters
+    const leagues =
+      selectedSport.value === 'all'
+        ? filters.leagues
+        : (filters.leaguesBySport?.[selectedSport.value] ?? [])
+    return withAllOption('All leagues', leagues)
+  })
   const stateOptions = computed(() => withAllOption('All statuses', discovery.value.filters.states))
+
+  watch(selectedSport, (sport) => {
+    if (sport === 'all') return
+    const leaguesForSport = discovery.value.filters.leaguesBySport?.[sport] ?? []
+    const leagueValues = new Set(leaguesForSport.map((o) => o.value))
+    if (selectedLeague.value !== 'all' && !leagueValues.has(selectedLeague.value)) {
+      selectedLeague.value = 'all'
+    }
+  })
 
   const filteredSections = computed<NapkinbetsDiscoverySection[]>(() =>
     discovery.value.sections

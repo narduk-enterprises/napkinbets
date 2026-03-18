@@ -34,11 +34,15 @@ logs
 # Test artifacts
 playwright-report/
 test-results/
+apps/web/tests/e2e/playwright-snapshots/gallery.html
 
 # ESLint plugin build artifacts (rebuilt via `pnpm run build:plugins`)
 packages/eslint-config/*/dist/
 # ESLint caches
 .eslint-results.json
+
+# Prod D1 export (contains live data; do not commit)
+apps/web/tools/prod-export.sql
 
 # Secrets & credential artifacts (use Doppler, never commit these)
 *-secrets.json

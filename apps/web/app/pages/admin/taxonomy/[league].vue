@@ -199,7 +199,7 @@ const actions = useNapkinbetsActions(async () => {
                 :src="team.logoUrl"
                 :alt="team.name"
                 size="sm"
-                class="bg-white p-0.5"
+                class="bg-default p-0.5"
                 :ui="{ fallback: 'hidden' }"
               />
               <UIcon v-else name="i-lucide-shield" class="size-6 text-muted" />

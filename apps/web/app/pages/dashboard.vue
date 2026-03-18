@@ -24,18 +24,9 @@ const isInitialWorkspaceLoad = computed(() => {
 
 useNapkinbetsAutoRefresh(workspaceState.refresh)
 
-type DashboardFilter = 'all' | 'upcoming' | 'live' | 'finished' | 'settled' | 'unsettled'
-
-const activeFilter = ref<DashboardFilter>('all')
-
-const filterChips: Array<{ value: DashboardFilter; label: string; icon: string }> = [
-  { value: 'all', label: 'All', icon: 'i-lucide-layers' },
-  { value: 'upcoming', label: 'Upcoming', icon: 'i-lucide-calendar-clock' },
-  { value: 'live', label: 'Live', icon: 'i-lucide-zap' },
-  { value: 'finished', label: 'Finished', icon: 'i-lucide-flag-triangle-right' },
-  { value: 'settled', label: 'Settled', icon: 'i-lucide-check-circle-2' },
-  { value: 'unsettled', label: 'Unsettled', icon: 'i-lucide-circle-alert' },
-]
+const { filterChips, activeFilter, filterWagerList } = useNapkinbetsWagerListFilter({
+  extended: true,
+})
 
 interface TaggedWager {
   wager: NapkinbetsWager
@@ -54,39 +45,17 @@ const allBets = computed<TaggedWager[]>(() => {
   return [...owned, ...joined]
 })
 
-function isFinished(wager: TaggedWager['wager']): boolean {
-  return (
-    wager.status === 'settling' ||
-    wager.status === 'settled' ||
-    wager.status === 'closed' ||
-    wager.status === 'archived'
-  )
-}
-
-function isFullySettled(wager: TaggedWager['wager']): boolean {
-  if (!isFinished(wager)) return false
-  const settlements = wager.settlements ?? []
-  return settlements.length > 0 && settlements.every((s) => s.verificationStatus === 'confirmed')
-}
-
 const filteredBets = computed(() => {
-  return allBets.value.filter(({ wager }) => {
-    switch (activeFilter.value) {
-      case 'upcoming':
-        return wager.status === 'open'
-      case 'live':
-        return wager.status === 'live' || wager.status === 'locked'
-      case 'finished':
-        return isFinished(wager)
-      case 'settled':
-        return isFullySettled(wager)
-      case 'unsettled':
-        return isFinished(wager) && !isFullySettled(wager)
-      default:
-        return true
-    }
-  })
+  const wagers = allBets.value.map((b) => b.wager)
+  const allowedIds = new Set(filterWagerList(wagers).map((w) => w.id))
+  return allBets.value.filter(({ wager }) => allowedIds.has(wager.id))
 })
+
+function setWagerFilter(
+  v: import('../composables/useNapkinbetsWagerListFilter').NapkinbetsWagerListFilterValue,
+) {
+  activeFilter.value = v
+}
 
 useSeo({
   title: 'Dashboard',
@@ -184,19 +153,11 @@ useWebPageSchema({
           </div>
 
           <!-- Filter chips -->
-          <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="chip in filterChips"
-              :key="chip.value"
-              :color="activeFilter === chip.value ? 'primary' : 'neutral'"
-              :variant="activeFilter === chip.value ? 'soft' : 'ghost'"
-              size="sm"
-              :icon="chip.icon"
-              @click="activeFilter = chip.value"
-            >
-              {{ chip.label }}
-            </UButton>
-          </div>
+          <NapkinbetsWagerListFilters
+            :chips="filterChips"
+            :model-value="activeFilter"
+            @update:model-value="setWagerFilter"
+          />
 
           <!-- Unified bet list -->
           <div v-if="filteredBets.length" class="space-y-2">

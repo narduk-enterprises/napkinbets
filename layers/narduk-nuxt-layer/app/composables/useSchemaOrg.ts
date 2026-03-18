@@ -27,9 +27,11 @@
  */
 
 // --- WebPage schema ---
+import type { MaybeRefOrGetter } from 'vue'
+
 interface WebPageOptions {
-  name?: string
-  description?: string
+  name?: MaybeRefOrGetter<string>
+  description?: MaybeRefOrGetter<string>
   type?:
     | 'WebPage'
     | 'AboutPage'

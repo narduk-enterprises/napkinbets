@@ -549,6 +549,9 @@ export const napkinbetsEvents = sqliteTable('napkinbets_events', {
   awayScore: text('away_score').notNull().default(''),
   rawPayloadJson: text('raw_payload_json'),
   sourceUpdatedAt: text('source_updated_at'),
+  importanceScore: integer('importance_score').notNull().default(0),
+  importanceReason: text('importance_reason').notNull().default(''),
+  importanceScoredAt: text('importance_scored_at'),
   lastSyncedAt: text('last_synced_at').notNull(),
   createdAt: text('created_at')
     .notNull()

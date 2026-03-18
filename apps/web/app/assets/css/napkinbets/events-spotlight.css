@@ -1,0 +1,446 @@
+.napkinbets-event-card,
+.napkinbets-admin-board {
+  overflow: hidden;
+}
+
+.napkinbets-event-card {
+  min-width: 0;
+  max-width: 20rem;
+  padding: 0.62rem;
+}
+
+.napkinbets-event-card-top,
+.napkinbets-event-footer,
+.napkinbets-event-side-main,
+.napkinbets-spotlight-topline,
+.napkinbets-spotlight-meta {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+  justify-content: space-between;
+}
+
+.napkinbets-event-title {
+  font-size: 0.9rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napkinbets-event-time {
+  color: var(--napkinbets-muted);
+  font-size: 0.74rem;
+  margin: 0;
+}
+
+.napkinbets-event-meta,
+.napkinbets-event-footer,
+.napkinbets-spotlight-window,
+.napkinbets-spotlight-summary {
+  color: var(--napkinbets-muted);
+  font-size: 0.71rem;
+}
+
+.napkinbets-event-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+
+.napkinbets-event-meta > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.napkinbets-event-meta > * + *::before {
+  color: var(--napkinbets-toned);
+  content: '·';
+  margin-right: 0.4rem;
+}
+
+.napkinbets-event-meta .napkinbets-event-venue {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.napkinbets-event-meta > *:last-child {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napkinbets-event-venue {
+  color: var(--napkinbets-toned);
+  font-size: 0.74rem;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napkinbets-event-matchup,
+.napkinbets-event-insights,
+.napkinbets-event-action-row,
+.napkinbets-spotlight-assets {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.napkinbets-event-side,
+.napkinbets-admin-board,
+.napkinbets-choice-panel {
+  background: var(--napkinbets-surface-soft);
+  border: 1px solid var(--napkinbets-border);
+  border-radius: 1rem;
+  display: flex;
+  gap: 0.55rem;
+  justify-content: space-between;
+  padding: 0.46rem 0.52rem;
+}
+
+.napkinbets-event-side {
+  align-items: center;
+}
+
+.napkinbets-event-badges {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.napkinbets-event-card .napkinbets-event-avatar,
+.napkinbets-spotlight-asset {
+  align-items: center;
+  background: rgb(27 124 71 / 0.08);
+  border: 1px solid rgb(27 124 71 / 0.12);
+  border-radius: 9999px;
+  color: var(--napkinbets-accent-strong);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 1.75rem;
+  justify-content: center;
+  overflow: hidden;
+  width: 1.75rem;
+}
+
+.napkinbets-event-card .napkinbets-event-matchup .napkinbets-event-avatar {
+  height: 2.25rem;
+  width: 2.25rem;
+}
+
+.napkinbets-event-avatar-image,
+.napkinbets-spotlight-asset-image {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.napkinbets-event-name {
+  color: var(--napkinbets-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napkinbets-event-record {
+  color: var(--napkinbets-toned);
+  font-size: 0.66rem;
+  margin: 0.2rem 0 0;
+}
+
+.napkinbets-event-odds-block {
+  background: rgb(27 124 71 / 0.05);
+  border: 1px solid rgb(27 124 71 / 0.1);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem;
+}
+
+.napkinbets-event-odds-topline,
+.napkinbets-event-odds-grid {
+  align-items: center;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.napkinbets-event-odds-topline {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.napkinbets-event-odds-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.napkinbets-event-odds-label {
+  color: var(--napkinbets-toned);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.napkinbets-event-odds-pill,
+.napkinbets-event-odds-chip {
+  background: rgb(255 255 255 / 0.72);
+  border: 1px solid rgb(21 83 45 / 0.08);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.12rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.napkinbets-event-odds-pill span,
+.napkinbets-event-odds-chip span {
+  color: var(--napkinbets-muted);
+  font-size: 0.67rem;
+}
+
+.napkinbets-event-odds-pill strong,
+.napkinbets-event-odds-chip strong {
+  color: var(--napkinbets-ink);
+  font-size: 0.76rem;
+}
+
+.napkinbets-event-odds-secondary {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.napkinbets-event-odds-overflow {
+  color: var(--napkinbets-toned);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.3rem;
+}
+
+.napkinbets-event-odds-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+}
+
+.napkinbets-event-odds-volume,
+.napkinbets-event-odds-trend {
+  align-items: center;
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 600;
+  gap: 0.2rem;
+  letter-spacing: 0.04em;
+}
+
+.napkinbets-event-odds-volume {
+  color: var(--napkinbets-muted);
+}
+
+.napkinbets-event-odds-trend {
+  letter-spacing: 0.02em;
+}
+
+.napkinbets-event-insight {
+  background: rgb(21 83 45 / 0.07);
+  border-radius: 0.95rem;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.48rem 0.6rem;
+}
+
+.napkinbets-event-insight span {
+  color: var(--napkinbets-toned);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.napkinbets-prop-note {
+  background: rgb(22 101 52 / 0.06);
+  border: 1px solid rgb(22 101 52 / 0.1);
+  border-radius: 1rem;
+  color: var(--napkinbets-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  padding: 0.7rem 0.8rem;
+}
+
+.napkinbets-event-insight strong {
+  color: var(--napkinbets-ink);
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.napkinbets-event-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.napkinbets-event-card-golf {
+  background:
+    linear-gradient(145deg, rgb(255 252 245 / 0.98), rgb(240 248 240 / 0.95)),
+    var(--napkinbets-surface);
+}
+
+.napkinbets-spotlight-card {
+  min-width: 0;
+  max-width: 18.5rem;
+  padding: 0.78rem;
+}
+
+.napkinbets-spotlight-media {
+  background:
+    radial-gradient(circle at top right, rgb(217 119 6 / 0.14), transparent 34%),
+    linear-gradient(160deg, rgb(255 252 245 / 0.98), rgb(243 238 227 / 0.94));
+  border: 1px solid rgb(21 83 45 / 0.12);
+  border-radius: 1rem;
+  min-height: 7.75rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.napkinbets-spotlight-media-image,
+.napkinbets-spotlight-media-fallback {
+  display: block;
+  height: 7.75rem;
+  width: 100%;
+}
+
+.napkinbets-spotlight-media-image {
+  object-fit: cover;
+}
+
+.napkinbets-spotlight-media-fallback {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0) 0,
+      rgb(255 255 255 / 0) 28px,
+      rgb(21 83 45 / 0.06) 28px,
+      rgb(21 83 45 / 0.06) 29px
+    ),
+    linear-gradient(150deg, rgb(20 83 45 / 0.08), rgb(217 119 6 / 0.1));
+}
+
+.napkinbets-spotlight-media-wash {
+  background:
+    linear-gradient(180deg, rgb(21 32 43 / 0) 42%, rgb(21 32 43 / 0.26) 100%),
+    linear-gradient(90deg, rgb(255 252 245 / 0.16), rgb(255 252 245 / 0));
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.napkinbets-spotlight-topline {
+  margin-bottom: 0.85rem;
+}
+
+.napkinbets-spotlight-title {
+  color: var(--napkinbets-ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.napkinbets-spotlight-meta {
+  color: var(--napkinbets-muted);
+  font-size: 0.78rem;
+}
+
+.napkinbets-spotlight-card-major {
+  background:
+    linear-gradient(145deg, rgb(20 83 45 / 0.06), rgb(217 119 6 / 0.08)), var(--napkinbets-surface);
+}
+
+.napkinbets-spotlight-card-tour,
+.napkinbets-spotlight-card-watch {
+  background: var(--napkinbets-surface);
+}
+
+.napkinbets-spotlight-assets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.napkinbets-spotlight-assets-overlay {
+  bottom: 0.8rem;
+  left: 0.8rem;
+  position: absolute;
+  z-index: 1;
+}
+
+.napkinbets-spotlight-asset {
+  border: 1.5px solid rgb(255 252 245 / 0.92);
+  box-shadow: 0 12px 26px -20px rgb(21 32 43 / 0.7);
+  height: 2.85rem;
+  width: 2.85rem;
+}
+
+.napkinbets-admin-board,
+.napkinbets-choice-panel {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.napkinbets-choice-panel {
+  justify-content: flex-start;
+  min-height: 8.5rem;
+  text-align: left;
+  width: 100%;
+}
+
+.napkinbets-choice-panel-active {
+  background: rgb(27 124 71 / 0.08);
+  border-color: rgb(27 124 71 / 0.25);
+  box-shadow: inset 0 0 0 1px rgb(27 124 71 / 0.08);
+}
+
+.napkinbets-event-score {
+  color: var(--napkinbets-ink);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin: 0;
+  min-width: 2rem;
+  text-align: right;
+}
+
+.napkinbets-inline-form,
+.napkinbets-event-preview,
+.napkinbets-spotlight-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.napkinbets-event-preview {
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .napkinbets-inline-form,
+  .napkinbets-event-preview {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .napkinbets-spotlight-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

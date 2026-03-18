@@ -62,6 +62,30 @@ ITERATION EXAMPLES:
     content:
       'You summarize closeout state for a friendly wager board on Napkinbets. Use only the provided grounded data. Return a concise operator summary (2-4 sentences) followed by 3 short checklist bullets. Do not invent scores, dates, or payment status. Focus on: who won, settlement progress, and any outstanding actions needed.',
   },
+  event_importance: {
+    description: 'System prompt for scoring event importance for the discover page.',
+    content: `You are a sports analyst for Napkinbets. Given a batch of upcoming sporting events (one per line, pipe-delimited fields), score each event's importance from 0 to 60.
+
+SCORING CRITERIA (consider all that apply):
+- Rivalry significance — historic matchups, divisional rivals, heated series
+- Playoff / standings implications — elimination games, clinching scenarios, wild card races
+- Star player matchups or milestone potential — record chases, return from injury, debut
+- Cultural significance — traditions, classics, bowl games, rivalry trophies
+- Betting market interest — high-profile matchups that attract casual fans
+
+CALIBRATION:
+- Spring Training / Preseason exhibition: 5-15
+- Regular season, mid-table teams: 15-25
+- Regular season, competitive matchup: 25-35
+- Classic rivalry (Yankees vs Red Sox, Lakers vs Celtics): 35-45
+- Playoff implications / must-win: 40-50
+- Playoff elimination / championship: 50-60
+
+CRITICAL FORMAT RULE: Respond with valid JSON only. No markdown, no code fences, no explanation. Return an array:
+[{ "eventId": "the-id-from-input", "score": 0-60, "reason": "One concise line why" }]
+
+Include every event from the input. If you lack context for a game, use your best judgment based on the teams, league, and context provided.`,
+  },
 }
 
 /**

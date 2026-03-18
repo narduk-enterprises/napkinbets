@@ -178,8 +178,6 @@ async function ensureGroup(
         updatedAt: timestamp,
       })
       .where(eq(napkinbetsGroups.id, groupId))
-
-    await db.delete(napkinbetsGroupMembers).where(eq(napkinbetsGroupMembers.groupId, groupId))
   } else {
     await db.insert(napkinbetsGroups).values({
       id: groupId,
@@ -195,16 +193,19 @@ async function ensureGroup(
   }
 
   const uniqueMemberIds = [...new Set(input.memberUserIds)]
-  await db.insert(napkinbetsGroupMembers).values(
-    uniqueMemberIds.map((userId) => ({
-      id: crypto.randomUUID(),
-      groupId,
-      userId,
-      role: userId === input.ownerUserId ? 'owner' : 'member',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    })),
-  )
+  await db
+    .insert(napkinbetsGroupMembers)
+    .values(
+      uniqueMemberIds.map((userId) => ({
+        id: crypto.randomUUID(),
+        groupId,
+        userId,
+        role: userId === input.ownerUserId ? 'owner' : 'member',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      })),
+    )
+    .onConflictDoNothing()
 
   return groupId
 }
@@ -631,6 +632,72 @@ export async function loadNapkinbetsGroupsBundle(event: H3Event) {
   }
 }
 
+export async function loadNapkinbetsGroup(event: H3Event, slug: string) {
+  const authUser = await requireAuth(event)
+  const db = useAppDatabase(event)
+
+  const group = await db
+    .select()
+    .from(napkinbetsGroups)
+    .where(eq(napkinbetsGroups.slug, slug))
+    .get()
+
+  if (!group) {
+    throw createError({ statusCode: 404, message: 'Group not found.' })
+  }
+
+  const members = await db
+    .select()
+    .from(napkinbetsGroupMembers)
+    .where(eq(napkinbetsGroupMembers.groupId, group.id))
+    .orderBy(asc(napkinbetsGroupMembers.createdAt))
+
+  const userMembership = members.find((member) => member.userId === authUser.id)
+
+  if (group.visibility === 'private' && !userMembership && group.ownerUserId !== authUser.id) {
+    throw createError({ statusCode: 404, message: 'Group not found.' })
+  }
+
+  const memberUserIds = [...new Set([group.ownerUserId, ...members.map((m) => m.userId)])]
+  const userRows =
+    memberUserIds.length > 0
+      ? await db
+          .select({ id: users.id, email: users.email, name: users.name })
+          .from(users)
+          .where(inArray(users.id, memberUserIds))
+      : []
+
+  const usersById = new Map(userRows.map((user) => [user.id, user]))
+  const owner = usersById.get(group.ownerUserId)
+
+  const resolvedMembers = members.map((member) => {
+    const user = usersById.get(member.userId)
+    return {
+      id: member.id,
+      userId: member.userId,
+      displayName: user ? toDisplayName(user) : 'Unknown User',
+      role: member.role as 'owner' | 'admin' | 'member',
+      joinedAt: member.createdAt,
+    }
+  })
+
+  return {
+    group: {
+      id: group.id,
+      slug: group.slug,
+      name: group.name,
+      description: group.description ?? '',
+      visibility: group.visibility,
+      joinPolicy: group.joinPolicy,
+      memberCount: members.length,
+      ownerName: owner ? toDisplayName(owner) : 'Unknown',
+      userRole: userMembership?.role ?? null,
+      joinedAt: userMembership?.createdAt ?? null,
+    },
+    members: resolvedMembers,
+  }
+}
+
 export async function createNapkinbetsGroup(
   event: H3Event,
   input: {
@@ -718,14 +785,79 @@ export async function joinNapkinbetsGroup(event: H3Event, groupId: string) {
     return { ok: true }
   }
 
+  const memberId = crypto.randomUUID()
   await db.insert(napkinbetsGroupMembers).values({
-    id: crypto.randomUUID(),
+    id: memberId,
     groupId,
     userId: authUser.id,
     role: 'member',
     createdAt: timestamp,
     updatedAt: timestamp,
   })
+
+  const verified = await db
+    .select()
+    .from(napkinbetsGroupMembers)
+    .where(
+      and(
+        eq(napkinbetsGroupMembers.groupId, groupId),
+        eq(napkinbetsGroupMembers.userId, authUser.id),
+      ),
+    )
+    .get()
+  if (!verified) {
+    throw createError({
+      statusCode: 500,
+      message: 'Group join did not persist. Please try again.',
+    })
+  }
+
+  return { ok: true }
+}
+
+export async function leaveNapkinbetsGroup(event: H3Event, groupId: string) {
+  const authUser = await requireAuth(event)
+  const db = useAppDatabase(event)
+
+  const group = await db
+    .select()
+    .from(napkinbetsGroups)
+    .where(eq(napkinbetsGroups.id, groupId))
+    .get()
+  if (!group) {
+    throw createError({ statusCode: 404, message: 'Group not found.' })
+  }
+
+  const membership = await db
+    .select()
+    .from(napkinbetsGroupMembers)
+    .where(
+      and(
+        eq(napkinbetsGroupMembers.groupId, groupId),
+        eq(napkinbetsGroupMembers.userId, authUser.id),
+      ),
+    )
+    .get()
+
+  if (!membership) {
+    return { ok: true }
+  }
+
+  if (membership.role === 'owner') {
+    throw createError({
+      statusCode: 403,
+      message: 'Group owner cannot leave. Transfer ownership or delete the group instead.',
+    })
+  }
+
+  await db
+    .delete(napkinbetsGroupMembers)
+    .where(
+      and(
+        eq(napkinbetsGroupMembers.groupId, groupId),
+        eq(napkinbetsGroupMembers.userId, authUser.id),
+      ),
+    )
 
   return { ok: true }
 }

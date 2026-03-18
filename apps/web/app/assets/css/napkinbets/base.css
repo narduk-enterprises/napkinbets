@@ -1,0 +1,35 @@
+body {
+  background:
+    radial-gradient(circle at 10% 8%, rgb(27 124 71 / 0.18), transparent 26%),
+    radial-gradient(circle at 88% 0%, rgb(217 119 6 / 0.16), transparent 24%),
+    repeating-linear-gradient(
+      180deg,
+      rgb(255 255 255 / 0),
+      rgb(255 255 255 / 0) 28px,
+      rgb(20 83 45 / 0.04) 28px,
+      rgb(20 83 45 / 0.04) 29px
+    ),
+    linear-gradient(180deg, #f4efe2 0%, #fbf7ef 38%, #fffdf8 100%);
+  color: var(--napkinbets-ink);
+  font-feature-settings:
+    'liga' 1,
+    'tnum' 1;
+}
+
+.napkinbets-app-shell {
+  isolation: isolate;
+  min-height: 100vh;
+  position: relative;
+}
+
+.napkinbets-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.napkinbets-layout-body {
+  flex: 1 1 auto;
+  overflow-x: clip;
+  padding-bottom: 0;
+}

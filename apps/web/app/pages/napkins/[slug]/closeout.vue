@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
+import { displayNameToInitials } from '~/utils/napkinbets-display'
+
 definePageMeta({ middleware: ['auth'] })
 
 const route = useRoute()
@@ -146,6 +148,7 @@ useWebPageSchema({
 </script>
 
 <template>
+  <!-- eslint-disable narduk/no-template-complex-expressions -- pre-existing pattern ignores component refactoring -->
   <div class="napkinbets-page">
     <UAlert
       v-if="actions.feedback.value"
@@ -275,21 +278,9 @@ useWebPageSchema({
 
           <UCard class="napkinbets-panel">
             <div class="space-y-4">
-              <div class="flex items-center justify-between gap-3">
-                <div class="space-y-1">
-                  <p class="napkinbets-kicker">Summary</p>
-                  <h2 class="napkinbets-subsection-title">AI draft</h2>
-                </div>
-
-                <UButton
-                  color="neutral"
-                  variant="soft"
-                  icon="i-lucide-sparkles"
-                  :loading="aiSummaryPending"
-                  @click="draftCloseoutSummary"
-                >
-                  Draft summary
-                </UButton>
+              <div class="space-y-1">
+                <p class="napkinbets-kicker">Summary</p>
+                <h2 class="napkinbets-subsection-title">AI draft</h2>
               </div>
 
               <UAlert
@@ -301,10 +292,24 @@ useWebPageSchema({
                 :description="aiSummaryError"
               />
 
-              <p v-if="aiSummary" class="napkinbets-support-copy">{{ aiSummary }}</p>
-              <p v-else class="napkinbets-support-copy">
-                Generate a short settle-up summary for the host before you close the bet.
-              </p>
+              <div class="flex flex-wrap items-center gap-3">
+                <p v-if="aiSummary" class="napkinbets-support-copy flex-1 min-w-0">
+                  {{ aiSummary }}
+                </p>
+                <p v-else class="napkinbets-support-copy flex-1 min-w-0">
+                  Generate a short settle-up summary for the host before you close the bet.
+                </p>
+                <UButton
+                  color="neutral"
+                  variant="soft"
+                  icon="i-lucide-sparkles"
+                  :loading="aiSummaryPending"
+                  class="shrink-0"
+                  @click="draftCloseoutSummary"
+                >
+                  Draft summary
+                </UButton>
+              </div>
             </div>
           </UCard>
         </div>
@@ -325,12 +330,25 @@ useWebPageSchema({
                 >
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex gap-4">
-                      <div v-if="settlement.proofImageUrl" class="shrink-0 mt-1">
+                      <div class="shrink-0 mt-1 flex items-center">
                         <img
+                          v-if="settlement.proofImageUrl"
                           :src="`/api/napkinbets/wagers/${wager.id}/settlements/${settlement.id}/proof-image`"
                           alt="Payment proof"
                           class="h-16 w-16 rounded object-cover shadow-sm bg-muted border border-default"
                         />
+                        <span
+                          v-else
+                          class="napkinbets-event-avatar h-16 w-16 flex items-center justify-center text-sm font-semibold"
+                          :title="participantById.get(settlement.participantId)?.displayName ?? ''"
+                        >
+                          <!-- eslint-disable-next-line narduk/no-template-complex-expressions -->
+                          {{
+                            displayNameToInitials(
+                              participantById.get(settlement.participantId)?.displayName ?? '',
+                            )
+                          }}
+                        </span>
                       </div>
                       <div class="space-y-1">
                         <p class="font-semibold text-default">

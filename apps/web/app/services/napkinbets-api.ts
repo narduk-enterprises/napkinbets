@@ -16,6 +16,7 @@ import type {
   NapkinbetsFriendSearchResponse,
   NapkinbetsFriendsResponse,
   NapkinbetsGroupsResponse,
+  NapkinbetsGroupDetailResponse,
   NapkinbetsNotificationSettingsResponse,
   NapkinbetsNotificationsResponse,
   NapkinbetsPaymentProfilesResponse,
@@ -42,6 +43,8 @@ import type {
   NapkinbetsGeneratedNapkin,
   NapkinbetsAdminAiModelSettingsResponse,
   NapkinbetsSystemPromptEntry,
+  NapkinbetsAdminEventsResponse,
+  NapkinbetsGamesResponse,
 } from '../../types/napkinbets'
 
 export function useNapkinbetsApi() {
@@ -53,6 +56,22 @@ export function useNapkinbetsApi() {
     },
     getDiscover() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
+    },
+    getGames(params?: {
+      limit?: number
+      after?: string
+      sport?: string
+      league?: string
+      state?: 'pre' | 'in'
+    }) {
+      const searchParams = new URLSearchParams()
+      if (params?.limit !== undefined) searchParams.set('limit', String(params.limit))
+      if (params?.after) searchParams.set('after', params.after)
+      if (params?.sport) searchParams.set('sport', params.sport)
+      if (params?.league) searchParams.set('league', params.league)
+      if (params?.state) searchParams.set('state', params.state)
+      const qs = searchParams.toString()
+      return fetch<NapkinbetsGamesResponse>(`/api/napkinbets/games${qs ? `?${qs}` : ''}`)
     },
     getEventDetail(id: string) {
       const safeId = encodeRouteId(id)
@@ -136,6 +155,16 @@ export function useNapkinbetsApi() {
     getGroups() {
       return fetch<NapkinbetsGroupsResponse>('/api/napkinbets/groups')
     },
+    getGroup(slug: string) {
+      return fetch<NapkinbetsGroupDetailResponse>(
+        `/api/napkinbets/groups/${encodeURIComponent(slug)}`,
+      )
+    },
+    getGroupWagers(slug: string) {
+      return fetch<NapkinbetsDashboardResponse>(
+        `/api/napkinbets/groups/${encodeURIComponent(slug)}/wagers`,
+      )
+    },
     createGroup(payload: CreateNapkinbetsGroupInput) {
       return fetch<{ ok: true; group: { id: string; slug: string; name: string } }>(
         '/api/napkinbets/groups',
@@ -148,6 +177,13 @@ export function useNapkinbetsApi() {
     joinGroup(groupId: string) {
       return fetch(`/api/napkinbets/groups/${groupId}/join`, {
         method: 'POST',
+        credentials: 'include',
+      })
+    },
+    leaveGroup(groupId: string) {
+      return fetch(`/api/napkinbets/groups/${groupId}/leave`, {
+        method: 'POST',
+        credentials: 'include',
       })
     },
     getAdminOverview() {
@@ -191,6 +227,23 @@ export function useNapkinbetsApi() {
         method: 'POST',
         body: { tier },
       })
+    },
+    runImportanceScoring(forceAll: boolean = false) {
+      return fetch<{ scored: number; total?: number; error?: string; message?: string }>(
+        '/api/napkinbets/admin/importance',
+        {
+          method: 'POST',
+          body: { forceAll },
+        },
+      )
+    },
+    refreshAllOdds() {
+      return fetch<{ success: boolean; polymarket: { attempted: number; updatedCount: number } }>(
+        '/api/napkinbets/admin/odds',
+        {
+          method: 'POST',
+        },
+      )
     },
     getAdminFeaturedBets() {
       return fetch<NapkinbetsAdminFeaturedBetsResponse>('/api/napkinbets/admin/featured-bets')
@@ -323,6 +376,11 @@ export function useNapkinbetsApi() {
     },
     getAdminWagers(params: { page: number; limit: number; search?: string }) {
       return fetch<NapkinbetsAdminWagersResponse>('/api/napkinbets/admin/wagers', {
+        query: params,
+      })
+    },
+    getAdminEvents(params: { page: number; limit: number; search?: string }) {
+      return fetch<NapkinbetsAdminEventsResponse>('/api/napkinbets/admin/events', {
         query: params,
       })
     },

@@ -169,7 +169,7 @@ INSERT OR IGNORE INTO napkinbets_pots (id, wager_id, label, amount_cents, sort_o
 VALUES ('seed-pot-0007', 'seed-bet-0007', 'Winner', 1500, 0);
 
 INSERT OR IGNORE INTO napkinbets_settlements (id, wager_id, participant_id, amount_cents, method, handle, confirmation_code, note, verification_status, rejected_by_user_id, rejected_at, rejection_note, recorded_at, proof_image_url)
-VALUES ('seed-settle-0007', 'seed-bet-0007', 'seed-part-0014', 1500, 'Zelle', 'logan@email.com', 'ZEL-3301', 'Sent via Zelle', 'rejected', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:00:00.000Z', 'Wrong amount — sent $10 instead of $15. Please resend the correct amount.', '2026-03-17T19:40:00.000Z', 'seed/venmo-1.png');
+VALUES ('seed-settle-0007', 'seed-bet-0007', 'seed-part-0014', 1500, 'Zelle', 'logan@email.com', 'ZEL-3301', 'Sent via Zelle', 'rejected', '00000000-0000-0000-0000-000000000003', '2026-03-17T20:00:00.000Z', 'Wrong amount — sent $10 instead of $15. Please resend the correct amount.', '2026-03-17T19:40:00.000Z', 'seed/venmo-rejected.png');
 
 
 -- ▸ BET 8 — Invitation Declined (Hurricanes @ Blue Jackets — Logan created, Pat declined, wager back to open)

@@ -1,14 +1,22 @@
 import { getHeader } from 'h3'
 import { z } from 'zod'
-import { RATE_LIMIT_POLICIES, enforceRateLimitPolicy } from '#layer/server/utils/rateLimit'
+import { enforceRateLimit } from '#layer/server/utils/rateLimit'
 import { normalizeDemoRedirectPath, resolveDemoSessionUser } from '#server/utils/demo'
 
 const querySchema = z.object({
   redirect: z.string().optional(),
 })
 
+/** Demo login is hit often by e2e (many tests, parallel workers); use a higher limit than authLogin. */
+const DEMO_RATE_LIMIT = { namespace: 'auth-demo', maxRequests: 300, windowMs: 60_000 }
+
 export default defineEventHandler(async (event) => {
-  await enforceRateLimitPolicy(event, RATE_LIMIT_POLICIES.authLogin)
+  await enforceRateLimit(
+    event,
+    DEMO_RATE_LIMIT.namespace,
+    DEMO_RATE_LIMIT.maxRequests,
+    DEMO_RATE_LIMIT.windowMs,
+  )
 
   const fetchSite = getHeader(event, 'sec-fetch-site')
   if (fetchSite === 'cross-site') {

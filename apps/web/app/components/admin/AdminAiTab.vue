@@ -253,7 +253,7 @@ function formatPromptName(name: string) {
           <span class="text-sm text-muted">Loading system prompts...</span>
         </div>
 
-        <div v-else class="space-y-3">
+        <div v-else-if="(admin.systemPrompts.value ?? []).length > 0" class="space-y-3">
           <UCard
             v-for="prompt in admin.systemPrompts.value ?? []"
             :key="prompt.name"
@@ -314,6 +314,38 @@ function formatPromptName(name: string) {
             </div>
           </UCard>
         </div>
+
+        <div
+          v-else
+          class="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-default bg-elevated/50 py-12 text-center"
+        >
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary"
+          >
+            <UIcon name="i-lucide-file-text" class="h-6 w-6" />
+          </div>
+          <p class="text-sm font-medium text-default">No system prompts loaded</p>
+          <p class="max-w-sm text-xs text-muted">
+            Configure the AI provider in Doppler to load editable prompts for napkin generation,
+            terms rewrite, and closeout summaries.
+          </p>
+        </div>
+      </div>
+    </UCard>
+
+    <!-- AI activity (empty state when no run history) -->
+    <UCard class="napkinbets-panel">
+      <div class="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <div
+          class="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted"
+        >
+          <UIcon name="i-lucide-sparkles" class="h-6 w-6" />
+        </div>
+        <p class="text-sm font-medium text-default">No AI runs yet</p>
+        <p class="max-w-sm text-xs text-muted">
+          When users trigger AI assists (recommendations, prop suggestions, terms rewrite, or
+          closeout summaries), runs will appear here.
+        </p>
       </div>
     </UCard>
   </div>
