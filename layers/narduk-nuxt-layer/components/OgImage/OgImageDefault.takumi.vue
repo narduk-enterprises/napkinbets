@@ -1,8 +1,9 @@
 <!--
   OG Image Default Template — Napkinbets branded.
 
-  Deep forest-green background with warm paper highlights,
-  Fraunces for titles (brand display serif), Manrope for body.
+  Matches the app's warm cream paper palette with green accents.
+  Manrope for all text (the brand sans-serif).
+  Emoji icons rendered at 64px for social media visibility.
 
   Nuxt OG Image v6 resolves renderers by filename suffix (.takumi.vue).
 -->
@@ -28,7 +29,7 @@ withDefaults(
     icon: '🎯',
     tag: '',
     // eslint-disable-next-line narduk/no-inline-hex -- OG brand color default
-    tagColor: '#c67a12',
+    tagColor: '#166534',
     siteName: 'napkinbets',
     meta: '',
     homeLogo: '',
@@ -45,270 +46,277 @@ withDefaults(
       width: '1200px',
       height: '630px',
       display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      padding: '64px 80px',
+      flexDirection: 'row',
       fontFamily: 'Manrope, sans-serif',
       position: 'relative',
       overflow: 'hidden',
-      // eslint-disable-next-line narduk/no-inline-hex -- OG deep green background
-      background: 'linear-gradient(145deg, #0a2618 0%, #0d3321 30%, #14532d 60%, #166534 100%)',
+      // eslint-disable-next-line narduk/no-inline-hex -- OG warm cream background
+      background: '#fff8ef',
     }"
   >
-    <!-- Warm paper glow: top-right -->
+    <!-- Left green accent strip -->
     <div
       :style="{
-        position: 'absolute',
-        top: '-60px',
-        right: '-20px',
-        width: '500px',
-        height: '500px',
-        borderRadius: '50%',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG warm glow
-        background: 'radial-gradient(circle, #fff8ef12 0%, #c67a120a 40%, transparent 70%)',
+        width: '8px',
+        flexShrink: '0',
+        // eslint-disable-next-line narduk/no-inline-hex -- OG green sidebar
+        background: 'linear-gradient(180deg, #166534 0%, #22c55e 50%, #166534 100%)',
       }"
     />
 
-    <!-- Gold glow: bottom-left -->
+    <!-- Main content area -->
     <div
       :style="{
-        position: 'absolute',
-        bottom: '-100px',
-        left: '-40px',
-        width: '400px',
-        height: '400px',
-        borderRadius: '50%',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG gold glow
-        background: 'radial-gradient(circle, #c67a1210 0%, transparent 65%)',
-      }"
-    />
-
-    <!-- Top accent line -->
-    <div
-      :style="{
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        right: '0',
-        height: '4px',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG accent bar
-        background: 'linear-gradient(90deg, #c67a12, #f59e0b, #c67a12)',
-      }"
-    />
-
-    <!-- Tag badge -->
-    <div
-      v-if="tag"
-      :style="{
+        flex: '1',
         display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '18px',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: '56px 72px',
+        position: 'relative',
       }"
     >
+      <!-- Subtle warm gradient overlay in top-right -->
       <div
+        :style="{
+          position: 'absolute',
+          top: '-80px',
+          right: '-60px',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG warm glow
+          background: 'radial-gradient(circle, #fde8c840 0%, transparent 70%)',
+        }"
+      />
+
+      <!-- Bottom-left green glow -->
+      <div
+        :style="{
+          position: 'absolute',
+          bottom: '-100px',
+          left: '-40px',
+          width: '350px',
+          height: '350px',
+          borderRadius: '50%',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG green glow
+          background: 'radial-gradient(circle, #16653410 0%, transparent 65%)',
+        }"
+      />
+
+      <!-- Tag badge -->
+      <div
+        v-if="tag"
         :style="{
           display: 'flex',
           alignItems: 'center',
-          gap: '7px',
-          padding: '5px 14px',
-          borderRadius: '9999px',
-          background: `${tagColor}20`,
-          border: `1.5px solid ${tagColor}50`,
+          gap: '8px',
+          marginBottom: '20px',
         }"
       >
         <div
           :style="{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: tagColor,
-          }"
-        />
-        <span
-          :style="{
-            fontSize: '13px',
-            fontWeight: '700',
-            fontFamily: 'Manrope, sans-serif',
-            color: tagColor,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase' as const,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            padding: '6px 16px',
+            borderRadius: '9999px',
+            background: `${tagColor}12`,
+            border: `1.5px solid ${tagColor}30`,
           }"
         >
-          {{ tag }}
-        </span>
+          <div
+            :style="{
+              width: '7px',
+              height: '7px',
+              borderRadius: '50%',
+              background: tagColor,
+            }"
+          />
+          <span
+            :style="{
+              fontSize: '14px',
+              fontWeight: '700',
+              fontFamily: 'Manrope, sans-serif',
+              color: tagColor,
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase' as const,
+            }"
+          >
+            {{ tag }}
+          </span>
+        </div>
       </div>
-    </div>
 
-    <!-- Matchup row (events with team logos) -->
-    <div
-      v-if="homeLogo || awayLogo"
-      :style="{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '18px',
-        marginBottom: '20px',
-      }"
-    >
-      <div v-if="homeLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
-        <img
-          :src="homeLogo"
-          :style="{
-            width: '44px',
-            height: '44px',
-            objectFit: 'contain',
-            borderRadius: '8px',
-          }"
-        />
-        <span
-          v-if="homeLabel"
-          :style="{
-            fontSize: '20px',
-            fontWeight: '700',
-            fontFamily: 'Manrope, sans-serif',
-            // eslint-disable-next-line narduk/no-inline-hex -- OG team label
-            color: '#fff8ef',
-          }"
-        >
-          {{ homeLabel }}
-        </span>
-      </div>
-      <span
-        :style="{
-          fontSize: '16px',
-          fontWeight: '600',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG vs label
-          color: '#94a3b8',
-          fontFamily: 'Manrope, sans-serif',
-        }"
-      >
-        vs
-      </span>
-      <div v-if="awayLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
-        <img
-          :src="awayLogo"
-          :style="{
-            width: '44px',
-            height: '44px',
-            objectFit: 'contain',
-            borderRadius: '8px',
-          }"
-        />
-        <span
-          v-if="awayLabel"
-          :style="{
-            fontSize: '20px',
-            fontWeight: '700',
-            fontFamily: 'Manrope, sans-serif',
-            // eslint-disable-next-line narduk/no-inline-hex -- OG team label
-            color: '#fff8ef',
-          }"
-        >
-          {{ awayLabel }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Icon (when no team logos) -->
-    <div
-      v-else-if="icon"
-      :style="{
-        fontSize: '38px',
-        marginBottom: '10px',
-      }"
-    >
-      {{ icon }}
-    </div>
-
-    <!-- Title — Fraunces display serif -->
-    <div
-      :style="{
-        fontSize: '48px',
-        fontWeight: '700',
-        fontFamily: 'Fraunces, Georgia, serif',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG cream title
-        color: '#fff8ef',
-        lineHeight: '1.15',
-        marginBottom: '14px',
-        maxWidth: '920px',
-        letterSpacing: '-0.02em',
-      }"
-    >
-      {{ title }}
-    </div>
-
-    <!-- Description — Manrope body -->
-    <div
-      :style="{
-        fontSize: '20px',
-        fontWeight: '400',
-        fontFamily: 'Manrope, sans-serif',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG muted description
-        color: '#94a3b8',
-        lineHeight: '1.5',
-        maxWidth: '820px',
-      }"
-    >
-      {{ description }}
-    </div>
-
-    <!-- Meta line -->
-    <div
-      v-if="meta"
-      :style="{
-        marginTop: '14px',
-        fontSize: '15px',
-        fontWeight: '600',
-        fontFamily: 'Manrope, sans-serif',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG gold meta
-        color: '#f59e0b',
-        letterSpacing: '0.01em',
-      }"
-    >
-      {{ meta }}
-    </div>
-
-    <!-- Bottom-right brand badge -->
-    <div
-      :style="{
-        position: 'absolute',
-        bottom: '24px',
-        right: '80px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-      }"
-    >
+      <!-- Matchup row (events with team logos) -->
       <div
+        v-if="homeLogo || awayLogo"
         :style="{
-          width: '28px',
-          height: '28px',
-          borderRadius: '7px',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG brand badge bg
-          background: '#c67a12',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontSize: '12px',
-          fontWeight: '700',
-          fontFamily: 'Manrope, sans-serif',
+          gap: '18px',
+          marginBottom: '18px',
         }"
       >
-        NB
+        <div v-if="homeLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
+          <img
+            :src="homeLogo"
+            :style="{
+              width: '52px',
+              height: '52px',
+              objectFit: 'contain',
+              borderRadius: '8px',
+            }"
+          />
+          <span
+            v-if="homeLabel"
+            :style="{
+              fontSize: '22px',
+              fontWeight: '700',
+              fontFamily: 'Manrope, sans-serif',
+              // eslint-disable-next-line narduk/no-inline-hex -- OG team name
+              color: '#0f1a24',
+            }"
+          >
+            {{ homeLabel }}
+          </span>
+        </div>
+        <span
+          :style="{
+            fontSize: '17px',
+            fontWeight: '600',
+            fontFamily: 'Manrope, sans-serif',
+            // eslint-disable-next-line narduk/no-inline-hex -- OG vs separator
+            color: '#94a3b8',
+          }"
+        >
+          vs
+        </span>
+        <div v-if="awayLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
+          <img
+            :src="awayLogo"
+            :style="{
+              width: '52px',
+              height: '52px',
+              objectFit: 'contain',
+              borderRadius: '8px',
+            }"
+          />
+          <span
+            v-if="awayLabel"
+            :style="{
+              fontSize: '22px',
+              fontWeight: '700',
+              fontFamily: 'Manrope, sans-serif',
+              // eslint-disable-next-line narduk/no-inline-hex -- OG team name
+              color: '#0f1a24',
+            }"
+          >
+            {{ awayLabel }}
+          </span>
+        </div>
       </div>
+
+      <!-- Icon emoji (large, visible at social card sizes) -->
+      <div
+        v-else-if="icon"
+        :style="{
+          fontSize: '64px',
+          lineHeight: '1',
+          marginBottom: '16px',
+        }"
+      >
+        {{ icon }}
+      </div>
+
+      <!-- Title -->
       <div
         :style="{
-          fontSize: '14px',
-          fontWeight: '600',
+          fontSize: '48px',
+          fontWeight: '700',
           fontFamily: 'Manrope, sans-serif',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG brand text
-          color: '#64748b',
-          letterSpacing: '0.02em',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG title ink color
+          color: '#0f1a24',
+          lineHeight: '1.15',
+          marginBottom: '14px',
+          maxWidth: '920px',
+          letterSpacing: '-0.02em',
         }"
       >
-        {{ siteName }}
+        {{ title }}
+      </div>
+
+      <!-- Description -->
+      <div
+        :style="{
+          fontSize: '21px',
+          fontWeight: '400',
+          fontFamily: 'Manrope, sans-serif',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG description text
+          color: '#475569',
+          lineHeight: '1.5',
+          maxWidth: '800px',
+        }"
+      >
+        {{ description }}
+      </div>
+
+      <!-- Meta line -->
+      <div
+        v-if="meta"
+        :style="{
+          marginTop: '14px',
+          fontSize: '16px',
+          fontWeight: '700',
+          fontFamily: 'Manrope, sans-serif',
+          // eslint-disable-next-line narduk/no-inline-hex -- OG green meta text
+          color: '#166534',
+          letterSpacing: '0.01em',
+        }"
+      >
+        {{ meta }}
+      </div>
+
+      <!-- Bottom-right brand badge -->
+      <div
+        :style="{
+          position: 'absolute',
+          bottom: '24px',
+          right: '72px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }"
+      >
+        <div
+          :style="{
+            width: '30px',
+            height: '30px',
+            borderRadius: '8px',
+            // eslint-disable-next-line narduk/no-inline-hex -- OG brand badge
+            background: '#166534',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '12px',
+            fontWeight: '700',
+            fontFamily: 'Manrope, sans-serif',
+          }"
+        >
+          NB
+        </div>
+        <div
+          :style="{
+            fontSize: '15px',
+            fontWeight: '600',
+            fontFamily: 'Manrope, sans-serif',
+            // eslint-disable-next-line narduk/no-inline-hex -- OG brand text
+            color: '#64748b',
+            letterSpacing: '0.01em',
+          }"
+        >
+          {{ siteName }}
+        </div>
       </div>
     </div>
   </div>
