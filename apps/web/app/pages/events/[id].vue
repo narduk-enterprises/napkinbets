@@ -110,7 +110,7 @@ useSeo({
         : effectiveState.value === 'post'
           ? '#64748b'
           : '#3b82f6',
-    /* eslint-enable narduk/no-inline-hex */
+    /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
   },
 })
 

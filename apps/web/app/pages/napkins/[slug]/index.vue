@@ -162,7 +162,7 @@ useSeo({
         : wager.value?.status === 'closed'
           ? '#ef4444'
           : '#22c55e',
-    /* eslint-enable narduk/no-inline-hex */
+    /* eslint-enable narduk/no-inline-hex -- end OG tag color block */
   },
 })
 
