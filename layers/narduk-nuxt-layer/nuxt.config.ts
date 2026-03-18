@@ -169,6 +169,12 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'cloudflare-module',
+    serverAssets: [
+      {
+        baseName: 'fonts',
+        dir: fileURLToPath(new URL('./server/assets/fonts', import.meta.url)),
+      },
+    ],
     imports: {
       // Prevent nuxt-auth-utils password.js from being server-auto-imported;
       // the layer provides its own Web Crypto (PBKDF2) implementations.
