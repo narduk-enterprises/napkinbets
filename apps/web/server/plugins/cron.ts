@@ -1,3 +1,20 @@
+// ─── Cloudflare Scheduled Event Handler — Napkinbets Ingestion Crons ────────
+//
+// Dispatches Cloudflare cron triggers to the appropriate internal API route.
+// Each schedule targets a different data freshness tier:
+//
+//   * * * * *       → live-window  (refresh scores for games currently in progress)
+//   every 5 min     → odds         (refresh actively traded Polymarket odds)
+//   every 10 min    → next-48h     (upcoming events within 48 hours)
+//   7 at every 6h   → next-7d      (events in next 7 days, 4x/day)
+//   23 at every 12h → next-8w      (events in next 8 weeks, 2x/day)
+//
+// Cost: The 1-minute schedule runs 1,440 times/day. Each invocation should
+// short-circuit (no-op) when there are no live games to minimize D1 reads.
+//
+// Idempotency: All cron handlers MUST be idempotent — duplicate or overlapping
+// invocations must produce the same result without data corruption.
+// ─────────────────────────────────────────────────────────────────────────────
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('cloudflare:scheduled', async (scheduledEvent: unknown) => {
     const cloudflareEvent = scheduledEvent as

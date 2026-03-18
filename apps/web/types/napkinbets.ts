@@ -258,6 +258,12 @@ export interface NapkinbetsEventOdds {
   commentCount: number | null
 }
 
+export interface NapkinbetsLinescore {
+  periodLabels: string[]
+  away: number[]
+  home: number[]
+}
+
 export interface NapkinbetsEventDetail {
   id: string
   source: string
@@ -287,6 +293,7 @@ export interface NapkinbetsEventDetail {
   venueProfileSlug?: string | null
   leagueProfileKey?: string | null
   odds: NapkinbetsEventOdds | null
+  linescores: NapkinbetsLinescore | null
 }
 
 export interface NapkinbetsEventDetailResponse {

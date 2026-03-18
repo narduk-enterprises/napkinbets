@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { eq } from 'drizzle-orm'
 import { users } from '#server/database/schema'
-import { ensureSeedData } from '#server/services/napkinbets/pools'
+import { ensureSeedData } from '#server/services/napkinbets/seed'
 import { useAppDatabase } from '#server/utils/database'
 
 const DEMO_USER_EMAIL = 'demo@napkinbets.app'

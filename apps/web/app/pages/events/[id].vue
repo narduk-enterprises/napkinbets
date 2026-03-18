@@ -172,37 +172,28 @@ useWebPageSchema({
           :status="eventDetail.shortStatus || eventDetail.status"
           :start-time="eventDetail.startTime"
           :venue-name="eventDetail.venueName"
+          :venue-location="eventDetail.venueLocation"
+          :broadcast="eventDetail.broadcast"
+          :sport="eventDetail.sport"
+          :league-label="eventDetail.leagueLabel"
           :weather="null"
           :away-team-name="eventDetail.awayTeam.name"
+          :away-team-short-name="eventDetail.awayTeam.shortName"
+          :away-team-abbreviation="eventDetail.awayTeam.abbreviation"
           :away-team-logo="eventDetail.awayTeam.logo"
           :away-score="eventDetail.awayTeam.score"
+          :away-team-record="eventDetail.awayTeam.record"
           :away-team-profile-slug="eventDetail.awayTeamProfileSlug"
           :home-team-name="eventDetail.homeTeam.name"
+          :home-team-short-name="eventDetail.homeTeam.shortName"
+          :home-team-abbreviation="eventDetail.homeTeam.abbreviation"
           :home-team-logo="eventDetail.homeTeam.logo"
           :home-score="eventDetail.homeTeam.score"
+          :home-team-record="eventDetail.homeTeam.record"
           :home-team-profile-slug="eventDetail.homeTeamProfileSlug"
-        >
-          <template #footer>
-            <div
-              v-if="eventDetail.leaders?.length"
-              class="pt-4 border-t border-dashed border-default mt-4 space-y-3"
-            >
-              <h4 class="text-sm font-semibold text-default">
-                {{ eventDetail.state === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
-              </h4>
-              <div class="napkinbets-event-insights">
-                <div
-                  v-for="leader in eventDetail.leaders"
-                  :key="`${leader.label}-${leader.athlete}`"
-                  class="napkinbets-event-insight"
-                >
-                  <span>{{ leader.label }}</span>
-                  <strong>{{ leader.athlete }} · {{ leader.value }}</strong>
-                </div>
-              </div>
-            </div>
-          </template>
-        </NapkinbetsBoxScore>
+          :linescores="eventDetail.linescores"
+          :leaders="eventDetail.leaders"
+        />
 
         <div class="space-y-4">
           <UCard v-if="moneylineOdds" class="napkinbets-panel">

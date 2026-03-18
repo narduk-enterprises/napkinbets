@@ -55,12 +55,11 @@ export function useNapkinbetsApi() {
       return fetch<NapkinbetsDiscoveryResponse>('/api/napkinbets/discover')
     },
     getEventDetail(id: string) {
-      // Use base64 encoding for the ID to completely bypass Nitro colon/bracket routing issues
-      const safeId = typeof btoa !== 'undefined' ? btoa(id) : Buffer.from(id).toString('base64')
+      const safeId = encodeRouteId(id)
       return fetch<NapkinbetsEventDetailResponse>(`/api/napkinbets/events/${safeId}`)
     },
     refreshEventOdds(id: string) {
-      const safeId = typeof btoa !== 'undefined' ? btoa(id) : Buffer.from(id).toString('base64')
+      const safeId = encodeRouteId(id)
       return fetch<{ success: boolean; odds: unknown }>(
         `/api/napkinbets/events/${safeId}/odds/refresh`,
         {

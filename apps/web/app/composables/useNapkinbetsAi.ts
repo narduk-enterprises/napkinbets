@@ -9,10 +9,14 @@ import { useNapkinbetsApi } from '../services/napkinbets-api'
 
 export function useNapkinbetsAi() {
   const api = useNapkinbetsApi()
-  const config = useRuntimeConfig()
+  const { data: aiStatus } = useAsyncData<{ aiEnabled: boolean }>(
+    'napkinbets-ai-status',
+    () => useAppFetch()('/api/napkinbets/ai/status'),
+    { default: () => ({ aiEnabled: false }) },
+  )
 
   return {
-    enabled: computed(() => Boolean(config.public.aiRecommendationsEnabled)),
+    enabled: computed(() => aiStatus.value?.aiEnabled === true),
     rewriteTerms(payload: NapkinbetsAiTermsInput) {
       return api.rewriteTermsWithAi(payload)
     },

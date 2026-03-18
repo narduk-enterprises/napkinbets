@@ -12,11 +12,8 @@ export default defineEventHandler(async (event) => {
   if (!encodedId) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
   }
-  // The ID is base64 encoded by the client to bypass Nitro routing issues with colons
-  const id =
-    typeof atob !== 'undefined'
-      ? atob(encodedId)
-      : Buffer.from(encodedId, 'base64').toString('ascii')
+  // The ID is base64url encoded by the client to bypass Nitro routing issues with colons
+  const id = decodeRouteId(encodedId)
 
   const db = useAppDatabase(event)
 
@@ -50,6 +47,75 @@ export default defineEventHandler(async (event) => {
       return fallback
     }
   }
+
+  // ─── Extract linescores from raw ESPN payload ──────────
+  interface RawLinescoreEntry {
+    value?: number
+  }
+
+  interface RawCompetitor {
+    homeAway?: 'home' | 'away'
+    linescores?: RawLinescoreEntry[]
+  }
+
+  interface RawCompetition {
+    competitors?: RawCompetitor[]
+  }
+
+  interface RawPayload {
+    competitions?: RawCompetition[]
+  }
+
+  function extractLinescores(rawJson: string | null, sport: string, state: string) {
+    if (state === 'pre' || !rawJson) return null
+
+    try {
+      const raw = JSON.parse(rawJson) as RawPayload
+      const competitors = raw?.competitions?.[0]?.competitors
+      if (!competitors) return null
+
+      const awayComp = competitors.find((c) => c.homeAway === 'away')
+      const homeComp = competitors.find((c) => c.homeAway === 'home')
+
+      const awayScores = awayComp?.linescores?.map((ls) => ls.value ?? 0)
+      const homeScores = homeComp?.linescores?.map((ls) => ls.value ?? 0)
+
+      if (!awayScores?.length || !homeScores?.length) return null
+
+      const periodCount = Math.max(awayScores.length, homeScores.length)
+      let periodLabels: string[]
+
+      if (sport === 'baseball') {
+        periodLabels = Array.from({ length: periodCount }, (_, i) => String(i + 1))
+      } else if (sport === 'football' || sport === 'basketball') {
+        if (periodCount <= 4) {
+          periodLabels = Array.from({ length: periodCount }, (_, i) => `Q${i + 1}`)
+        } else {
+          periodLabels = [
+            ...Array.from({ length: 4 }, (_, i) => `Q${i + 1}`),
+            ...Array.from({ length: periodCount - 4 }, (_, i) => `OT${i > 0 ? i + 1 : ''}`.trim()),
+          ]
+        }
+      } else if (sport === 'hockey') {
+        if (periodCount <= 3) {
+          periodLabels = Array.from({ length: periodCount }, (_, i) => `P${i + 1}`)
+        } else {
+          periodLabels = [
+            ...Array.from({ length: 3 }, (_, i) => `P${i + 1}`),
+            ...Array.from({ length: periodCount - 3 }, (_, i) => (i === 0 ? 'OT' : `OT${i + 1}`)),
+          ]
+        }
+      } else {
+        periodLabels = Array.from({ length: periodCount }, (_, i) => String(i + 1))
+      }
+
+      return { periodLabels, away: awayScores, home: homeScores }
+    } catch {
+      return null
+    }
+  }
+
+  const linescores = extractLinescores(row.rawPayloadJson ?? null, row.sport, row.state)
 
   const odds = oddsRow
     ? {
@@ -96,6 +162,7 @@ export default defineEventHandler(async (event) => {
       venueProfileSlug: venueRows[0]?.slug ?? null,
       leagueProfileKey: row.league,
       odds,
+      linescores,
     },
   }
 })

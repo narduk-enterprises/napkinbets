@@ -8,11 +8,7 @@ import {
   napkinbetsFeaturedBets,
   napkinbetsWagers,
 } from '#server/database/schema'
-import {
-  getNapkinbetsContextLabel,
-  getNapkinbetsSportLabel,
-  type NapkinbetsLeagueDefinition,
-} from '#server/services/napkinbets/taxonomy'
+import type { NapkinbetsLeagueDefinition } from '#server/services/napkinbets/taxonomy'
 import { loadNapkinbetsLeaguesFromStore } from '#server/services/napkinbets/taxonomy-store'
 import {
   enrichNapkinbetsEventsWithPolymarketOdds,
@@ -20,210 +16,47 @@ import {
 } from '#server/services/napkinbets/polymarket'
 import { linkEventsToCanonicalEntities } from '#server/services/napkinbets/entities'
 import { useAppDatabase } from '#server/utils/database'
+import {
+  buildIngestWindows,
+  fetchLeagueEvents,
+  isLeagueActive,
+  type DiscoverTier,
+  type IngestWindow,
+  type CachedDiscoverEventIdea,
+} from '#server/services/napkinbets/espn'
+import {
+  type NapkinbetsCachedEvent,
+  NAPKINBETS_CACHED_EVENT_SELECT,
+  toCachedEvent,
+  parseJsonValue,
+} from '#server/services/napkinbets/event-queries'
 
-interface EspnTeamRecord {
-  summary?: string
-}
+// -- Re-export from extracted modules for backward compatibility -------------
+export {
+  buildIngestWindows,
+  buildEspnScoreboardUrl,
+  normalizeMatchupEspnEvent,
+  normalizeTournamentEspnEvent,
+  isLeagueActive,
+  type DiscoverTier,
+  type IngestWindow,
+  type CachedDiscoverEventIdea,
+  type CachedDiscoverEventLeader,
+  type CachedDiscoverEventTeam,
+} from '#server/services/napkinbets/espn'
 
-interface EspnLeaderEntry {
-  displayValue?: string
-  athlete?: {
-    displayName?: string
-  }
-}
+export {
+  type NapkinbetsCachedEvent,
+  type NapkinbetsCachedEventRow,
+  NAPKINBETS_CACHED_EVENT_SELECT,
+  toCachedEvent,
+  toLiveGame,
+  loadCachedEventsByIds,
+  loadFeaturedLiveGames,
+  parseJsonValue,
+} from '#server/services/napkinbets/event-queries'
 
-interface EspnLeader {
-  displayName?: string
-  leaders?: EspnLeaderEntry[]
-}
-
-interface EspnAthlete {
-  id?: string
-  displayName?: string
-  shortName?: string
-  headshot?: {
-    href?: string
-  }
-}
-
-interface EspnCompetitorStatus {
-  displayValue?: string
-  detail?: string
-  type?: {
-    state?: 'pre' | 'in' | 'post'
-    description?: string
-    shortDetail?: string
-  }
-  position?: {
-    displayName?: string
-    isTie?: boolean
-  }
-}
-
-interface EspnCompetitorScore {
-  value?: number
-  displayValue?: string
-}
-
-interface EspnCompetitor {
-  id?: string
-  homeAway?: 'home' | 'away'
-  score?: string | EspnCompetitorScore
-  winner?: boolean
-  team?: {
-    id?: string
-    displayName?: string
-    shortDisplayName?: string
-    abbreviation?: string
-    logo?: string
-  }
-  athlete?: EspnAthlete
-  sortOrder?: number
-  status?: EspnCompetitorStatus
-  records?: EspnTeamRecord[]
-  leaders?: EspnLeader[]
-}
-
-interface EspnBroadcast {
-  names?: string[]
-  media?: {
-    shortName?: string
-  }
-}
-
-interface EspnVenueAddress {
-  city?: string
-  state?: string
-}
-
-interface EspnCompetition {
-  date?: string
-  status?: {
-    type?: {
-      state?: 'pre' | 'in' | 'post'
-      description?: string
-      shortDetail?: string
-    }
-  }
-  venue?: {
-    fullName?: string
-    address?: EspnVenueAddress
-  }
-  broadcasts?: EspnBroadcast[]
-  geoBroadcasts?: Array<{ media?: { shortName?: string } }>
-  competitors?: EspnCompetitor[]
-}
-
-interface EspnEvent {
-  id?: string
-  date?: string
-  name?: string
-  shortName?: string
-  status?: {
-    type?: {
-      state?: 'pre' | 'in' | 'post'
-      description?: string
-      shortDetail?: string
-    }
-  }
-  defendingChampion?: {
-    athlete?: EspnAthlete
-  }
-  courses?: Array<{
-    name?: string
-    shotsToPar?: number
-    address?: EspnVenueAddress & { country?: string }
-  }>
-  tournament?: {
-    displayName?: string
-    numberOfRounds?: number
-    major?: boolean
-  }
-  competitions?: EspnCompetition[]
-}
-
-interface EspnScoreboardResponse {
-  events?: EspnEvent[]
-}
-
-interface CachedDiscoverEventIdea {
-  title: string
-  description: string
-  sideOptions: string[]
-  format: string
-}
-
-interface CachedDiscoverEventLeader {
-  label: string
-  athlete: string
-  value: string
-}
-
-interface CachedDiscoverEventTeam {
-  id: string
-  name: string
-  shortName: string
-  abbreviation: string
-  logo: string
-  homeAway: string
-  score: string
-  record: string
-  winner: boolean
-}
-
-export interface NapkinbetsCachedEvent {
-  id: string
-  source: 'espn'
-  sport: string
-  sportLabel: string
-  contextKey: string
-  contextLabel: string
-  league: string
-  leagueLabel: string
-  eventTitle: string
-  summary: string
-  status: string
-  state: 'pre' | 'in' | 'post'
-  shortStatus: string
-  startTime: string
-  venueName: string
-  venueLocation: string
-  broadcast: string
-  homeTeam: CachedDiscoverEventTeam
-  awayTeam: CachedDiscoverEventTeam
-  leaders: CachedDiscoverEventLeader[]
-  ideas: CachedDiscoverEventIdea[]
-  lastSyncedAt: string
-  sourceUpdatedAt: string | null
-  rawPayload: unknown
-  odds?: NapkinbetsEventOdds | null
-}
-
-interface NapkinbetsCachedEventRow {
-  id: string
-  source: string
-  sport: string
-  sportLabel: string
-  contextKey: string
-  contextLabel: string
-  league: string
-  leagueLabel: string
-  eventTitle: string
-  summary: string
-  status: string
-  state: string
-  shortStatus: string
-  startTime: string
-  venueName: string
-  venueLocation: string
-  broadcast: string
-  homeTeamJson: string
-  awayTeamJson: string
-  leadersJson: string
-  ideasJson: string
-  lastSyncedAt: string
-  sourceUpdatedAt: string | null
-}
+// -- Types -------------------------------------------------------------------
 
 interface NapkinbetsCreatePrefillQuery {
   source: string
@@ -274,38 +107,14 @@ export interface NapkinbetsDiscoverFilters {
   states: Array<{ value: string; label: string }>
 }
 
-type DiscoverTier = 'live-window' | 'next-48h' | 'next-7d' | 'next-8w' | 'manual'
-
 export type NapkinbetsEventIngestTier = DiscoverTier
 export type NapkinbetsDiscoverScope = 'live' | 'next-48h' | 'next-7d' | 'next-8w' | 'all'
 
+// -- Constants ---------------------------------------------------------------
+
 const SNAPSHOT_INSERT_BATCH_SIZE = 8
 const EVENT_LOOKUP_BATCH_SIZE = 64
-const NAPKINBETS_CACHED_EVENT_SELECT = {
-  id: napkinbetsEvents.id,
-  source: napkinbetsEvents.source,
-  sport: napkinbetsEvents.sport,
-  sportLabel: napkinbetsEvents.sportLabel,
-  contextKey: napkinbetsEvents.contextKey,
-  contextLabel: napkinbetsEvents.contextLabel,
-  league: napkinbetsEvents.league,
-  leagueLabel: napkinbetsEvents.leagueLabel,
-  eventTitle: napkinbetsEvents.eventTitle,
-  summary: napkinbetsEvents.summary,
-  status: napkinbetsEvents.status,
-  state: napkinbetsEvents.state,
-  shortStatus: napkinbetsEvents.shortStatus,
-  startTime: napkinbetsEvents.startTime,
-  venueName: napkinbetsEvents.venueName,
-  venueLocation: napkinbetsEvents.venueLocation,
-  broadcast: napkinbetsEvents.broadcast,
-  homeTeamJson: napkinbetsEvents.homeTeamJson,
-  awayTeamJson: napkinbetsEvents.awayTeamJson,
-  leadersJson: napkinbetsEvents.leadersJson,
-  ideasJson: napkinbetsEvents.ideasJson,
-  lastSyncedAt: napkinbetsEvents.lastSyncedAt,
-  sourceUpdatedAt: napkinbetsEvents.sourceUpdatedAt,
-} as const
+
 const NAPKINBETS_EDITORIAL_IMAGE_PATHS = {
   auth: '/brand/imagery/auth-table-scene.webp',
   discovery: '/brand/imagery/discovery-paper-grid.webp',
@@ -348,8 +157,7 @@ export const NAPKINBETS_PROP_IDEAS = [
     category: 'Entertainment',
     title: 'Non-sports prompts for group nights',
     context: 'The app should feel broader than games only.',
-    summary:
-      'Napkinbets can host reality-show outcomes, awards-night calls, and other “who’s right tonight?” bets.',
+    summary: `Napkinbets can host reality-show outcomes, awards-night calls, and other "who\u2019s right tonight?" bets.`,
     examples: [
       'Which contestant gets called safe first?',
       'Will the acceptance speech run over 45 seconds?',
@@ -421,12 +229,10 @@ const NAPKINBETS_GOLF_EDITORIAL = [
 const GOLF_MAJOR_EVENT_PATTERN =
   /masters|u\.s\. open|us open|open championship|the open|pga championship/i
 
+// -- Shared utilities --------------------------------------------------------
+
 function nowIso() {
   return new Date().toISOString()
-}
-
-function buildEventId(source: string, league: string, externalEventId: string) {
-  return `${source}:${league}:${externalEventId}`
 }
 
 function addDays(date: Date, days: number) {
@@ -435,7 +241,7 @@ function addDays(date: Date, days: number) {
   return copy
 }
 
-function chunkItems<T>(items: T[], size: number) {
+export function chunkItems<T>(items: T[], size: number) {
   const chunks: T[][] = []
 
   for (let index = 0; index < items.length; index += size) {
@@ -443,376 +249,6 @@ function chunkItems<T>(items: T[], size: number) {
   }
 
   return chunks
-}
-
-function formatEspnDate(date: Date) {
-  const year = date.getUTCFullYear()
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(date.getUTCDate()).padStart(2, '0')
-  return `${year}${month}${day}`
-}
-
-function formatEventTime(value: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
-}
-
-interface IngestWindow {
-  start: Date
-  end: Date
-  datesParam: string
-}
-
-function getMonthsCoveredByWindows(windows: IngestWindow[]) {
-  const months = new Set<number>()
-
-  for (const window of windows) {
-    const cursor = new Date(window.start)
-    while (cursor <= window.end) {
-      months.add(cursor.getUTCMonth() + 1)
-      cursor.setUTCDate(cursor.getUTCDate() + 1)
-    }
-  }
-
-  return months
-}
-
-function isLeagueActive(config: NapkinbetsLeagueDefinition, windows: IngestWindow[]) {
-  const coveredMonths = getMonthsCoveredByWindows(windows)
-
-  return (config.activeMonths as readonly number[]).some((month) => coveredMonths.has(month))
-}
-
-function getLeagueIdeas(
-  sport: string,
-  homeTeam: string,
-  awayTeam: string,
-): CachedDiscoverEventIdea[] {
-  switch (sport) {
-    case 'basketball':
-      return [
-        {
-          title: 'Race market',
-          description: `Turn ${awayTeam} vs ${homeTeam} into a simple run-race bet.`,
-          sideOptions: [
-            'First to 25 points',
-            'First to 50 points',
-            'Winning margin 1-5 / 6-10 / 11+',
-          ],
-          format: 'sports-race',
-        },
-        {
-          title: 'Closer call',
-          description: 'Give the room one late-game prop that settles cleanly off the broadcast.',
-          sideOptions: [
-            'Game goes to overtime',
-            'Home team covers final spread band',
-            'Last made three-pointer team',
-          ],
-          format: 'sports-prop',
-        },
-      ]
-    case 'football':
-      return [
-        {
-          title: 'Drive finish bet',
-          description: `Keep ${awayTeam} vs ${homeTeam} focused on clean, free-to-track football swings.`,
-          sideOptions: [
-            'Next scoring team',
-            'First turnover of the half',
-            'One-score game in the fourth quarter',
-          ],
-          format: 'sports-prop',
-        },
-      ]
-    case 'hockey':
-      return [
-        {
-          title: 'First goal bet',
-          description: `Keep ${awayTeam} vs ${homeTeam} simple and social.`,
-          sideOptions: ['Home scores first', 'Away scores first', 'Scoreless first 10 minutes'],
-          format: 'sports-prop',
-        },
-        {
-          title: 'Clutch finish',
-          description: 'Add one overtime or empty-net style side market.',
-          sideOptions: ['Overtime yes/no', 'One-goal game at final horn', 'Empty-netter scored'],
-          format: 'sports-prop',
-        },
-      ]
-    case 'baseball':
-      return [
-        {
-          title: 'Early innings bet',
-          description: 'Lean into clean, free-to-track inning outcomes.',
-          sideOptions: [
-            'First team to score',
-            'Lead after 3 innings',
-            'Total runs over 2.5 by the 5th',
-          ],
-          format: 'sports-prop',
-        },
-      ]
-    case 'golf':
-      return [
-        {
-          title: 'Featured golfer lane',
-          description: `Keep ${awayTeam} and ${homeTeam} at the center of a bet that still settles cleanly from the leaderboard.`,
-          sideOptions: [
-            'Best finish among featured golfers',
-            'Both golfers make the cut',
-            'Top-10 finisher count',
-          ],
-          format: 'golf-draft',
-        },
-        {
-          title: 'Round and cut sweat',
-          description:
-            'Use one quick tournament pulse instead of asking the room to track the full field.',
-          sideOptions: [
-            'Leader after round one',
-            'Cut made by both featured golfers',
-            'Best weekend score',
-            'Playoff yes/no',
-          ],
-          format: 'sports-prop',
-        },
-      ]
-    default:
-      return [
-        {
-          title: 'Head-to-head bet',
-          description: 'Keep it simple with winner and one side market.',
-          sideOptions: ['Home wins', 'Away wins', 'One featured side prop'],
-          format: 'sports-game',
-        },
-      ]
-  }
-}
-
-function getEventBroadcast(event: EspnEvent) {
-  const competition = event.competitions?.[0]
-  const broadcastNames =
-    competition?.broadcasts
-      ?.flatMap((item) => [item.media?.shortName, ...(item.names ?? [])])
-      .filter((value): value is string => Boolean(value)) ?? []
-
-  return (
-    competition?.geoBroadcasts?.find((item) => item.media?.shortName)?.media?.shortName ||
-    broadcastNames[0] ||
-    ''
-  )
-}
-
-function getAddressParts(address?: EspnVenueAddress) {
-  const parts = [address?.city, address?.state].filter(Boolean)
-  return parts.join(', ')
-}
-
-function getEventLocation(event: EspnEvent) {
-  return getAddressParts(event.competitions?.[0]?.venue?.address)
-}
-
-function getStatus(event: EspnEvent) {
-  return event.competitions?.[0]?.status?.type ?? event.status?.type
-}
-
-function getCompetitorScore(score?: string | EspnCompetitorScore, fallback = '0') {
-  if (typeof score === 'string') {
-    return score
-  }
-
-  return score?.displayValue ?? fallback
-}
-
-function buildCompetitorLeaders(competitors: EspnCompetitor[]) {
-  const leaders: CachedDiscoverEventLeader[] = []
-
-  for (const competitor of competitors) {
-    for (const leader of competitor.leaders ?? []) {
-      const top = leader.leaders?.[0]
-      if (!leader.displayName || !top?.athlete?.displayName || !top.displayValue) {
-        continue
-      }
-
-      leaders.push({
-        label: leader.displayName,
-        athlete: top.athlete.displayName,
-        value: top.displayValue,
-      })
-    }
-  }
-
-  return leaders.slice(0, 3)
-}
-
-function buildGolfLeaderboard(competitors: EspnCompetitor[]) {
-  return competitors
-    .filter((competitor) => competitor.athlete?.displayName)
-    .sort(
-      (left, right) =>
-        (left.sortOrder ?? Number.MAX_SAFE_INTEGER) - (right.sortOrder ?? Number.MAX_SAFE_INTEGER),
-    )
-    .slice(0, 3)
-    .map((competitor) => ({
-      label: competitor.status?.position?.displayName || 'Featured',
-      athlete: competitor.athlete?.displayName ?? '',
-      value: getCompetitorScore(competitor.score, competitor.status?.displayValue ?? ''),
-    }))
-    .filter((leader) => leader.athlete && leader.value)
-}
-
-function buildGolfFeaturedTeams(
-  event: EspnEvent,
-  competitors: EspnCompetitor[],
-): Pick<NapkinbetsCachedEvent, 'homeTeam' | 'awayTeam'> | null {
-  const rankedGolfers = competitors
-    .filter((competitor) => competitor.athlete?.displayName)
-    .sort(
-      (left, right) =>
-        (left.sortOrder ?? Number.MAX_SAFE_INTEGER) - (right.sortOrder ?? Number.MAX_SAFE_INTEGER),
-    )
-  const leader = rankedGolfers[0]
-  const chaser = rankedGolfers[1]
-  const defendingChampion = event.defendingChampion?.athlete
-  const tournament = event.tournament?.displayName || event.shortName || event.name || 'Tournament'
-  const roundLabel = event.tournament?.numberOfRounds
-    ? `${event.tournament.numberOfRounds}-round event`
-    : 'Tournament field'
-
-  return {
-    awayTeam: leader?.athlete?.displayName
-      ? {
-          id: leader.athlete.id ?? '',
-          name: leader.athlete.displayName,
-          shortName: leader.athlete.shortName ?? leader.athlete.displayName,
-          abbreviation: leader.status?.position?.displayName ?? 'LEAD',
-          logo: leader.athlete.headshot?.href ?? '',
-          homeAway: 'leader',
-          score: getCompetitorScore(leader.score, leader.status?.displayValue ?? ''),
-          record: leader.status?.detail ?? leader.status?.position?.displayName ?? 'Leader',
-          winner: leader.status?.type?.state === 'post',
-        }
-      : {
-          id: defendingChampion?.id ?? '',
-          name: defendingChampion?.displayName ?? 'Featured golfer',
-          shortName: defendingChampion?.shortName ?? defendingChampion?.displayName ?? 'Featured',
-          abbreviation: 'CHAMP',
-          logo: defendingChampion?.headshot?.href ?? '',
-          homeAway: 'featured',
-          score: '',
-          record: defendingChampion?.displayName ? 'Defending champion' : 'Featured storyline',
-          winner: false,
-        },
-    homeTeam: chaser?.athlete?.displayName
-      ? {
-          id: chaser.athlete.id ?? '',
-          name: chaser.athlete.displayName,
-          shortName: chaser.athlete.shortName ?? chaser.athlete.displayName,
-          abbreviation: chaser.status?.position?.displayName ?? 'CHASE',
-          logo: chaser.athlete.headshot?.href ?? '',
-          homeAway: 'chase',
-          score: getCompetitorScore(chaser.score, chaser.status?.displayValue ?? ''),
-          record: chaser.status?.detail ?? chaser.status?.position?.displayName ?? 'Chasing',
-          winner: false,
-        }
-      : {
-          id: '',
-          name: tournament,
-          shortName: 'Field',
-          abbreviation: 'FIELD',
-          logo: '',
-          homeAway: 'field',
-          score: '',
-          record: roundLabel,
-          winner: false,
-        },
-  }
-}
-
-function buildGolfSummary(event: EspnEvent, startTime: string, state: 'pre' | 'in' | 'post') {
-  const tournament = event.shortName || event.name || 'Tournament'
-  const competition = event.competitions?.[0]
-  const rankedGolfers = competition?.competitors
-    ?.filter((competitor) => competitor.athlete?.displayName)
-    .sort(
-      (left, right) =>
-        (left.sortOrder ?? Number.MAX_SAFE_INTEGER) - (right.sortOrder ?? Number.MAX_SAFE_INTEGER),
-    )
-  const leader = rankedGolfers?.[0]?.athlete?.displayName
-  const chaser = rankedGolfers?.[1]?.athlete?.displayName
-
-  if (state === 'in' && leader) {
-    return chaser
-      ? `${leader} leads ${tournament}, with ${chaser} in the chase pack.`
-      : `${leader} is on top of ${tournament} right now.`
-  }
-
-  if (state === 'post' && leader) {
-    return `${leader} closed out ${tournament}.`
-  }
-
-  return `${tournament} starts ${formatEventTime(startTime)}.`
-}
-
-export function buildIngestWindows(tier: DiscoverTier, now = new Date()) {
-  switch (tier) {
-    case 'live-window': {
-      const start = addDays(now, -1)
-      const end = addDays(now, 1)
-      return [
-        {
-          start,
-          end,
-          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-        },
-      ] satisfies IngestWindow[]
-    }
-    case 'next-48h': {
-      const start = now
-      const end = addDays(now, 2)
-      return [
-        {
-          start,
-          end,
-          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-        },
-      ] satisfies IngestWindow[]
-    }
-    case 'next-7d':
-    case 'manual': {
-      const start = now
-      const end = addDays(now, 7)
-      return [
-        {
-          start,
-          end,
-          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-        },
-      ] satisfies IngestWindow[]
-    }
-    case 'next-8w': {
-      const windows: IngestWindow[] = []
-      let cursor = new Date(now)
-
-      for (let index = 0; index < 8; index += 1) {
-        const start = new Date(cursor)
-        const end = addDays(start, 7)
-        windows.push({
-          start,
-          end,
-          datesParam: `${formatEspnDate(start)}-${formatEspnDate(end)}`,
-        })
-        cursor = end
-      }
-
-      return windows
-    }
-  }
 }
 
 function isWithinHours(date: Date, hours: number, now: Date) {
@@ -823,195 +259,20 @@ function isWithinDays(date: Date, days: number, now: Date) {
   return date.getTime() <= now.getTime() + days * 24 * 60 * 60 * 1000
 }
 
-function parseJsonValue<T>(value: string, fallback: T): T {
-  try {
-    return JSON.parse(value) as T
-  } catch {
-    return fallback
-  }
-}
-
 function readScoreFromJson(value: string) {
-  const parsed = parseJsonValue<CachedDiscoverEventTeam>(value, {
-    id: '',
-    name: '',
-    shortName: '',
-    abbreviation: '',
-    logo: '',
-    homeAway: 'home',
-    score: '0',
-    record: '',
-    winner: false,
-  })
-
+  const parsed = parseJsonValue<{ score: string }>(value, { score: '0' })
   return parsed.score
 }
 
-export function buildEspnScoreboardUrl(
-  config: NapkinbetsLeagueDefinition,
-  tier: DiscoverTier,
-  now = new Date(),
-) {
-  const [window] = buildIngestWindows(tier, now)
-  if (!window) {
-    throw new Error(`No ingest window available for ${tier}.`)
+export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
+  if (!freshestSync) {
+    return true
   }
 
-  const url = new URL(
-    `https://site.web.api.espn.com/apis/site/v2/sports/${config.sportKey}/${config.providerLeagueKey ?? config.key}/scoreboard`,
-  )
-
-  if (config.supportsDateWindow !== false) {
-    url.searchParams.set('dates', window.datesParam)
-  }
-
-  for (const [key, value] of Object.entries(config.scoreboardQueryParams ?? {})) {
-    url.searchParams.set(key, value)
-  }
-
-  return {
-    window,
-    url,
-  }
+  return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
 }
 
-export function normalizeMatchupEspnEvent(
-  event: EspnEvent,
-  config: NapkinbetsLeagueDefinition,
-  syncedAt: string,
-): NapkinbetsCachedEvent | null {
-  const competition = event.competitions?.[0]
-  const competitors = competition?.competitors ?? []
-  const homeTeam = competitors.find((competitor) => competitor.homeAway === 'home')
-  const awayTeam = competitors.find((competitor) => competitor.homeAway === 'away')
-  const status = getStatus(event)
-
-  if (!event.id || !homeTeam?.team?.displayName || !awayTeam?.team?.displayName || !status?.state) {
-    return null
-  }
-
-  const startTime = competition?.date ?? event.date ?? syncedAt
-  const venueName = competition?.venue?.fullName ?? 'Venue TBD'
-  const homeName = homeTeam.team.displayName
-  const awayName = awayTeam.team.displayName
-
-  return {
-    id: buildEventId('espn', config.key, event.id),
-    source: 'espn',
-    sport: config.sportKey,
-    sportLabel: config.sportLabel ?? getNapkinbetsSportLabel(config.sportKey),
-    contextKey: config.primaryContextKey,
-    contextLabel: config.primaryContextLabel ?? getNapkinbetsContextLabel(config.primaryContextKey),
-    league: config.key,
-    leagueLabel: config.label,
-    eventTitle: event.shortName ?? event.name ?? `${awayName} at ${homeName}`,
-    summary:
-      status.state === 'in'
-        ? `${awayName} and ${homeName} are in progress now.`
-        : `${awayName} at ${homeName} starts ${formatEventTime(startTime)}.`,
-    status: status.description ?? 'Scheduled',
-    state: status.state,
-    shortStatus: status.shortDetail ?? status.description ?? 'Scheduled',
-    startTime,
-    venueName,
-    venueLocation: getEventLocation(event),
-    broadcast: getEventBroadcast(event),
-    homeTeam: {
-      id: homeTeam.team.id ?? '',
-      name: homeName,
-      shortName: homeTeam.team.shortDisplayName ?? homeName,
-      abbreviation: homeTeam.team.abbreviation ?? '',
-      logo: homeTeam.team.logo ?? '',
-      homeAway: 'home',
-      score: getCompetitorScore(homeTeam.score),
-      record: homeTeam.records?.[0]?.summary ?? '',
-      winner: Boolean(homeTeam.winner),
-    },
-    awayTeam: {
-      id: awayTeam.team.id ?? '',
-      name: awayName,
-      shortName: awayTeam.team.shortDisplayName ?? awayName,
-      abbreviation: awayTeam.team.abbreviation ?? '',
-      logo: awayTeam.team.logo ?? '',
-      homeAway: 'away',
-      score: getCompetitorScore(awayTeam.score),
-      record: awayTeam.records?.[0]?.summary ?? '',
-      winner: Boolean(awayTeam.winner),
-    },
-    leaders: buildCompetitorLeaders(competitors),
-    ideas: getLeagueIdeas(config.sportKey, homeName, awayName),
-    lastSyncedAt: syncedAt,
-    sourceUpdatedAt: null,
-    rawPayload: event,
-  }
-}
-
-export function normalizeTournamentEspnEvent(
-  event: EspnEvent,
-  config: NapkinbetsLeagueDefinition,
-  syncedAt: string,
-): NapkinbetsCachedEvent | null {
-  const competition = event.competitions?.[0]
-  const status = getStatus(event)
-
-  if (!event.id || !status?.state) {
-    return null
-  }
-
-  const featuredTeams = buildGolfFeaturedTeams(event, competition?.competitors ?? [])
-  if (!featuredTeams) {
-    return null
-  }
-
-  const startTime = competition?.date ?? event.date ?? syncedAt
-  const hostCourse = event.courses?.[0]
-  const venueName = hostCourse?.name ?? competition?.venue?.fullName ?? 'Course TBD'
-  const venueLocation = getAddressParts(hostCourse?.address) || getEventLocation(event)
-  const eventTitle = event.shortName ?? event.name ?? event.tournament?.displayName ?? 'Tournament'
-
-  return {
-    id: buildEventId('espn', config.key, event.id),
-    source: 'espn',
-    sport: config.sportKey,
-    sportLabel: config.sportLabel ?? getNapkinbetsSportLabel(config.sportKey),
-    contextKey: config.primaryContextKey,
-    contextLabel: config.primaryContextLabel ?? getNapkinbetsContextLabel(config.primaryContextKey),
-    league: config.key,
-    leagueLabel: config.label,
-    eventTitle,
-    summary: buildGolfSummary(event, startTime, status.state),
-    status: status.description ?? 'Scheduled',
-    state: status.state,
-    shortStatus: status.shortDetail ?? status.description ?? 'Scheduled',
-    startTime,
-    venueName,
-    venueLocation,
-    broadcast: getEventBroadcast(event),
-    homeTeam: featuredTeams.homeTeam,
-    awayTeam: featuredTeams.awayTeam,
-    leaders: buildGolfLeaderboard(competition?.competitors ?? []),
-    ideas: getLeagueIdeas(
-      config.sportKey,
-      featuredTeams.homeTeam.name,
-      featuredTeams.awayTeam.name,
-    ),
-    lastSyncedAt: syncedAt,
-    sourceUpdatedAt: null,
-    rawPayload: event,
-  }
-}
-
-function normalizeEspnEvent(
-  event: EspnEvent,
-  config: NapkinbetsLeagueDefinition,
-  syncedAt: string,
-) {
-  if (config.eventShape === 'tournament') {
-    return normalizeTournamentEspnEvent(event, config, syncedAt)
-  }
-
-  return normalizeMatchupEspnEvent(event, config, syncedAt)
-}
+// -- Ingest pipeline ---------------------------------------------------------
 
 function eventNeedsSnapshot(
   existing: typeof napkinbetsEvents.$inferSelect | undefined,
@@ -1033,121 +294,6 @@ function eventNeedsSnapshot(
     readScoreFromJson(existing.homeTeamJson) !== nextEvent.homeTeam.score ||
     readScoreFromJson(existing.awayTeamJson) !== nextEvent.awayTeam.score
   )
-}
-
-export function isDiscoverCacheStale(freshestSync: string, nowMs = Date.now()) {
-  if (!freshestSync) {
-    return true
-  }
-
-  return nowMs - new Date(freshestSync).getTime() > 30 * 60 * 1000
-}
-
-async function fetchEspnJson<T>(url: string) {
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': 'napkinbets-ingest',
-    },
-  })
-
-  const payload = (await response.json()) as T
-
-  return {
-    response,
-    payload,
-  }
-}
-
-async function fetchTournamentEventDetails(
-  config: NapkinbetsLeagueDefinition,
-  externalEventId: string,
-) {
-  const url = new URL('https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard')
-  url.searchParams.set('league', config.providerLeagueKey ?? config.key)
-  url.searchParams.set('event', externalEventId)
-
-  const { response, payload } = await fetchEspnJson<EspnScoreboardResponse>(url.toString())
-
-  if (response.status === 400 || response.status === 404) {
-    return null
-  }
-
-  if (!response.ok) {
-    throw new Error(`ESPN ${config.key} leaderboard returned ${response.status}.`)
-  }
-
-  return payload.events?.[0] ?? null
-}
-
-async function fetchLeagueEvents(
-  config: NapkinbetsLeagueDefinition,
-  tier: DiscoverTier,
-  syncedAt: string,
-) {
-  const windows = buildIngestWindows(tier)
-  const normalizedEventsById = new Map<string, NapkinbetsCachedEvent>()
-  const payloads: EspnScoreboardResponse[] = []
-
-  for (const window of windows) {
-    const url = new URL(
-      `https://site.web.api.espn.com/apis/site/v2/sports/${config.sportKey}/${config.providerLeagueKey ?? config.key}/scoreboard`,
-    )
-
-    if (config.supportsDateWindow !== false) {
-      url.searchParams.set('dates', window.datesParam)
-    }
-
-    for (const [key, value] of Object.entries(config.scoreboardQueryParams ?? {})) {
-      url.searchParams.set(key, value)
-    }
-
-    const { response, payload } = await fetchEspnJson<EspnScoreboardResponse>(url.toString())
-
-    if (response.status === 400 || response.status === 404) {
-      payloads.push({ events: [] })
-      continue
-    }
-
-    if (!response.ok) {
-      throw new Error(`ESPN ${config.key} returned ${response.status}.`)
-    }
-
-    payloads.push(payload)
-
-    const tournamentEventDetails = new Map<string, EspnEvent>()
-    if (config.eventShape === 'tournament') {
-      for (const currentEvent of payload.events ?? []) {
-        if (!currentEvent.id) {
-          continue
-        }
-
-        const details = await fetchTournamentEventDetails(config, currentEvent.id)
-        if (details) {
-          tournamentEventDetails.set(currentEvent.id, details)
-        }
-      }
-    }
-
-    for (const currentEvent of payload.events ?? []) {
-      const normalized = normalizeEspnEvent(
-        tournamentEventDetails.get(currentEvent.id ?? '') ?? currentEvent,
-        config,
-        syncedAt,
-      )
-      if (!normalized) {
-        continue
-      }
-
-      normalizedEventsById.set(normalized.id, normalized)
-    }
-  }
-
-  return {
-    windows,
-    payload: payloads.at(-1) ?? { events: [] },
-    events: [...normalizedEventsById.values()],
-  }
 }
 
 async function recordIngestRunStart(
@@ -1174,13 +320,11 @@ async function recordIngestRunStart(
       sport: config.sportKey,
       league: config.key,
       tier,
+      status: 'running',
       windowStartsAt: firstWindow.start.toISOString(),
       windowEndsAt: lastWindow.end.toISOString(),
       eventCount: 0,
-      status: 'running',
-      errorMessage: null,
       startedAt: nowIso(),
-      completedAt: null,
     })
     .run()
 
@@ -1419,84 +563,7 @@ async function syncWagerScoresFromEvents(event: H3Event, events: NapkinbetsCache
   }
 }
 
-function toCachedEvent(row: NapkinbetsCachedEventRow): NapkinbetsCachedEvent {
-  return {
-    id: row.id,
-    source: row.source as 'espn',
-    sport: row.sport,
-    sportLabel: row.sportLabel,
-    contextKey: row.contextKey,
-    contextLabel: row.contextLabel,
-    league: row.league,
-    leagueLabel: row.leagueLabel,
-    eventTitle: row.eventTitle,
-    summary: row.summary,
-    status: row.status,
-    state: row.state as 'pre' | 'in' | 'post',
-    shortStatus: row.shortStatus,
-    startTime: row.startTime,
-    venueName: row.venueName,
-    venueLocation: row.venueLocation,
-    broadcast: row.broadcast,
-    homeTeam: parseJsonValue<CachedDiscoverEventTeam>(row.homeTeamJson, {
-      id: '',
-      name: '',
-      shortName: '',
-      abbreviation: '',
-      logo: '',
-      homeAway: 'home',
-      score: '0',
-      record: '',
-      winner: false,
-    }),
-    awayTeam: parseJsonValue<CachedDiscoverEventTeam>(row.awayTeamJson, {
-      id: '',
-      name: '',
-      shortName: '',
-      abbreviation: '',
-      logo: '',
-      homeAway: 'away',
-      score: '0',
-      record: '',
-      winner: false,
-    }),
-    leaders: parseJsonValue<CachedDiscoverEventLeader[]>(row.leadersJson, []),
-    ideas: parseJsonValue<CachedDiscoverEventIdea[]>(row.ideasJson, []),
-    lastSyncedAt: row.lastSyncedAt,
-    sourceUpdatedAt: row.sourceUpdatedAt ?? null,
-    rawPayload: null,
-    odds: null,
-  }
-}
-
-function toLiveGame(event: NapkinbetsCachedEvent) {
-  const isMatchup = event.awayTeam.homeAway === 'away' && event.homeTeam.homeAway === 'home'
-
-  return {
-    id: event.id,
-    name: event.eventTitle,
-    shortName: isMatchup
-      ? `${event.awayTeam.abbreviation || event.awayTeam.shortName} @ ${event.homeTeam.abbreviation || event.homeTeam.shortName}`
-      : event.eventTitle,
-    status: event.shortStatus,
-    sport: event.sport,
-    league: event.league,
-    competitors: [
-      {
-        name: event.awayTeam.name,
-        abbreviation: event.awayTeam.abbreviation,
-        score: event.awayTeam.score,
-        homeAway: event.awayTeam.homeAway,
-      },
-      {
-        name: event.homeTeam.name,
-        abbreviation: event.homeTeam.abbreviation,
-        score: event.homeTeam.score,
-        homeAway: event.homeTeam.homeAway,
-      },
-    ],
-  }
-}
+// -- Discover sections & filters ---------------------------------------------
 
 function takeLeagueBalancedEvents(events: NapkinbetsCachedEvent[], limit: number) {
   const selected: NapkinbetsCachedEvent[] = []
@@ -1610,6 +677,8 @@ function buildDiscoverFilters(events: NapkinbetsCachedEvent[]): NapkinbetsDiscov
       .map(([value, label]) => ({ value, label })),
   }
 }
+
+// -- Spotlights --------------------------------------------------------------
 
 function buildCreatePrefillFromEvent(
   event: NapkinbetsCachedEvent,
@@ -1796,6 +865,8 @@ export function buildDiscoverSpotlights(events: NapkinbetsCachedEvent[], now = n
   return spotlights.slice(0, 4)
 }
 
+// -- Ingest orchestration ----------------------------------------------------
+
 export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTier = 'manual') {
   const syncedAt = nowIso()
   const windows = buildIngestWindows(tier)
@@ -1893,6 +964,12 @@ export async function refreshDiscoverEventCache(event: H3Event, tier: DiscoverTi
   }
 }
 
+// -- Odds sync & cache -------------------------------------------------------
+
+type NapkinbetsEventOddsMarketType = NapkinbetsEventOdds extends { moneyline: infer M }
+  ? NonNullable<M>
+  : never
+
 function deserializeOddsRow(
   row: typeof napkinbetsEventOdds.$inferSelect,
 ): NapkinbetsEventOdds | null {
@@ -1902,12 +979,12 @@ function deserializeOddsRow(
       url: row.polymarketUrl ?? 'https://polymarket.com',
       updatedAt: row.fetchedAt,
       moneyline: row.moneylineJson
-        ? (JSON.parse(row.moneylineJson) as NapkinbetsEventOddsMarket)
+        ? (JSON.parse(row.moneylineJson) as NapkinbetsEventOddsMarketType)
         : null,
-      spread: row.spreadJson ? (JSON.parse(row.spreadJson) as NapkinbetsEventOddsMarket) : null,
-      total: row.totalJson ? (JSON.parse(row.totalJson) as NapkinbetsEventOddsMarket) : null,
+      spread: row.spreadJson ? (JSON.parse(row.spreadJson) as NapkinbetsEventOddsMarketType) : null,
+      total: row.totalJson ? (JSON.parse(row.totalJson) as NapkinbetsEventOddsMarketType) : null,
       extraMarkets: row.extraMarketsJson
-        ? (JSON.parse(row.extraMarketsJson) as NapkinbetsEventOddsMarket[])
+        ? (JSON.parse(row.extraMarketsJson) as NapkinbetsEventOddsMarketType[])
         : [],
       volume: row.volume ?? null,
       priceChange24h: row.priceChange24h ?? null,
@@ -1917,10 +994,6 @@ function deserializeOddsRow(
     return null
   }
 }
-
-type NapkinbetsEventOddsMarket = NapkinbetsEventOdds extends { moneyline: infer M }
-  ? NonNullable<M>
-  : never
 
 async function syncCachedOdds(h3Event: H3Event, candidates: NapkinbetsCachedEvent[]) {
   if (candidates.length === 0) {
@@ -2045,6 +1118,8 @@ async function loadCachedOdds(
 
   return result
 }
+
+// -- Public entry points -----------------------------------------------------
 
 export async function loadCachedDiscoverData(event: H3Event) {
   const db = useAppDatabase(event)
@@ -2186,35 +1261,6 @@ export async function runEventIngest(event: H3Event, scope: NapkinbetsDiscoverSc
     refreshedAt: runs.at(-1)?.refreshedAt ?? nowIso(),
     runs: runs.flatMap((run) => run.runs),
   }
-}
-
-export async function loadCachedEventsByIds(event: H3Event, eventIds: string[]) {
-  if (eventIds.length === 0) {
-    return new Map<string, NapkinbetsCachedEvent>()
-  }
-
-  const db = useAppDatabase(event)
-  const rows = await db
-    .select(NAPKINBETS_CACHED_EVENT_SELECT)
-    .from(napkinbetsEvents)
-    .where(inArray(napkinbetsEvents.id, eventIds))
-
-  return new Map(rows.map((row) => [row.id, toCachedEvent(row)]))
-}
-
-export async function loadFeaturedLiveGames(event: H3Event, limit = 6) {
-  const db = useAppDatabase(event)
-  const rows = await db
-    .select(NAPKINBETS_CACHED_EVENT_SELECT)
-    .from(napkinbetsEvents)
-    .where(or(eq(napkinbetsEvents.state, 'in'), eq(napkinbetsEvents.state, 'pre')))
-    .orderBy(asc(napkinbetsEvents.state), asc(napkinbetsEvents.startTime))
-
-  return rows
-    .map((row) => toCachedEvent(row))
-    .filter((item) => item.state === 'in' || isWithinHours(new Date(item.startTime), 6, new Date()))
-    .slice(0, limit)
-    .map((item) => toLiveGame(item))
 }
 
 export async function loadEventIngestHealth(event: H3Event) {

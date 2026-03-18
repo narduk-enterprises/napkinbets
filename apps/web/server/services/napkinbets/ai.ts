@@ -8,13 +8,6 @@ async function requireAi(event: H3Event, capability: 'terms' | 'closeout' | 'nap
   const config = useRuntimeConfig(event)
   const settings = await loadNapkinbetsAiSettings(event)
 
-  if (!config.public.aiRecommendationsEnabled) {
-    throw createError({
-      statusCode: 404,
-      message: 'AI recommendations are disabled.',
-    })
-  }
-
   if (!settings.aiRecommendationsEnabled) {
     throw createError({
       statusCode: 403,

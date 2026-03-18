@@ -8,11 +8,8 @@ export default defineEventHandler(async (event) => {
   if (!encodedId) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
   }
-  // The ID is base64 encoded by the client to bypass Nitro routing issues with colons
-  const id =
-    typeof atob !== 'undefined'
-      ? atob(encodedId)
-      : Buffer.from(encodedId, 'base64').toString('ascii')
+  // The ID is base64url encoded by the client to bypass Nitro routing issues with colons
+  const id = decodeRouteId(encodedId)
 
   const db = useAppDatabase(event)
 

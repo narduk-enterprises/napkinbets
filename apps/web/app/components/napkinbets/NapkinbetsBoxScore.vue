@@ -1,23 +1,36 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import type { NapkinbetsLinescore, NapkinbetsEventLeader } from '../../../types/napkinbets'
 
 const props = defineProps<{
   state: 'pre' | 'in' | 'post' | string
   status: string
   startTime: string | null
   venueName: string | null
+  venueLocation?: string | null
+  broadcast?: string | null
+  sport?: string | null
+  leagueLabel?: string | null
   weather: {
     temperatureF: number
     conditions: string
   } | null
   awayTeamName: string
+  awayTeamShortName?: string | null
+  awayTeamAbbreviation?: string | null
   awayTeamLogo: string | null
   awayScore: string | null
+  awayTeamRecord?: string | null
   awayTeamProfileSlug?: string | null
   homeTeamName: string
+  homeTeamShortName?: string | null
+  homeTeamAbbreviation?: string | null
   homeTeamLogo: string | null
   homeScore: string | null
+  homeTeamRecord?: string | null
   homeTeamProfileSlug?: string | null
+  linescores?: NapkinbetsLinescore | null
+  leaders?: NapkinbetsEventLeader[]
 }>()
 
 const now = ref(new Date())
@@ -85,6 +98,41 @@ const badgeLabel = computed(() => {
   return 'Upcoming'
 })
 
+const hasLinescores = computed(() => {
+  if (!props.linescores) return false
+  return props.linescores.away.length > 0 && props.linescores.home.length > 0
+})
+
+const showLeaders = computed(() => props.leaders && props.leaders.length > 0 && !isUpcoming.value)
+
+const awayAbbr = computed(
+  () =>
+    props.awayTeamAbbreviation ||
+    props.awayTeamShortName ||
+    props.awayTeamName.slice(0, 3).toUpperCase(),
+)
+
+const homeAbbr = computed(
+  () =>
+    props.homeTeamAbbreviation ||
+    props.homeTeamShortName ||
+    props.homeTeamName.slice(0, 3).toUpperCase(),
+)
+
+const awayTotal = computed(() => {
+  if (hasLinescores.value && props.linescores) {
+    return props.linescores.away.reduce((sum, v) => sum + v, 0)
+  }
+  return props.awayScore || '0'
+})
+
+const homeTotal = computed(() => {
+  if (hasLinescores.value && props.linescores) {
+    return props.linescores.home.reduce((sum, v) => sum + v, 0)
+  }
+  return props.homeScore || '0'
+})
+
 function _formatLocalTime(isoString: string) {
   try {
     const date = new Date(isoString)
@@ -106,9 +154,11 @@ function _formatLocalTime(isoString: string) {
 
 <template>
   <div class="space-y-4">
-    <UCard class="napkinbets-panel bg-linear-to-br from-default to-muted border-default">
-      <!-- TOP: Status and Weather -->
-      <div class="flex flex-wrap items-center justify-between gap-3">
+    <UCard
+      class="napkinbets-panel napkinbets-boxscore bg-linear-to-br from-default to-muted border-default overflow-hidden"
+    >
+      <!-- ─── STATUS BAR ──────────────────────────────────── -->
+      <div class="napkinbets-boxscore-status-bar">
         <div class="flex items-center gap-2">
           <UBadge :color="badgeColor" variant="soft" class="font-bold">
             {{ badgeLabel }}
@@ -121,40 +171,26 @@ function _formatLocalTime(isoString: string) {
           </span>
         </div>
 
-        <div
-          v-if="venueName"
-          class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted"
-        >
-          <span class="flex items-center gap-1">
-            <UIcon name="i-lucide-map-pin" class="size-3.5" />
-            {{ venueName }}
-          </span>
-          <span v-if="weather" class="flex items-center gap-1">
-            <UIcon name="i-lucide-cloud" class="size-3.5" />
-            {{ weather.temperatureF }}° {{ weather.conditions }}
-          </span>
+        <div class="flex items-center gap-2 text-xs text-dimmed">
+          <span v-if="leagueLabel">{{ leagueLabel }}</span>
         </div>
       </div>
 
-      <!-- MIDDLE: Matchup & Scores -->
-      <div class="flex items-center justify-between py-2">
+      <!-- ─── TEAM HEADER ─────────────────────────────────── -->
+      <div class="napkinbets-boxscore-teams">
         <!-- Away Team -->
-        <div class="flex flex-1 flex-col items-center gap-2 sm:flex-row sm:justify-start">
-          <span
-            class="napkinbets-event-avatar size-12 sm:size-16 bg-white border border-faint shadow-sm shrink-0"
-          >
+        <div class="napkinbets-boxscore-team">
+          <span class="napkinbets-boxscore-team-logo">
             <img
               v-if="awayTeamLogo"
               :src="awayTeamLogo"
               :alt="awayTeamName"
-              class="napkinbets-event-avatar-image object-contain p-1"
+              class="napkinbets-event-avatar-image object-contain p-0.5"
             />
-            <span v-else class="text-lg font-bold">{{
-              awayTeamName.slice(0, 2).toUpperCase()
-            }}</span>
+            <span v-else class="text-xs font-bold">{{ awayAbbr }}</span>
           </span>
-          <div class="text-center sm:text-left">
-            <p class="font-display text-lg font-bold leading-tight">
+          <div class="min-w-0">
+            <p class="napkinbets-boxscore-team-name">
               <ULink
                 v-if="awayTeamProfileSlug"
                 :to="`/teams/${awayTeamProfileSlug}`"
@@ -166,51 +202,34 @@ function _formatLocalTime(isoString: string) {
                 {{ awayTeamName }}
               </template>
             </p>
-            <p class="text-sm text-dimmed">Away</p>
+            <p v-if="awayTeamRecord" class="napkinbets-boxscore-team-record">
+              {{ awayTeamRecord }}
+            </p>
           </div>
         </div>
 
-        <!-- Score / VS -->
-        <div class="flex flex-col items-center justify-center px-4 shrink-0">
-          <div v-if="!isUpcoming" class="flex items-center gap-3 font-display">
+        <!-- Score Center -->
+        <div class="napkinbets-boxscore-score-center">
+          <template v-if="!isUpcoming">
             <span
-              class="text-3xl font-bold"
-              :class="{
-                'opacity-50': isFinished && Number(awayScore) < Number(homeScore),
-              }"
-              >{{ awayScore || '0' }}</span
+              class="napkinbets-boxscore-score"
+              :class="{ 'opacity-40': isFinished && Number(awayScore) < Number(homeScore) }"
+              >{{ awayTotal }}</span
             >
-            <span class="text-muted font-normal">-</span>
+            <span class="text-dimmed text-sm">–</span>
             <span
-              class="text-3xl font-bold"
-              :class="{
-                'opacity-50': isFinished && Number(homeScore) < Number(awayScore),
-              }"
-              >{{ homeScore || '0' }}</span
+              class="napkinbets-boxscore-score"
+              :class="{ 'opacity-40': isFinished && Number(homeScore) < Number(awayScore) }"
+              >{{ homeTotal }}</span
             >
-          </div>
-          <div v-else class="flex flex-col items-center text-center">
-            <p class="font-display text-xl font-bold text-muted">VS</p>
-          </div>
+          </template>
+          <span v-else class="font-display text-xl font-bold text-dimmed">VS</span>
         </div>
 
         <!-- Home Team -->
-        <div class="flex flex-1 flex-col items-center gap-2 sm:flex-row-reverse sm:justify-start">
-          <span
-            class="napkinbets-event-avatar size-12 sm:size-16 bg-white border border-faint shadow-sm shrink-0"
-          >
-            <img
-              v-if="homeTeamLogo"
-              :src="homeTeamLogo"
-              :alt="homeTeamName"
-              class="napkinbets-event-avatar-image object-contain p-1"
-            />
-            <span v-else class="text-lg font-bold">{{
-              homeTeamName.slice(0, 2).toUpperCase()
-            }}</span>
-          </span>
-          <div class="text-center sm:text-right">
-            <p class="font-display text-lg font-bold leading-tight">
+        <div class="napkinbets-boxscore-team napkinbets-boxscore-team-home">
+          <div class="min-w-0 text-right">
+            <p class="napkinbets-boxscore-team-name">
               <ULink
                 v-if="homeTeamProfileSlug"
                 :to="`/teams/${homeTeamProfileSlug}`"
@@ -222,7 +241,113 @@ function _formatLocalTime(isoString: string) {
                 {{ homeTeamName }}
               </template>
             </p>
-            <p class="text-sm text-dimmed">Home</p>
+            <p v-if="homeTeamRecord" class="napkinbets-boxscore-team-record">
+              {{ homeTeamRecord }}
+            </p>
+          </div>
+          <span class="napkinbets-boxscore-team-logo">
+            <img
+              v-if="homeTeamLogo"
+              :src="homeTeamLogo"
+              :alt="homeTeamName"
+              class="napkinbets-event-avatar-image object-contain p-0.5"
+            />
+            <span v-else class="text-xs font-bold">{{ homeAbbr }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ─── LINESCORE GRID ──────────────────────────────── -->
+      <div v-if="hasLinescores && linescores" class="napkinbets-boxscore-linescore-wrap">
+        <div class="napkinbets-boxscore-linescore">
+          <!-- Header row -->
+          <div class="napkinbets-boxscore-ls-row napkinbets-boxscore-ls-header">
+            <span class="napkinbets-boxscore-ls-team-cell"></span>
+            <span
+              v-for="label in linescores.periodLabels"
+              :key="`h-${label}`"
+              class="napkinbets-boxscore-ls-cell"
+              >{{ label }}</span
+            >
+            <span class="napkinbets-boxscore-ls-cell napkinbets-boxscore-ls-total">T</span>
+          </div>
+
+          <!-- Away row -->
+          <div class="napkinbets-boxscore-ls-row">
+            <span class="napkinbets-boxscore-ls-team-cell">
+              <img
+                v-if="awayTeamLogo"
+                :src="awayTeamLogo"
+                :alt="awayAbbr"
+                class="size-4 object-contain"
+              />
+              <span class="napkinbets-boxscore-ls-abbr">{{ awayAbbr }}</span>
+            </span>
+            <span
+              v-for="(score, i) in linescores.away"
+              :key="`a-${i}`"
+              class="napkinbets-boxscore-ls-cell"
+              >{{ score }}</span
+            >
+            <span class="napkinbets-boxscore-ls-cell napkinbets-boxscore-ls-total">{{
+              awayTotal
+            }}</span>
+          </div>
+
+          <!-- Home row -->
+          <div class="napkinbets-boxscore-ls-row">
+            <span class="napkinbets-boxscore-ls-team-cell">
+              <img
+                v-if="homeTeamLogo"
+                :src="homeTeamLogo"
+                :alt="homeAbbr"
+                class="size-4 object-contain"
+              />
+              <span class="napkinbets-boxscore-ls-abbr">{{ homeAbbr }}</span>
+            </span>
+            <span
+              v-for="(score, i) in linescores.home"
+              :key="`h-${i}`"
+              class="napkinbets-boxscore-ls-cell"
+              >{{ score }}</span
+            >
+            <span class="napkinbets-boxscore-ls-cell napkinbets-boxscore-ls-total">{{
+              homeTotal
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── INFO BAR ────────────────────────────────────── -->
+      <div class="napkinbets-boxscore-info-bar">
+        <span v-if="venueName" class="napkinbets-boxscore-info-item">
+          <UIcon name="i-lucide-map-pin" class="size-3" />
+          {{ venueName }}
+        </span>
+        <span v-if="weather" class="napkinbets-boxscore-info-item">
+          <UIcon name="i-lucide-thermometer" class="size-3" />
+          {{ weather.temperatureF }}° {{ weather.conditions }}
+        </span>
+        <span v-if="broadcast" class="napkinbets-boxscore-info-item">
+          <UIcon name="i-lucide-tv" class="size-3" />
+          {{ broadcast }}
+        </span>
+      </div>
+
+      <!-- ─── GAME LEADERS ────────────────────────────────── -->
+      <div v-if="showLeaders" class="napkinbets-boxscore-leaders">
+        <h4 class="napkinbets-boxscore-leaders-title">
+          {{ effectiveState === 'pre' ? 'Season Leaders' : 'Game Leaders' }}
+        </h4>
+        <div class="napkinbets-boxscore-leaders-grid">
+          <div
+            v-for="leader in leaders"
+            :key="`${leader.label}-${leader.athlete}`"
+            class="napkinbets-boxscore-leader-card"
+          >
+            <span class="napkinbets-boxscore-leader-label">{{ leader.label }}</span>
+            <strong class="napkinbets-boxscore-leader-value">{{ leader.athlete }}</strong>
+            <span class="napkinbets-boxscore-leader-stat">{{ leader.value }}</span>
           </div>
         </div>
       </div>

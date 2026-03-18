@@ -32,9 +32,8 @@
  * ```
  */
 
+import { createError } from 'h3'
 import type { H3Event } from 'h3'
-
-/// <reference types="@cloudflare/workers-types" />
 
 /**
  * Get the KV namespace binding from the Cloudflare event context.
