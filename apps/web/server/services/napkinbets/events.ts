@@ -784,13 +784,16 @@ async function syncCachedOdds(h3Event: H3Event, candidates: NapkinbetsCachedEven
   const db = useAppDatabase(h3Event)
   const nowMs = Date.now()
   const candidateIds = candidates.map((candidate) => candidate.id)
-  const cachedRows =
-    candidateIds.length > 0
-      ? await db
-          .select()
-          .from(napkinbetsEventOdds)
-          .where(inArray(napkinbetsEventOdds.eventId, candidateIds))
-      : []
+  const cachedRows: Array<typeof napkinbetsEventOdds.$inferSelect> = []
+  if (candidateIds.length > 0) {
+    for (const chunk of chunkItems(candidateIds, EVENT_LOOKUP_BATCH_SIZE)) {
+      const rows = await db
+        .select()
+        .from(napkinbetsEventOdds)
+        .where(inArray(napkinbetsEventOdds.eventId, chunk))
+      cachedRows.push(...rows)
+    }
+  }
 
   const cachedByEventId = new Map(cachedRows.map((row) => [row.eventId, row]))
   const staleEvents: NapkinbetsCachedEvent[] = []
@@ -875,13 +878,16 @@ async function loadCachedOdds(
   const result = new Map<string, NapkinbetsEventOdds>()
 
   const candidateIds = candidates.map((c) => c.id)
-  const cachedRows =
-    candidateIds.length > 0
-      ? await db
-          .select()
-          .from(napkinbetsEventOdds)
-          .where(inArray(napkinbetsEventOdds.eventId, candidateIds))
-      : []
+  const cachedRows: Array<typeof napkinbetsEventOdds.$inferSelect> = []
+  if (candidateIds.length > 0) {
+    for (const chunk of chunkItems(candidateIds, EVENT_LOOKUP_BATCH_SIZE)) {
+      const rows = await db
+        .select()
+        .from(napkinbetsEventOdds)
+        .where(inArray(napkinbetsEventOdds.eventId, chunk))
+      cachedRows.push(...rows)
+    }
+  }
 
   const cachedByEventId = new Map(cachedRows.map((row) => [row.eventId, row]))
 

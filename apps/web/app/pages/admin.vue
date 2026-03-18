@@ -11,6 +11,7 @@ const items = [
   { label: 'Taxonomy', icon: 'i-lucide-library-big', slot: 'taxonomy' },
   { label: 'Featured', icon: 'i-lucide-star', slot: 'featured' },
   { label: 'Users', icon: 'i-lucide-users', slot: 'users' },
+  { label: 'OG Images', icon: 'i-lucide-image', slot: 'ogImages' },
 ]
 
 useSeo({
@@ -99,6 +100,12 @@ useWebPageSchema({
       <template #users>
         <div class="mt-6">
           <AdminUsersTab />
+        </div>
+      </template>
+
+      <template #ogImages>
+        <div class="mt-6">
+          <AdminOgImagesTab />
         </div>
       </template>
     </UTabs>
