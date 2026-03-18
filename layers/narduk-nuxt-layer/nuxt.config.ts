@@ -153,7 +153,8 @@ export default defineNuxtConfig({
 
   ogImage: {
     // @ts-expect-error — `fonts` works at runtime in v6.0.3 but is missing from the type defs
-    fonts: ['Manrope:400', 'Manrope:700'],
+    // Inter has distinct static 400/700 weight files; Manrope is variable (always maps to 400)
+    fonts: ['Inter:400', 'Inter:700'],
     runtimeCacheStorage: {
       driver: 'memory',
     },
