@@ -12,12 +12,12 @@ const isInitialLoad = computed(() => {
   return ledger.value.counterparties.length === 0
 })
 
-const isFullySettled = (cp: { wagerEntries: { verificationStatus: string | null }[] }) =>
-  cp.wagerEntries.length > 0 &&
-  cp.wagerEntries.every((e) => e.verificationStatus === 'confirmed')
+const isFullySettled = (counterparty: { wagerEntries: { verificationStatus: string | null }[] }) =>
+  counterparty.wagerEntries.length > 0 &&
+  counterparty.wagerEntries.every((e) => e.verificationStatus === 'confirmed')
 
 const activeCounterparties = computed(() =>
-  ledger.value.counterparties.filter((cp) => !isFullySettled(cp)),
+  ledger.value.counterparties.filter((counterparty) => !isFullySettled(counterparty)),
 )
 
 const settledCounterparties = computed(() =>

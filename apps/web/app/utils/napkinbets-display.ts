@@ -32,7 +32,9 @@ export function formatCurrencyAbs(cents: number): string {
 }
 
 /** Map a settlement verification status to a UI badge color. */
-export function getVerificationBadgeColor(status: string | null): string {
+export function getVerificationBadgeColor(
+  status: string | null,
+): 'success' | 'error' | 'warning' | 'neutral' {
   if (status === 'confirmed') return 'success'
   if (status === 'rejected') return 'error'
   if (status === 'submitted') return 'warning'
