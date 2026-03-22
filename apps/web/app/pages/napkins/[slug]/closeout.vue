@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
-import { displayNameToInitials, formatCurrency } from '~/utils/napkinbets-display'
+import { displayNameToInitials, formatCurrency, getVerificationBadgeColor } from '~/utils/napkinbets-display'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -373,13 +373,7 @@ useWebPageSchema({
 
                     <div class="flex flex-col items-end gap-2 shrink-0">
                       <UBadge
-                        :color="
-                          settlement.verificationStatus === 'confirmed'
-                            ? 'success'
-                            : settlement.verificationStatus === 'rejected'
-                              ? 'error'
-                              : 'warning'
-                        "
+                        :color="getVerificationBadgeColor(settlement.verificationStatus)"
                         variant="soft"
                       >
                         {{ settlement.verificationStatus }}
