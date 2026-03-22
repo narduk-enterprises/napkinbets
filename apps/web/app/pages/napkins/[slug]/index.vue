@@ -63,14 +63,6 @@ const isInvited = computed(
     (myParticipant.value.joinStatus === 'invited' || myParticipant.value.joinStatus === 'pending'),
 )
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
-
 useNapkinbetsAutoRefresh(wagerState.refresh)
 
 const acceptJoinPayload = computed(() => {

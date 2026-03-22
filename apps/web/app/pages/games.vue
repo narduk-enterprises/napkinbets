@@ -8,6 +8,8 @@ interface GamesTimelineItem {
   icon: string
   value: string
   slot: 'game'
+  venueName?: string | null
+  broadcast?: string | null
 }
 
 function withAllOption(
@@ -87,11 +89,9 @@ function eventToTimelineItem(e: NapkinbetsEventCard): GamesTimelineItem {
     icon: e.state === 'in' ? 'i-lucide-circle-dot' : 'i-lucide-calendar',
     value: e.id,
     slot: 'game',
+    venueName: e.venueName,
+    broadcast: e.broadcast,
   }
-}
-
-function getEvent(id: string): NapkinbetsEventCard | undefined {
-  return events.value.find((e) => e.id === id)
 }
 
 const timelineItems = computed(() => events.value.map(eventToTimelineItem))
@@ -192,22 +192,19 @@ function onSelect(_e: Event, item: GamesTimelineItem) {
             <div class="space-y-0.5 text-sm">
               <p class="text-muted">{{ item.description }}</p>
               <p
-                v-if="
-                  getEvent(item.value) &&
-                  (getEvent(item.value)?.venueName || getEvent(item.value)?.broadcast)
-                "
+                v-if="item.venueName || item.broadcast"
                 class="games-timeline-extra text-dimmed text-xs"
               >
-                <template v-if="getEvent(item.value)?.venueName">
+                <template v-if="item.venueName">
                   <UIcon name="i-lucide-map-pin" class="mr-0.5 inline size-3.5" />
-                  {{ getEvent(item.value)?.venueName }}
+                  {{ item.venueName }}
                 </template>
-                <template v-if="getEvent(item.value)?.venueName && getEvent(item.value)?.broadcast">
+                <template v-if="item.venueName && item.broadcast">
                   <span class="mx-1">·</span>
                 </template>
-                <template v-if="getEvent(item.value)?.broadcast">
+                <template v-if="item.broadcast">
                   <UIcon name="i-lucide-radio" class="mr-0.5 inline size-3.5" />
-                  {{ getEvent(item.value)?.broadcast }}
+                  {{ item.broadcast }}
                 </template>
               </p>
             </div>

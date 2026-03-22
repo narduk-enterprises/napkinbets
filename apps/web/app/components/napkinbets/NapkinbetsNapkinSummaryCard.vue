@@ -6,14 +6,6 @@ const props = defineProps<{
   role?: 'owner' | 'player' | 'invited'
 }>()
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
-
 function statusBadgeColor(status: string) {
   switch (status) {
     case 'live':

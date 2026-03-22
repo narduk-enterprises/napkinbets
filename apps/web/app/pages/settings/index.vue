@@ -95,13 +95,8 @@ async function handleSave() {
 }
 
 const initials = computed(() => {
-  const name = formName.value || profile.value?.email || ''
-  if (!name) return '?'
-  const parts = name.split(/[\s@]+/)
-  const firstInitial = parts[0]?.[0]
-  const secondInitial = parts[1]?.[0]
-  if (firstInitial && secondInitial) return (firstInitial + secondInitial).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
+  const name = formName.value || profile.value?.email?.split('@')[0] || ''
+  return displayNameToInitials(name)
 })
 
 useSeo({

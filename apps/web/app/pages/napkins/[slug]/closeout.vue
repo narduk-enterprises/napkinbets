@@ -70,14 +70,6 @@ const paymentLinks = computed(() =>
     : [],
 )
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
-
 async function handleConfirm(settlementId: string) {
   if (!wager.value) {
     return

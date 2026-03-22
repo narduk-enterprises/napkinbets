@@ -47,37 +47,14 @@ async function handleVerify(profileId: string) {
   await actions.verifyPaymentProfile(profileId)
 }
 
-function verificationIcon(status: string) {
-  switch (status) {
-    case 'verified':
-      return 'i-lucide-badge-check'
-    case 'failed':
-      return 'i-lucide-badge-x'
-    default:
-      return 'i-lucide-badge-help'
-  }
+const verificationStatusMap: Record<string, { icon: string; color: 'success' | 'error' | 'neutral'; label: string }> = {
+  verified: { icon: 'i-lucide-badge-check', color: 'success', label: 'Verified' },
+  failed: { icon: 'i-lucide-badge-x', color: 'error', label: 'Not found' },
 }
+const defaultVerificationStatus = { icon: 'i-lucide-badge-help', color: 'neutral' as const, label: 'Unverified' }
 
-function verificationColor(status: string): 'success' | 'error' | 'neutral' {
-  switch (status) {
-    case 'verified':
-      return 'success'
-    case 'failed':
-      return 'error'
-    default:
-      return 'neutral'
-  }
-}
-
-function verificationLabel(status: string) {
-  switch (status) {
-    case 'verified':
-      return 'Verified'
-    case 'failed':
-      return 'Not found'
-    default:
-      return 'Unverified'
-  }
+function verificationInfo(status: string) {
+  return verificationStatusMap[status] ?? defaultVerificationStatus
 }
 
 useSeo({
@@ -211,11 +188,11 @@ useWebPageSchema({
                   >
                   <UBadge
                     v-if="profile.provider === 'Venmo'"
-                    :color="verificationColor(profile.handleVerificationStatus)"
+                    :color="verificationInfo(profile.handleVerificationStatus).color"
                     variant="soft"
-                    :icon="verificationIcon(profile.handleVerificationStatus)"
+                    :icon="verificationInfo(profile.handleVerificationStatus).icon"
                   >
-                    {{ verificationLabel(profile.handleVerificationStatus) }}
+                    {{ verificationInfo(profile.handleVerificationStatus).label }}
                   </UBadge>
                 </div>
                 <p class="text-sm text-muted">{{ profile.provider }} • {{ profile.handle }}</p>

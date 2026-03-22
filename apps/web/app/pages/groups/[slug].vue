@@ -248,36 +248,9 @@ useWebPageSchema({
           />
 
           <template v-if="showGrouped">
-            <section v-if="wagersByStage.upcoming.length" class="space-y-3">
-              <h3 class="text-sm font-semibold tracking-wide text-muted uppercase">Upcoming</h3>
-              <div class="space-y-2">
-                <NapkinbetsNapkinSummaryCard
-                  v-for="wager in wagersByStage.upcoming"
-                  :key="wager.id"
-                  :wager="wager"
-                />
-              </div>
-            </section>
-            <section v-if="wagersByStage.live.length" class="space-y-3">
-              <h3 class="text-sm font-semibold tracking-wide text-muted uppercase">In progress</h3>
-              <div class="space-y-2">
-                <NapkinbetsNapkinSummaryCard
-                  v-for="wager in wagersByStage.live"
-                  :key="wager.id"
-                  :wager="wager"
-                />
-              </div>
-            </section>
-            <section v-if="wagersByStage.finished.length" class="space-y-3">
-              <h3 class="text-sm font-semibold tracking-wide text-muted uppercase">Finished</h3>
-              <div class="space-y-2">
-                <NapkinbetsNapkinSummaryCard
-                  v-for="wager in wagersByStage.finished"
-                  :key="wager.id"
-                  :wager="wager"
-                />
-              </div>
-            </section>
+            <NapkinbetsWagerStageSection label="Upcoming" :wagers="wagersByStage.upcoming" />
+            <NapkinbetsWagerStageSection label="In progress" :wagers="wagersByStage.live" />
+            <NapkinbetsWagerStageSection label="Finished" :wagers="wagersByStage.finished" />
           </template>
 
           <template v-else>

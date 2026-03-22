@@ -38,14 +38,6 @@ function toggleExpanded(userId: string) {
   }
 }
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(cents) / 100)
-}
-
 function paymentLinksForCounterparty(cp: {
   preferredPaymentMethod: string | null
   preferredPaymentHandle: string | null
@@ -59,13 +51,6 @@ function paymentLinksForCounterparty(cp: {
     amount,
     'NapkinBets ledger settle-up',
   )
-}
-
-function getVerificationBadgeColor(status: string | null) {
-  if (status === 'confirmed') return 'success'
-  if (status === 'rejected') return 'error'
-  if (status === 'submitted') return 'warning'
-  return 'neutral'
 }
 
 useSeo({
@@ -175,119 +160,14 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-2">
-              <UCard v-for="cp in activeCounterparties" :key="cp.userId" class="napkinbets-panel">
-                <div class="space-y-3">
-                  <!-- Counterparty header row -->
-                  <div
-                    class="flex items-center justify-between gap-3 cursor-pointer"
-                    @click="toggleExpanded(cp.userId)"
-                  >
-                    <div class="flex items-center gap-3">
-                      <UAvatar :src="cp.avatarUrl || undefined" :alt="cp.displayName" size="sm" />
-                      <div>
-                        <p class="font-semibold text-default">{{ cp.displayName }}</p>
-                        <p class="text-sm text-muted">
-                          {{ cp.wagerEntries.length }} bet{{
-                            cp.wagerEntries.length === 1 ? '' : 's'
-                          }}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                      <div class="text-right">
-                        <p
-                          class="text-lg font-bold"
-                          :class="cp.netBalanceCents > 0 ? 'text-error' : 'text-success'"
-                        >
-                          {{ cp.netBalanceCents > 0 ? 'You owe' : 'Owes you' }}
-                          {{ formatCurrency(cp.netBalanceCents) }}
-                        </p>
-                      </div>
-                      <UIcon
-                        :name="
-                          expandedCounterparties.has(cp.userId)
-                            ? 'i-lucide-chevron-up'
-                            : 'i-lucide-chevron-down'
-                        "
-                        class="size-5 text-dimmed"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Quick pay links -->
-                  <div
-                    v-if="cp.netBalanceCents > 0 && paymentLinksForCounterparty(cp).length"
-                    class="napkinbets-card-actions"
-                  >
-                    <UButton
-                      v-for="link in paymentLinksForCounterparty(cp)"
-                      :key="link.href"
-                      :to="link.href"
-                      color="primary"
-                      variant="soft"
-                      size="sm"
-                      target="_blank"
-                      icon="i-lucide-external-link"
-                    >
-                      {{ link.label }}
-                    </UButton>
-                  </div>
-
-                  <div
-                    v-else-if="
-                      cp.netBalanceCents > 0 &&
-                      cp.preferredPaymentMethod &&
-                      cp.preferredPaymentHandle
-                    "
-                    class="napkinbets-support-copy"
-                  >
-                    Pay via {{ cp.preferredPaymentMethod }}:
-                    <span class="font-medium text-default">{{ cp.preferredPaymentHandle }}</span>
-                  </div>
-
-                  <!-- Expanded wager breakdown -->
-                  <div
-                    v-if="expandedCounterparties.has(cp.userId)"
-                    class="space-y-2 pt-2 border-t border-default"
-                  >
-                    <div
-                      v-for="entry in cp.wagerEntries"
-                      :key="entry.wagerId"
-                      class="napkinbets-list-row"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <NuxtLink
-                          :to="`/napkins/${entry.wagerSlug}`"
-                          class="font-medium text-default hover:text-primary truncate block"
-                        >
-                          {{ entry.wagerTitle }}
-                        </NuxtLink>
-                        <p class="text-xs text-muted">
-                          <template v-if="entry.method">via {{ entry.method }}</template>
-                          <template v-else>no payment recorded</template>
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span
-                          class="text-sm font-semibold"
-                          :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
-                        >
-                          {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrency(entry.amountCents) }}
-                        </span>
-                        <UBadge
-                          :color="getVerificationBadgeColor(entry.verificationStatus)"
-                          variant="soft"
-                          size="xs"
-                        >
-                          {{ entry.verificationStatus || entry.paymentStatus }}
-                        </UBadge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
+              <NapkinbetsLedgerCounterpartyCard
+                v-for="cp in activeCounterparties"
+                :key="cp.userId"
+                :counterparty="cp"
+                :expanded="expandedCounterparties.has(cp.userId)"
+                :payment-links="paymentLinksForCounterparty(cp)"
+                @toggle="toggleExpanded(cp.userId)"
+              />
             </div>
           </div>
 
@@ -312,87 +192,14 @@ useWebPageSchema({
             </div>
 
             <div class="space-y-2">
-              <UCard
+              <NapkinbetsLedgerCounterpartyCard
                 v-for="cp in settledCounterparties"
                 :key="cp.userId"
-                class="napkinbets-panel opacity-80 hover:opacity-100 transition-opacity"
-              >
-                <div class="space-y-3">
-                  <!-- Counterparty header row -->
-                  <div
-                    class="flex items-center justify-between gap-3 cursor-pointer"
-                    @click="toggleExpanded(cp.userId)"
-                  >
-                    <div class="flex items-center gap-3">
-                      <UAvatar :src="cp.avatarUrl || undefined" :alt="cp.displayName" size="sm" />
-                      <div>
-                        <p class="font-semibold text-default">{{ cp.displayName }}</p>
-                        <p class="text-sm text-muted">
-                          {{ cp.wagerEntries.length }} bet{{
-                            cp.wagerEntries.length === 1 ? '' : 's'
-                          }}
-                          • all confirmed
-                        </p>
-                      </div>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                      <div class="text-right">
-                        <p class="text-lg font-bold text-success">Settled</p>
-                      </div>
-                      <UIcon
-                        :name="
-                          expandedCounterparties.has(cp.userId)
-                            ? 'i-lucide-chevron-up'
-                            : 'i-lucide-chevron-down'
-                        "
-                        class="size-5 text-dimmed"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Expanded wager breakdown -->
-                  <div
-                    v-if="expandedCounterparties.has(cp.userId)"
-                    class="space-y-2 pt-2 border-t border-default"
-                  >
-                    <div
-                      v-for="entry in cp.wagerEntries"
-                      :key="entry.wagerId"
-                      class="napkinbets-list-row"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <NuxtLink
-                          :to="`/napkins/${entry.wagerSlug}`"
-                          class="font-medium text-default hover:text-primary truncate block"
-                        >
-                          {{ entry.wagerTitle }}
-                        </NuxtLink>
-                        <p class="text-xs text-muted">
-                          <template v-if="entry.method">via {{ entry.method }}</template>
-                          <template v-else>no payment recorded</template>
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span
-                          class="text-sm font-semibold"
-                          :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
-                        >
-                          {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrency(entry.amountCents) }}
-                        </span>
-                        <UBadge
-                          :color="getVerificationBadgeColor(entry.verificationStatus)"
-                          variant="soft"
-                          size="xs"
-                        >
-                          {{ entry.verificationStatus || entry.paymentStatus }}
-                        </UBadge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </UCard>
+                :counterparty="cp"
+                settled
+                :expanded="expandedCounterparties.has(cp.userId)"
+                @toggle="toggleExpanded(cp.userId)"
+              />
             </div>
           </div>
           <!-- Payment History -->
