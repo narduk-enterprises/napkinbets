@@ -152,6 +152,12 @@ function inferPotTemplate(format: string, rules: string) {
   )
 }
 
+function pickLabelValue<T extends { label: string; value: string | number }>(
+  items: readonly T[],
+): { label: string; value: T['value'] }[] {
+  return items.map((item) => ({ label: item.label, value: item.value }))
+}
+
 export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOptions) {
   const formState = reactive<CreateWagerInput>({
     ...options.prefill.value,
@@ -185,89 +191,41 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   )
   const isSimpleBet = computed(() => formState.napkinType === 'simple-bet')
 
-  const sportOptions = computed(() =>
-    options.taxonomy.value.sports.map((sport) => ({
-      label: sport.label,
-      value: sport.value,
-    })),
-  )
+  const sportOptions = computed(() => pickLabelValue(options.taxonomy.value.sports))
 
-  const contextOptions = computed(() =>
-    options.taxonomy.value.contexts.map((context) => ({
-      label: context.label,
-      value: context.value,
-    })),
-  )
+  const contextOptions = computed(() => pickLabelValue(options.taxonomy.value.contexts))
 
   const leagueOptions = computed(() =>
-    options.taxonomy.value.leagues
-      .filter(
+    pickLabelValue(
+      options.taxonomy.value.leagues.filter(
         (league) =>
           league.sport === formState.sport && league.contextKeys.includes(formState.contextKey),
-      )
-      .map((league) => ({
-        label: league.label,
-        value: league.value,
-      })),
+      ),
+    ),
   )
 
   const groupOptions = computed(() =>
-    options.groups.value.map((group) => ({
-      label: group.name,
-      value: group.id,
-    })),
+    options.groups.value.map((group) => ({ label: group.name, value: group.id })),
   )
 
   const friendOptions = computed(() =>
-    options.friends.value.map((friend) => ({
-      label: friend.displayName,
-      value: friend.id,
-    })),
+    options.friends.value.map((friend) => ({ label: friend.displayName, value: friend.id })),
   )
 
-  const poolFormatOptions = computed(() =>
-    POOL_FORMAT_OPTIONS.map((option) => ({
-      label: option.label,
-      value: option.value,
-    })),
-  )
-
-  const paymentOptions = computed(() =>
-    PAYMENT_OPTIONS.map((option) => ({
-      label: option.label,
-      value: option.value,
-    })),
-  )
-
-  const venueOptions = computed(() =>
-    VENUE_PRESET_OPTIONS.map((option) => ({
-      label: option.label,
-      value: option.value,
-    })),
-  )
+  const poolFormatOptions = computed(() => pickLabelValue(POOL_FORMAT_OPTIONS))
+  const paymentOptions = computed(() => pickLabelValue(PAYMENT_OPTIONS))
+  const venueOptions = computed(() => pickLabelValue(VENUE_PRESET_OPTIONS))
 
   const potTemplateOptions = computed(() =>
-    POT_TEMPLATE_OPTIONS.filter(
-      (template) => !template.formats || template.formats.includes(formState.format),
-    ).map((template) => ({
-      label: template.label,
-      value: template.value,
-    })),
+    pickLabelValue(
+      POT_TEMPLATE_OPTIONS.filter(
+        (template) => !template.formats || template.formats.includes(formState.format),
+      ),
+    ),
   )
 
-  const sideTemplateOptions = computed(() =>
-    SIDE_TEMPLATE_OPTIONS.map((template) => ({
-      label: template.label,
-      value: template.value,
-    })),
-  )
-
-  const seatPresetOptions = computed(() =>
-    SEAT_PRESET_OPTIONS.map((option) => ({
-      label: option.label,
-      value: option.value,
-    })),
-  )
+  const sideTemplateOptions = computed(() => pickLabelValue(SIDE_TEMPLATE_OPTIONS))
+  const seatPresetOptions = computed(() => pickLabelValue(SEAT_PRESET_OPTIONS))
 
   const showCustomContextName = computed(
     () =>

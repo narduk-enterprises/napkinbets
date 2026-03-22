@@ -232,40 +232,16 @@ useWebPageSchema({
                     v-if="expandedCounterparties.has(cp.userId)"
                     class="space-y-2 pt-2 border-t border-default"
                   >
-                    <div
+                    <NapkinbetsLedgerEntryRow
                       v-for="entry in cp.wagerEntries"
                       :key="entry.wagerId"
-                      class="napkinbets-list-row"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <NuxtLink
-                          :to="`/napkins/${entry.wagerSlug}`"
-                          class="font-medium text-default hover:text-primary truncate block"
-                        >
-                          {{ entry.wagerTitle }}
-                        </NuxtLink>
-                        <p class="text-xs text-muted">
-                          <template v-if="entry.method">via {{ entry.method }}</template>
-                          <template v-else>no payment recorded</template>
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span
-                          class="text-sm font-semibold"
-                          :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
-                        >
-                          {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrencyAbs(entry.amountCents) }}
-                        </span>
-                        <UBadge
-                          :color="getVerificationBadgeColor(entry.verificationStatus)"
-                          variant="soft"
-                          size="xs"
-                        >
-                          {{ entry.verificationStatus || entry.paymentStatus }}
-                        </UBadge>
-                      </div>
-                    </div>
+                      :wager-slug="entry.wagerSlug"
+                      :wager-title="entry.wagerTitle"
+                      :method="entry.method"
+                      :amount-cents="entry.amountCents"
+                      :verification-status="entry.verificationStatus"
+                      :payment-status="entry.paymentStatus"
+                    />
                   </div>
                 </div>
               </UCard>
@@ -337,40 +313,16 @@ useWebPageSchema({
                     v-if="expandedCounterparties.has(cp.userId)"
                     class="space-y-2 pt-2 border-t border-default"
                   >
-                    <div
+                    <NapkinbetsLedgerEntryRow
                       v-for="entry in cp.wagerEntries"
                       :key="entry.wagerId"
-                      class="napkinbets-list-row"
-                    >
-                      <div class="min-w-0 flex-1">
-                        <NuxtLink
-                          :to="`/napkins/${entry.wagerSlug}`"
-                          class="font-medium text-default hover:text-primary truncate block"
-                        >
-                          {{ entry.wagerTitle }}
-                        </NuxtLink>
-                        <p class="text-xs text-muted">
-                          <template v-if="entry.method">via {{ entry.method }}</template>
-                          <template v-else>no payment recorded</template>
-                        </p>
-                      </div>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span
-                          class="text-sm font-semibold"
-                          :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
-                        >
-                          {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrencyAbs(entry.amountCents) }}
-                        </span>
-                        <UBadge
-                          :color="getVerificationBadgeColor(entry.verificationStatus)"
-                          variant="soft"
-                          size="xs"
-                        >
-                          {{ entry.verificationStatus || entry.paymentStatus }}
-                        </UBadge>
-                      </div>
-                    </div>
+                      :wager-slug="entry.wagerSlug"
+                      :wager-title="entry.wagerTitle"
+                      :method="entry.method"
+                      :amount-cents="entry.amountCents"
+                      :verification-status="entry.verificationStatus"
+                      :payment-status="entry.paymentStatus"
+                    />
                   </div>
                 </div>
               </UCard>

@@ -29,42 +29,37 @@ watch(searchQuery, (value) => {
   }, 250)
 })
 
-async function handleSendRequest(userId: string) {
+async function withToast(action: () => Promise<void>, success: string, failure: string) {
   try {
-    await friendsStore.sendFriendRequest(userId)
-    searchQuery.value = ''
-    friendsStore.clearSearch()
-    toast.add({ title: 'Friend request sent', color: 'success' })
+    await action()
+    toast.add({ title: success, color: 'success' })
   } catch {
-    toast.add({ title: 'Friend request failed', color: 'error' })
+    toast.add({ title: failure, color: 'error' })
   }
+}
+
+async function handleSendRequest(userId: string) {
+  await withToast(
+    async () => {
+      await friendsStore.sendFriendRequest(userId)
+      searchQuery.value = ''
+      friendsStore.clearSearch()
+    },
+    'Friend request sent',
+    'Friend request failed',
+  )
 }
 
 async function handleAccept(requestId: string) {
-  try {
-    await friendsStore.acceptFriendRequest(requestId)
-    toast.add({ title: 'Friend added', color: 'success' })
-  } catch {
-    toast.add({ title: 'Could not accept request', color: 'error' })
-  }
+  await withToast(() => friendsStore.acceptFriendRequest(requestId), 'Friend added', 'Could not accept request')
 }
 
 async function handleDecline(requestId: string) {
-  try {
-    await friendsStore.declineFriendRequest(requestId)
-    toast.add({ title: 'Request cleared', color: 'success' })
-  } catch {
-    toast.add({ title: 'Could not update request', color: 'error' })
-  }
+  await withToast(() => friendsStore.declineFriendRequest(requestId), 'Request cleared', 'Could not update request')
 }
 
 async function handleRemove(friendshipId: string) {
-  try {
-    await friendsStore.removeFriend(friendshipId)
-    toast.add({ title: 'Friend removed', color: 'success' })
-  } catch {
-    toast.add({ title: 'Could not remove friend', color: 'error' })
-  }
+  await withToast(() => friendsStore.removeFriend(friendshipId), 'Friend removed', 'Could not remove friend')
 }
 
 useSeo({

@@ -94,15 +94,16 @@ const showDeleteModal = ref(false)
 const selectedWager = ref<NapkinbetsAdminWager | null>(null)
 
 // Forms State
-const createForm = ref<NapkinbetsAdminWagerCreateInput>({
+const EMPTY_CREATE_FORM: NapkinbetsAdminWagerCreateInput = {
   title: '',
   description: '',
   status: 'open',
   league: '',
   eventTitle: '',
   slug: '',
-})
+}
 
+const createForm = ref<NapkinbetsAdminWagerCreateInput>({ ...EMPTY_CREATE_FORM })
 const editForm = ref<NapkinbetsAdminWagerUpdateInput>({})
 
 const statusOptions = [
@@ -117,14 +118,7 @@ const statusOptions = [
 
 // Actions
 function openCreateModal() {
-  createForm.value = {
-    title: '',
-    description: '',
-    status: 'open',
-    league: '',
-    eventTitle: '',
-    slug: '',
-  }
+  createForm.value = { ...EMPTY_CREATE_FORM }
   showCreateModal.value = true
 }
 
