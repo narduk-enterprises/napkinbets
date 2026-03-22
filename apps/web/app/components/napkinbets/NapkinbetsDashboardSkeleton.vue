@@ -1,3 +1,9 @@
+<script setup lang="ts">
+withDefaults(defineProps<{ srLabel?: string }>(), {
+  srLabel: 'Loading your bets and invitations.',
+})
+</script>
+
 <template>
   <div class="napkinbets-dashboard-content" aria-busy="true" aria-live="polite">
     <p class="sr-only">{{ srLabel }}</p>
@@ -35,9 +41,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-withDefaults(defineProps<{ srLabel?: string }>(), {
-  srLabel: 'Loading your bets and invitations.',
-})
-</script>

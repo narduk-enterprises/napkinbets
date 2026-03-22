@@ -47,14 +47,14 @@ async function handleVerify(profileId: string) {
   await actions.verifyPaymentProfile(profileId)
 }
 
-const verificationStatusMap: Record<string, { icon: string; color: 'success' | 'error' | 'neutral'; label: string }> = {
+const VERIFICATION_STATUS_MAP: Record<string, { icon: string; color: 'success' | 'error' | 'neutral'; label: string }> = {
   verified: { icon: 'i-lucide-badge-check', color: 'success', label: 'Verified' },
   failed: { icon: 'i-lucide-badge-x', color: 'error', label: 'Not found' },
 }
-const defaultVerificationStatus = { icon: 'i-lucide-badge-help', color: 'neutral' as const, label: 'Unverified' }
+const DEFAULT_VERIFICATION_STATUS = { icon: 'i-lucide-badge-help', color: 'neutral' as const, label: 'Unverified' }
 
 function verificationInfo(status: string) {
-  return verificationStatusMap[status] ?? defaultVerificationStatus
+  return VERIFICATION_STATUS_MAP[status] ?? DEFAULT_VERIFICATION_STATUS
 }
 
 useSeo({
