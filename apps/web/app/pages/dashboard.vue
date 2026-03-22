@@ -122,7 +122,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledger.totalOwedCents > 0 ? 'text-error' : ''"
                 >
-                  {{ formatCurrency(ledger.totalOwedCents) }}
+                  {{ formatCurrencyAbs(ledger.totalOwedCents) }}
                 </span>
               </span>
               <span class="napkinbets-ledger-summary-item">
@@ -131,7 +131,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledger.totalOwedToYouCents > 0 ? 'text-success' : ''"
                 >
-                  {{ formatCurrency(ledger.totalOwedToYouCents) }}
+                  {{ formatCurrencyAbs(ledger.totalOwedToYouCents) }}
                 </span>
               </span>
               <span class="napkinbets-ledger-summary-item">
@@ -140,7 +140,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledgerNetCents >= 0 ? 'text-success' : 'text-error'"
                 >
-                  {{ ledgerNetCents >= 0 ? '+' : '-' }}{{ formatCurrency(ledgerNetCents) }}
+                  {{ ledgerNetCents >= 0 ? '+' : '-' }}{{ formatCurrencyAbs(ledgerNetCents) }}
                 </span>
               </span>
             </template>

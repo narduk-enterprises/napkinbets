@@ -28,7 +28,7 @@ defineProps<{
         class="text-sm font-semibold"
         :class="amountCents > 0 ? 'text-error' : 'text-success'"
       >
-        {{ amountCents > 0 ? '-' : '+' }}{{ formatCurrency(amountCents) }}
+        {{ amountCents > 0 ? '-' : '+' }}{{ formatCurrencyAbs(amountCents) }}
       </span>
       <UBadge
         :color="getVerificationBadgeColor(verificationStatus)"

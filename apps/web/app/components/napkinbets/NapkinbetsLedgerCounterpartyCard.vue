@@ -64,7 +64,7 @@ const betCount = computed(() => props.counterparty.wagerEntries.length)
               :class="counterparty.netBalanceCents > 0 ? 'text-error' : 'text-success'"
             >
               {{ counterparty.netBalanceCents > 0 ? 'You owe' : 'Owes you' }}
-              {{ formatCurrency(counterparty.netBalanceCents) }}
+              {{ formatCurrencyAbs(counterparty.netBalanceCents) }}
             </p>
           </div>
           <UIcon

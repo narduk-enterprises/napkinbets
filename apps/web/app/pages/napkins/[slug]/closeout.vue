@@ -202,7 +202,7 @@ useWebPageSchema({
                 </div>
                 <div class="napkinbets-surface">
                   <p class="napkinbets-surface-label">Entry</p>
-                  <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
+                  <p class="napkinbets-surface-value">{{ formatCurrencyAbs(wager.entryFeeCents) }}</p>
                   <p class="napkinbets-support-copy">{{ paymentNote }}</p>
                 </div>
                 <div class="napkinbets-surface">
@@ -366,7 +366,7 @@ useWebPageSchema({
                           }}
                         </p>
                         <p class="text-sm text-muted">
-                          {{ formatCurrency(settlement.amountCents) }} via {{ settlement.method }}
+                          {{ formatCurrencyAbs(settlement.amountCents) }} via {{ settlement.method }}
                         </p>
                       </div>
                     </div>

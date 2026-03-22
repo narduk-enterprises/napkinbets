@@ -91,7 +91,7 @@ const shortName = computed(() => {
     <!-- Stake + chevron -->
     <div class="napkinbets-compact-right">
       <div class="text-right">
-        <p class="napkinbets-compact-stake">{{ formatCurrency(wager.entryFeeCents) }}</p>
+        <p class="napkinbets-compact-stake">{{ formatCurrencyAbs(wager.entryFeeCents) }}</p>
         <p class="napkinbets-compact-meta">
           {{ wager.participants.length }} player{{ wager.participants.length === 1 ? '' : 's' }}
         </p>

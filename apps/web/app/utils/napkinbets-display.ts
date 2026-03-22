@@ -20,8 +20,9 @@ export function displayNameToInitials(displayName: string): string {
 /**
  * Format a cent value as a whole-dollar currency string (USD).
  * Always uses the absolute value so callers can add their own sign.
+ * Rounds to whole dollars (no decimal places).
  */
-export function formatCurrency(cents: number): string {
+export function formatCurrencyAbs(cents: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',

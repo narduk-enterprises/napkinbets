@@ -213,8 +213,8 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
       ? 'Follow the game here and settle up once the result is official.'
       : 'This bet stays shareable, but settlement still waits until the final result.'
   const recordedAmount = mySettlement.value
-    ? formatCurrency(mySettlement.value.amountCents)
-    : formatCurrency(paymentAmountCents.value)
+    ? formatCurrencyAbs(mySettlement.value.amountCents)
+    : formatCurrencyAbs(paymentAmountCents.value)
 
   switch (settlementStage.value) {
     case 'upcoming':
@@ -229,7 +229,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         primaryValue: paymentRoute.value,
         primaryHint: 'The loser pays after the result is official.',
         secondaryLabel: 'Stake each',
-        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryValue: formatCurrencyAbs(props.wager.entryFeeCents),
         secondaryHint: props.wager.eventStatus || 'Waiting for first pitch.',
         supportCopy: 'Payment shortcuts stay hidden until the result is official.',
       }
@@ -246,7 +246,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         primaryValue: paymentRoute.value,
         primaryHint: 'Financial settlement opens after all participants accept.',
         secondaryLabel: 'Stake each',
-        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryValue: formatCurrencyAbs(props.wager.entryFeeCents),
         secondaryHint: 'Review the called outcomes in the panel above.',
         supportCopy: 'Payment shortcuts appear once the outcome is finalized.',
       }
@@ -263,7 +263,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         primaryValue: paymentRoute.value,
         primaryHint: 'Settle-up opens once the game goes final.',
         secondaryLabel: 'Stake each',
-        secondaryValue: formatCurrency(props.wager.entryFeeCents),
+        secondaryValue: formatCurrencyAbs(props.wager.entryFeeCents),
         secondaryHint: props.wager.eventStatus || 'Game in progress.',
         supportCopy: 'Use the game context below to follow the score until settlement opens.',
       }
@@ -279,7 +279,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         emphasis: participantContext,
         primaryLabel: 'Pay to',
         primaryValue: paymentRoute.value,
-        primaryHint: `Amount due: ${formatCurrency(paymentAmountCents.value)}.`,
+        primaryHint: `Amount due: ${formatCurrencyAbs(paymentAmountCents.value)}.`,
         secondaryLabel: 'Suggested note',
         secondaryValue: paymentNote.value,
         secondaryHint: 'Keep the slug in the note so both sides can match the transfer.',
@@ -298,7 +298,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         emphasis: settlementSummary.value || participantContext,
         primaryLabel: 'Pay to',
         primaryValue: paymentRoute.value,
-        primaryHint: `Amount due: ${formatCurrency(paymentAmountCents.value)}.`,
+        primaryHint: `Amount due: ${formatCurrencyAbs(paymentAmountCents.value)}.`,
         secondaryLabel: 'Suggested note',
         secondaryValue: paymentNote.value,
         secondaryHint: 'Reuse the note so the replacement transfer is easy to trace.',
@@ -345,7 +345,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         emphasis: settlementSummary.value || participantContext,
         primaryLabel: 'Payout route',
         primaryValue: paymentRoute.value,
-        primaryHint: `Stake was ${formatCurrency(props.wager.entryFeeCents)} per person.`,
+        primaryHint: `Stake was ${formatCurrencyAbs(props.wager.entryFeeCents)} per person.`,
         secondaryLabel: 'Ledger entries',
         secondaryValue: `${props.wager.settlements.length} payment record${props.wager.settlements.length === 1 ? '' : 's'}`,
         secondaryHint: 'Use the ledger below if you need to review receipts or acknowledgements.',
@@ -361,7 +361,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         emphasis: participantContext,
         primaryLabel: 'Payment route',
         primaryValue: paymentRoute.value,
-        primaryHint: `Stake is ${formatCurrency(props.wager.entryFeeCents)} per person.`,
+        primaryHint: `Stake is ${formatCurrencyAbs(props.wager.entryFeeCents)} per person.`,
         secondaryLabel: 'Ledger',
         secondaryValue: `${props.wager.settlements.length} payment record${props.wager.settlements.length === 1 ? '' : 's'}`,
         secondaryHint: 'Open the ledger below for the current closeout state.',
@@ -546,7 +546,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
           <div class="napkinbets-summary-grid">
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">Stake</p>
-              <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
+              <p class="napkinbets-surface-value">{{ formatCurrencyAbs(wager.entryFeeCents) }}</p>
               <p class="napkinbets-support-copy">
                 {{ wager.paymentService
                 }}{{ wager.paymentHandle ? ` • ${wager.paymentHandle}` : '' }}
@@ -555,7 +555,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
 
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">Total payout</p>
-              <p class="napkinbets-surface-value">{{ formatCurrency(wager.totalPotCents) }}</p>
+              <p class="napkinbets-surface-value">{{ formatCurrencyAbs(wager.totalPotCents) }}</p>
               <p class="napkinbets-support-copy">
                 {{ wager.pots.length }} payout split{{ wager.pots.length === 1 ? '' : 's' }}
               </p>
@@ -575,7 +575,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
             <div v-if="wager.pots.length" class="napkinbets-chip-grid">
               <div v-for="pot in wager.pots" :key="pot.id" class="napkinbets-chip-card">
                 <span class="font-semibold text-default">{{ pot.label }}</span>
-                <span class="text-sm text-muted">{{ formatCurrency(pot.amountCents) }}</span>
+                <span class="text-sm text-muted">{{ formatCurrencyAbs(pot.amountCents) }}</span>
               </div>
             </div>
             <p v-else class="text-sm text-muted">No payout breakdown yet.</p>
@@ -672,7 +672,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   <div class="text-right">
                     <p class="font-semibold text-default">{{ row.score }} pts</p>
                     <p class="text-sm text-muted">
-                      {{ formatCurrency(row.projectedPayoutCents) }} projected
+                      {{ formatCurrencyAbs(row.projectedPayoutCents) }} projected
                     </p>
                   </div>
                 </div>
@@ -1024,7 +1024,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                     Recipient received
                   </UBadge>
                   <p class="font-semibold text-default">
-                    {{ formatCurrency(settlement.amountCents) }}
+                    {{ formatCurrencyAbs(settlement.amountCents) }}
                   </p>
                   <div class="flex justify-end gap-2">
                     <UButton

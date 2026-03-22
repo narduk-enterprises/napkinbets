@@ -228,7 +228,7 @@ useWebPageSchema({
           <div class="napkinbets-summary-grid">
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">Stake</p>
-              <p class="napkinbets-surface-value">{{ formatCurrency(wager.entryFeeCents) }}</p>
+              <p class="napkinbets-surface-value">{{ formatCurrencyAbs(wager.entryFeeCents) }}</p>
             </div>
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">Payment</p>

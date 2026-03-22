@@ -121,14 +121,14 @@ useWebPageSchema({
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">You owe</p>
               <p class="napkinbets-surface-value text-error">
-                {{ formatCurrency(ledger.totalOwedCents) }}
+                {{ formatCurrencyAbs(ledger.totalOwedCents) }}
               </p>
               <p class="napkinbets-support-copy">total across all bets</p>
             </div>
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">You're owed</p>
               <p class="napkinbets-surface-value text-success">
-                {{ formatCurrency(ledger.totalOwedToYouCents) }}
+                {{ formatCurrencyAbs(ledger.totalOwedToYouCents) }}
               </p>
               <p class="napkinbets-support-copy">total from others</p>
             </div>
@@ -143,7 +143,7 @@ useWebPageSchema({
                 "
               >
                 {{ ledger.totalOwedToYouCents - ledger.totalOwedCents >= 0 ? '+' : '-'
-                }}{{ formatCurrency(Math.abs(ledger.totalOwedToYouCents - ledger.totalOwedCents)) }}
+                }}{{ formatCurrencyAbs(Math.abs(ledger.totalOwedToYouCents - ledger.totalOwedCents)) }}
               </p>
               <p class="napkinbets-support-copy">overall balance</p>
             </div>
@@ -248,7 +248,7 @@ useWebPageSchema({
                     :class="entry.direction === 'sent' ? 'text-error' : 'text-success'"
                   >
                     {{ entry.direction === 'sent' ? '-' : '+'
-                    }}{{ formatCurrency(entry.amountCents) }}
+                    }}{{ formatCurrencyAbs(entry.amountCents) }}
                   </span>
                   <UBadge
                     :color="getVerificationBadgeColor(entry.verificationStatus)"
