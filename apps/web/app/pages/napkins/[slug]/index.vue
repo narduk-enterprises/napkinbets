@@ -2,6 +2,7 @@
 import type { JoinWagerInput, WagerSettlementReviewInput } from '../../../../types/napkinbets'
 import type { NapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
 import { getNapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
+import { formatCurrency } from '~/utils/napkinbets-display'
 
 /** Stages where the hero "Settle up" button is shown (ready to settle, in progress, or done). Hidden for live/upcoming. */
 const SETTLE_UP_VISIBLE_STAGES: NapkinbetsWagerSettlementStage[] = [
@@ -62,14 +63,6 @@ const isInvited = computed(
     myParticipant.value !== null &&
     (myParticipant.value.joinStatus === 'invited' || myParticipant.value.joinStatus === 'pending'),
 )
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
 
 useNapkinbetsAutoRefresh(wagerState.refresh)
 

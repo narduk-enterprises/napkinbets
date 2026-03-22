@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
-import { displayNameToInitials } from '~/utils/napkinbets-display'
+import { displayNameToInitials, formatCurrency } from '~/utils/napkinbets-display'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -69,14 +69,6 @@ const paymentLinks = computed(() =>
       )
     : [],
 )
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
 
 async function handleConfirm(settlementId: string) {
   if (!wager.value) {

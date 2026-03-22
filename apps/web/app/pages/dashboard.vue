@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NapkinbetsWager } from '../../types/napkinbets'
+import { formatCurrencyAbs } from '~/utils/napkinbets-display'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -16,26 +17,14 @@ const ledgerNetCents = computed(
   () => ledger.value.totalOwedToYouCents - ledger.value.totalOwedCents,
 )
 
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(cents) / 100)
-}
-const isInitialWorkspaceLoad = computed(() => {
-  if (workspaceState.status.value !== 'pending') {
-    return false
-  }
-
-  return (
-    workspace.value.metrics.length === 0 &&
-    workspace.value.ownedWagers.length === 0 &&
-    workspace.value.joinedWagers.length === 0 &&
-    workspace.value.invitedWagers.length === 0 &&
-    workspace.value.reminders.length === 0
-  )
-})
+const isInitialWorkspaceLoad = computed(() =>
+  workspaceState.status.value === 'pending' &&
+  !workspace.value.metrics.length &&
+  !workspace.value.ownedWagers.length &&
+  !workspace.value.joinedWagers.length &&
+  !workspace.value.invitedWagers.length &&
+  !workspace.value.reminders.length,
+)
 
 useNapkinbetsAutoRefresh(workspaceState.refresh)
 
@@ -199,7 +188,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledger.totalOwedCents > 0 ? 'text-error' : ''"
                 >
-                  {{ formatCurrency(ledger.totalOwedCents) }}
+                  {{ formatCurrencyAbs(ledger.totalOwedCents) }}
                 </span>
               </span>
               <span class="napkinbets-ledger-summary-item">
@@ -208,7 +197,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledger.totalOwedToYouCents > 0 ? 'text-success' : ''"
                 >
-                  {{ formatCurrency(ledger.totalOwedToYouCents) }}
+                  {{ formatCurrencyAbs(ledger.totalOwedToYouCents) }}
                 </span>
               </span>
               <span class="napkinbets-ledger-summary-item">
@@ -217,7 +206,7 @@ useWebPageSchema({
                   class="napkinbets-ledger-summary-value"
                   :class="ledgerNetCents >= 0 ? 'text-success' : 'text-error'"
                 >
-                  {{ ledgerNetCents >= 0 ? '+' : '-' }}{{ formatCurrency(ledgerNetCents) }}
+                  {{ ledgerNetCents >= 0 ? '+' : '-' }}{{ formatCurrencyAbs(ledgerNetCents) }}
                 </span>
               </span>
             </template>

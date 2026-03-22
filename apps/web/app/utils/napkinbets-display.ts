@@ -16,3 +16,25 @@ export function displayNameToInitials(displayName: string): string {
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
   return '??'
 }
+
+/** Format a cent value as a whole-dollar currency string (e.g. 1500 → "$15"). */
+export function formatCurrency(cents: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(cents / 100)
+}
+
+/** Absolute-value variant used when sign is rendered separately. */
+export function formatCurrencyAbs(cents: number): string {
+  return formatCurrency(Math.abs(cents))
+}
+
+/** Map a settlement verification status to a UI badge color. */
+export function getVerificationBadgeColor(status: string | null): string {
+  if (status === 'confirmed') return 'success'
+  if (status === 'rejected') return 'error'
+  if (status === 'submitted') return 'warning'
+  return 'neutral'
+}

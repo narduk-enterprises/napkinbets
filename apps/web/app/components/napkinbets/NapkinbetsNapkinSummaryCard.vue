@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import type { NapkinbetsWager } from '../../../types/napkinbets'
+import { formatCurrency } from '../../utils/napkinbets-display'
 
 const props = defineProps<{
   wager: NapkinbetsWager
   role?: 'owner' | 'player' | 'invited'
 }>()
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
 
 function statusBadgeColor(status: string) {
   switch (status) {

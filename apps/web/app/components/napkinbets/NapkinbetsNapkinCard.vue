@@ -5,7 +5,7 @@ import type {
   NapkinbetsWager,
   WagerSettlementInput,
 } from '../../../types/napkinbets'
-import { displayNameToInitials } from '../../utils/napkinbets-display'
+import { displayNameToInitials, formatCurrency } from '../../utils/napkinbets-display'
 import { getNapkinbetsWagerSettlementStage } from '../../utils/napkinbets-wager-detail'
 
 const props = defineProps<{
@@ -369,14 +369,6 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
       }
   }
 })
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(cents / 100)
-}
 
 function statusBadgeColor(status: string) {
   switch (status) {

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatCurrencyAbs, getVerificationBadgeColor } from '~/utils/napkinbets-display'
+
 definePageMeta({ middleware: ['auth'] })
 
 const ledgerState = useNapkinbetsLedger({ server: false, lazy: true })
@@ -10,22 +12,16 @@ const isInitialLoad = computed(() => {
   return ledger.value.counterparties.length === 0
 })
 
+const isFullySettled = (cp: { wagerEntries: { verificationStatus: string | null }[] }) =>
+  cp.wagerEntries.length > 0 &&
+  cp.wagerEntries.every((e) => e.verificationStatus === 'confirmed')
+
 const activeCounterparties = computed(() =>
-  ledger.value.counterparties.filter((cp) => {
-    const allConfirmed =
-      cp.wagerEntries.length > 0 &&
-      cp.wagerEntries.every((e) => e.verificationStatus === 'confirmed')
-    return !allConfirmed
-  }),
+  ledger.value.counterparties.filter((cp) => !isFullySettled(cp)),
 )
 
 const settledCounterparties = computed(() =>
-  ledger.value.counterparties.filter((cp) => {
-    return (
-      cp.wagerEntries.length > 0 &&
-      cp.wagerEntries.every((e) => e.verificationStatus === 'confirmed')
-    )
-  }),
+  ledger.value.counterparties.filter(isFullySettled),
 )
 
 const expandedCounterparties = ref<Set<string>>(new Set())
@@ -36,14 +32,6 @@ function toggleExpanded(userId: string) {
   } else {
     expandedCounterparties.value.add(userId)
   }
-}
-
-function formatCurrency(cents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Math.abs(cents) / 100)
 }
 
 function paymentLinksForCounterparty(cp: {
@@ -59,13 +47,6 @@ function paymentLinksForCounterparty(cp: {
     amount,
     'NapkinBets ledger settle-up',
   )
-}
-
-function getVerificationBadgeColor(status: string | null) {
-  if (status === 'confirmed') return 'success'
-  if (status === 'rejected') return 'error'
-  if (status === 'submitted') return 'warning'
-  return 'neutral'
 }
 
 useSeo({
@@ -136,14 +117,14 @@ useWebPageSchema({
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">You owe</p>
               <p class="napkinbets-surface-value text-error">
-                {{ formatCurrency(ledger.totalOwedCents) }}
+                {{ formatCurrencyAbs(ledger.totalOwedCents) }}
               </p>
               <p class="napkinbets-support-copy">total across all bets</p>
             </div>
             <div class="napkinbets-surface">
               <p class="napkinbets-surface-label">You're owed</p>
               <p class="napkinbets-surface-value text-success">
-                {{ formatCurrency(ledger.totalOwedToYouCents) }}
+                {{ formatCurrencyAbs(ledger.totalOwedToYouCents) }}
               </p>
               <p class="napkinbets-support-copy">total from others</p>
             </div>
@@ -158,7 +139,7 @@ useWebPageSchema({
                 "
               >
                 {{ ledger.totalOwedToYouCents - ledger.totalOwedCents >= 0 ? '+' : '-'
-                }}{{ formatCurrency(Math.abs(ledger.totalOwedToYouCents - ledger.totalOwedCents)) }}
+                }}{{ formatCurrencyAbs(ledger.totalOwedToYouCents - ledger.totalOwedCents) }}
               </p>
               <p class="napkinbets-support-copy">overall balance</p>
             </div>
@@ -201,7 +182,7 @@ useWebPageSchema({
                           :class="cp.netBalanceCents > 0 ? 'text-error' : 'text-success'"
                         >
                           {{ cp.netBalanceCents > 0 ? 'You owe' : 'Owes you' }}
-                          {{ formatCurrency(cp.netBalanceCents) }}
+                          {{ formatCurrencyAbs(cp.netBalanceCents) }}
                         </p>
                       </div>
                       <UIcon
@@ -274,7 +255,7 @@ useWebPageSchema({
                           :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
                         >
                           {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrency(entry.amountCents) }}
+                          }}{{ formatCurrencyAbs(entry.amountCents) }}
                         </span>
                         <UBadge
                           :color="getVerificationBadgeColor(entry.verificationStatus)"
@@ -379,7 +360,7 @@ useWebPageSchema({
                           :class="entry.amountCents > 0 ? 'text-error' : 'text-success'"
                         >
                           {{ entry.amountCents > 0 ? '-' : '+'
-                          }}{{ formatCurrency(entry.amountCents) }}
+                          }}{{ formatCurrencyAbs(entry.amountCents) }}
                         </span>
                         <UBadge
                           :color="getVerificationBadgeColor(entry.verificationStatus)"
@@ -441,7 +422,7 @@ useWebPageSchema({
                     :class="entry.direction === 'sent' ? 'text-error' : 'text-success'"
                   >
                     {{ entry.direction === 'sent' ? '-' : '+'
-                    }}{{ formatCurrency(entry.amountCents) }}
+                    }}{{ formatCurrencyAbs(entry.amountCents) }}
                   </span>
                   <UBadge
                     :color="getVerificationBadgeColor(entry.verificationStatus)"
