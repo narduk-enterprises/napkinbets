@@ -1,6 +1,6 @@
-import { createError, getRouterParam, readBody } from 'h3'
+import { createError, getRouterParam } from 'h3'
 import { z } from 'zod'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { savePick } from '#server/services/napkinbets/pools'
 
 const bodySchema = z.object({
@@ -13,22 +13,19 @@ const bodySchema = z.object({
   pickNumericValue: z.coerce.number().int().optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  await enforceRateLimit(event, 'napkinbets-picks', 40, 60_000)
+const RATE_LIMIT = { namespace: 'napkinbets-picks', maxRequests: 40, windowMs: 60_000 }
 
-  const wagerId = getRouterParam(event, 'id')
-  if (!wagerId) {
-    throw createError({ statusCode: 400, message: 'Missing wager ID.' })
-  }
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body }) => {
+    const wagerId = getRouterParam(event, 'id')
+    if (!wagerId) {
+      throw createError({ statusCode: 400, message: 'Missing wager ID.' })
+    }
 
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
-
-  return await savePick(event, wagerId, parsed.data)
-})
+    return await savePick(event, wagerId, body)
+  },
+)

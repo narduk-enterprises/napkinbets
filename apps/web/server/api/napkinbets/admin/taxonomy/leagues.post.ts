@@ -1,8 +1,6 @@
-import { createError, readBody } from 'h3'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
-import { requireAdmin } from '#layer/server/utils/auth'
+import { defineAdminMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { napkinbetsTaxonomyLeagues } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 
@@ -32,84 +30,85 @@ const leagueSchema = z.object({
   isActive: z.boolean().default(true),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'napkinbets-admin-taxonomy-leagues', 30, 60_000)
+const RATE_LIMIT = {
+  namespace: 'napkinbets-admin-taxonomy-leagues',
+  maxRequests: 30,
+  windowMs: 60_000,
+}
 
-  const parsed = leagueSchema.safeParse((await readBody(event)) ?? {})
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(leagueSchema.parse),
+  },
+  async ({ event, body }) => {
+    const db = useAppDatabase(event)
+    const now = new Date().toISOString()
+    const existing = await db
+      .select({ key: napkinbetsTaxonomyLeagues.key, createdAt: napkinbetsTaxonomyLeagues.createdAt })
+      .from(napkinbetsTaxonomyLeagues)
+      .where(eq(napkinbetsTaxonomyLeagues.key, body.key))
+      .limit(1)
 
-  const db = useAppDatabase(event)
-  const now = new Date().toISOString()
-  const existing = await db
-    .select({ key: napkinbetsTaxonomyLeagues.key, createdAt: napkinbetsTaxonomyLeagues.createdAt })
-    .from(napkinbetsTaxonomyLeagues)
-    .where(eq(napkinbetsTaxonomyLeagues.key, parsed.data.key))
-    .limit(1)
+    const values: typeof napkinbetsTaxonomyLeagues.$inferInsert = {
+      key: body.key,
+      label: body.label,
+      sportKey: body.sportKey,
+      primaryContextKey: body.primaryContextKey,
+      contextKeysJson: JSON.stringify(body.contextKeys),
+      provider: body.provider,
+      providerLeagueKey: body.providerLeagueKey || null,
+      entityProvider: body.entityProvider,
+      entityProviderSportKey: body.entityProviderSportKey || null,
+      entityProviderLeagueId: body.entityProviderLeagueId || null,
+      entityProviderSeason: body.entityProviderSeason || null,
+      entitySyncEnabled: body.entitySyncEnabled,
+      scoreSyncEnabled: body.scoreSyncEnabled,
+      entityLastSyncAt: existing[0]?.key ? undefined : null,
+      entityLastSyncStatus: existing[0]?.key ? undefined : 'idle',
+      entityLastSyncMessage: existing[0]?.key ? undefined : null,
+      entityResolvedSeason: existing[0]?.key ? undefined : null,
+      scoreboardQueryParamsJson: JSON.stringify(body.scoreboardQueryParams),
+      eventShape: body.eventShape ?? null,
+      activeMonthsJson: JSON.stringify(body.activeMonths),
+      supportsDateWindow: body.supportsDateWindow,
+      supportsEventDiscovery: body.supportsEventDiscovery,
+      sortOrder: body.sortOrder,
+      isActive: body.isActive,
+      createdAt: existing[0]?.createdAt ?? now,
+      updatedAt: now,
+    }
 
-  const values: typeof napkinbetsTaxonomyLeagues.$inferInsert = {
-    key: parsed.data.key,
-    label: parsed.data.label,
-    sportKey: parsed.data.sportKey,
-    primaryContextKey: parsed.data.primaryContextKey,
-    contextKeysJson: JSON.stringify(parsed.data.contextKeys),
-    provider: parsed.data.provider,
-    providerLeagueKey: parsed.data.providerLeagueKey || null,
-    entityProvider: parsed.data.entityProvider,
-    entityProviderSportKey: parsed.data.entityProviderSportKey || null,
-    entityProviderLeagueId: parsed.data.entityProviderLeagueId || null,
-    entityProviderSeason: parsed.data.entityProviderSeason || null,
-    entitySyncEnabled: parsed.data.entitySyncEnabled,
-    scoreSyncEnabled: parsed.data.scoreSyncEnabled,
-    entityLastSyncAt: existing[0]?.key ? undefined : null,
-    entityLastSyncStatus: existing[0]?.key ? undefined : 'idle',
-    entityLastSyncMessage: existing[0]?.key ? undefined : null,
-    entityResolvedSeason: existing[0]?.key ? undefined : null,
-    scoreboardQueryParamsJson: JSON.stringify(parsed.data.scoreboardQueryParams),
-    eventShape: parsed.data.eventShape ?? null,
-    activeMonthsJson: JSON.stringify(parsed.data.activeMonths),
-    supportsDateWindow: parsed.data.supportsDateWindow,
-    supportsEventDiscovery: parsed.data.supportsEventDiscovery,
-    sortOrder: parsed.data.sortOrder,
-    isActive: parsed.data.isActive,
-    createdAt: existing[0]?.createdAt ?? now,
-    updatedAt: now,
-  }
+    await db
+      .insert(napkinbetsTaxonomyLeagues)
+      .values(values)
+      .onConflictDoUpdate({
+        target: napkinbetsTaxonomyLeagues.key,
+        set: {
+          label: values.label,
+          sportKey: values.sportKey,
+          primaryContextKey: values.primaryContextKey,
+          contextKeysJson: values.contextKeysJson,
+          provider: values.provider,
+          providerLeagueKey: values.providerLeagueKey,
+          entityProvider: values.entityProvider,
+          entityProviderSportKey: values.entityProviderSportKey,
+          entityProviderLeagueId: values.entityProviderLeagueId,
+          entityProviderSeason: values.entityProviderSeason,
+          entitySyncEnabled: values.entitySyncEnabled,
+          scoreSyncEnabled: values.scoreSyncEnabled,
+          scoreboardQueryParamsJson: values.scoreboardQueryParamsJson,
+          eventShape: values.eventShape,
+          activeMonthsJson: values.activeMonthsJson,
+          supportsDateWindow: values.supportsDateWindow,
+          supportsEventDiscovery: values.supportsEventDiscovery,
+          sortOrder: values.sortOrder,
+          isActive: values.isActive,
+          updatedAt: values.updatedAt,
+        },
+      })
+      .run()
 
-  await db
-    .insert(napkinbetsTaxonomyLeagues)
-    .values(values)
-    .onConflictDoUpdate({
-      target: napkinbetsTaxonomyLeagues.key,
-      set: {
-        label: values.label,
-        sportKey: values.sportKey,
-        primaryContextKey: values.primaryContextKey,
-        contextKeysJson: values.contextKeysJson,
-        provider: values.provider,
-        providerLeagueKey: values.providerLeagueKey,
-        entityProvider: values.entityProvider,
-        entityProviderSportKey: values.entityProviderSportKey,
-        entityProviderLeagueId: values.entityProviderLeagueId,
-        entityProviderSeason: values.entityProviderSeason,
-        entitySyncEnabled: values.entitySyncEnabled,
-        scoreSyncEnabled: values.scoreSyncEnabled,
-        scoreboardQueryParamsJson: values.scoreboardQueryParamsJson,
-        eventShape: values.eventShape,
-        activeMonthsJson: values.activeMonthsJson,
-        supportsDateWindow: values.supportsDateWindow,
-        supportsEventDiscovery: values.supportsEventDiscovery,
-        sortOrder: values.sortOrder,
-        isActive: values.isActive,
-        updatedAt: values.updatedAt,
-      },
-    })
-    .run()
-
-  return { ok: true }
-})
+    return { ok: true }
+  },
+)

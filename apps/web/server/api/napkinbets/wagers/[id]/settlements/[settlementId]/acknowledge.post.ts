@@ -1,15 +1,24 @@
 import { createError, getRouterParam } from 'h3'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation } from '#layer/server/utils/mutation'
 import { acknowledgeSettlement } from '#server/services/napkinbets/pools'
 
-export default defineEventHandler(async (event) => {
-  await enforceRateLimit(event, 'napkinbets-settlement-acknowledge', 30, 60_000)
+const RATE_LIMIT = {
+  namespace: 'napkinbets-settlement-acknowledge',
+  maxRequests: 30,
+  windowMs: 60_000,
+}
 
-  const wagerId = getRouterParam(event, 'id')
-  const settlementId = getRouterParam(event, 'settlementId')
-  if (!wagerId || !settlementId) {
-    throw createError({ statusCode: 400, message: 'Missing wager or settlement ID.' })
-  }
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
+    const wagerId = getRouterParam(event, 'id')
+    const settlementId = getRouterParam(event, 'settlementId')
+    if (!wagerId || !settlementId) {
+      throw createError({ statusCode: 400, message: 'Missing wager or settlement ID.' })
+    }
 
-  return await acknowledgeSettlement(event, wagerId, settlementId)
-})
+    return await acknowledgeSettlement(event, wagerId, settlementId)
+  },
+)

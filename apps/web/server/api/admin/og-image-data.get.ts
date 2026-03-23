@@ -5,7 +5,7 @@ import {
   napkinbetsGroups,
   napkinbetsEvents,
   napkinbetsParticipants,
-} from '../../database/schema'
+} from '#server/database/schema'
 
 /**
  * Builds OG image preview data for the admin tab.

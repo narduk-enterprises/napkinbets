@@ -1,9 +1,8 @@
 import { eq } from 'drizzle-orm'
-import { readBody } from 'h3'
 import { z } from 'zod'
-import { requireAuth } from '#layer/server/utils/auth'
 import { napkinbetsUserNotificationSettings } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
+import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 
 const bodySchema = z.object({
   notifyFriendRequests: z.boolean(),
@@ -11,48 +10,45 @@ const bodySchema = z.object({
   notifyWagerUpdates: z.boolean(),
 })
 
-export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
-  const db = useAppDatabase(event)
+const RATE_LIMIT = { namespace: 'notifications', maxRequests: 60, windowMs: 60_000 }
 
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body, user }) => {
+    const db = useAppDatabase(event)
 
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
+    const existing = await db
+      .select({ userId: napkinbetsUserNotificationSettings.userId })
+      .from(napkinbetsUserNotificationSettings)
+      .where(eq(napkinbetsUserNotificationSettings.userId, user.id))
+      .get()
 
-  const existing = await db
-    .select({ userId: napkinbetsUserNotificationSettings.userId })
-    .from(napkinbetsUserNotificationSettings)
-    .where(eq(napkinbetsUserNotificationSettings.userId, user.id))
-    .get()
+    const timestamp = new Date().toISOString()
 
-  const timestamp = new Date().toISOString()
-
-  if (existing) {
-    await db
-      .update(napkinbetsUserNotificationSettings)
-      .set({
-        notifyFriendRequests: parsed.data.notifyFriendRequests,
-        notifyGroupInvites: parsed.data.notifyGroupInvites,
-        notifyWagerUpdates: parsed.data.notifyWagerUpdates,
+    if (existing) {
+      await db
+        .update(napkinbetsUserNotificationSettings)
+        .set({
+          notifyFriendRequests: body.notifyFriendRequests,
+          notifyGroupInvites: body.notifyGroupInvites,
+          notifyWagerUpdates: body.notifyWagerUpdates,
+          updatedAt: timestamp,
+        })
+        .where(eq(napkinbetsUserNotificationSettings.userId, user.id))
+    } else {
+      await db.insert(napkinbetsUserNotificationSettings).values({
+        userId: user.id,
+        notifyFriendRequests: body.notifyFriendRequests,
+        notifyGroupInvites: body.notifyGroupInvites,
+        notifyWagerUpdates: body.notifyWagerUpdates,
+        createdAt: timestamp,
         updatedAt: timestamp,
       })
-      .where(eq(napkinbetsUserNotificationSettings.userId, user.id))
-  } else {
-    await db.insert(napkinbetsUserNotificationSettings).values({
-      userId: user.id,
-      notifyFriendRequests: parsed.data.notifyFriendRequests,
-      notifyGroupInvites: parsed.data.notifyGroupInvites,
-      notifyWagerUpdates: parsed.data.notifyWagerUpdates,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    })
-  }
+    }
 
-  return { ok: true }
-})
+    return { ok: true }
+  },
+)

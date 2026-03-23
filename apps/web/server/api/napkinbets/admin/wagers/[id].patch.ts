@@ -1,8 +1,8 @@
-import { requireAdmin } from '#layer/server/utils/auth'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineAdminMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { napkinbetsWagers } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 import { eq } from 'drizzle-orm'
+import { createError } from 'h3'
 import { z } from 'zod'
 
 const bodySchema = z.object({
@@ -26,37 +26,33 @@ const bodySchema = z.object({
   slug: z.string().max(120).optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'admin-wager-update', 20, 60_000)
+const RATE_LIMIT = { namespace: 'admin-wager-update', maxRequests: 20, windowMs: 60_000 }
 
-  const db = useAppDatabase(event)
-  const wagerId = event.context.params?.id
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body }) => {
+    const db = useAppDatabase(event)
+    const wagerId = event.context.params?.id
 
-  if (!wagerId) {
-    throw createError({ statusCode: 400, message: 'Missing wager ID' })
-  }
+    if (!wagerId) {
+      throw createError({ statusCode: 400, message: 'Missing wager ID' })
+    }
 
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((i) => i.message).join(', '),
-    })
-  }
+    if (Object.keys(body).length === 0) {
+      return { success: true }
+    }
 
-  if (Object.keys(parsed.data).length === 0) {
+    await db
+      .update(napkinbetsWagers)
+      .set({
+        ...body,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(napkinbetsWagers.id, wagerId))
+
     return { success: true }
-  }
-
-  await db
-    .update(napkinbetsWagers)
-    .set({
-      ...parsed.data,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(napkinbetsWagers.id, wagerId))
-
-  return { success: true }
-})
+  },
+)

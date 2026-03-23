@@ -1,6 +1,6 @@
-import { createError, readBody } from 'h3'
+import { createError } from 'h3'
 import { z } from 'zod'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { savePoolData } from '#server/services/napkinbets/pools'
 import { NAPKINBETS_BOARD_TYPES } from '#server/services/napkinbets/taxonomy'
 import { normalizeCreateWagerTaxonomyInputFromStore } from '#server/services/napkinbets/taxonomy-store'
@@ -62,30 +62,27 @@ const bodySchema = z.object({
     .optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  await enforceRateLimit(event, 'napkinbets-create', 20, 60_000)
+const RATE_LIMIT = { namespace: 'napkinbets-create', maxRequests: 20, windowMs: 60_000 }
 
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body }) => {
+    let normalizedTaxonomy
+    try {
+      normalizedTaxonomy = await normalizeCreateWagerTaxonomyInputFromStore(event, body)
+    } catch (error) {
+      throw createError({
+        statusCode: 400,
+        message: error instanceof Error ? error.message : 'Invalid napkin taxonomy.',
+      })
+    }
+
+    return await savePoolData(event, {
+      ...body,
+      ...normalizedTaxonomy,
     })
-  }
-
-  let normalizedTaxonomy
-  try {
-    normalizedTaxonomy = await normalizeCreateWagerTaxonomyInputFromStore(event, parsed.data)
-  } catch (error) {
-    throw createError({
-      statusCode: 400,
-      message: error instanceof Error ? error.message : 'Invalid napkin taxonomy.',
-    })
-  }
-
-  return await savePoolData(event, {
-    ...parsed.data,
-    ...normalizedTaxonomy,
-  })
-})
+  },
+)

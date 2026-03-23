@@ -2,8 +2,15 @@ import { eq } from 'drizzle-orm'
 import { napkinbetsEvents } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 import { refreshPolymarketOddsForEventId } from '#server/services/napkinbets/polymarket'
+import { definePublicMutation } from '#layer/server/utils/mutation'
 
-export default defineEventHandler(async (event) => {
+const RATE_LIMIT = { namespace: 'napkinbets-event-odds-refresh', maxRequests: 30, windowMs: 60_000 }
+
+export default definePublicMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
   const encodedId = getRouterParam(event, 'id')
   if (!encodedId) {
     throw createError({ statusCode: 400, message: 'Missing event ID' })
@@ -57,4 +64,5 @@ export default defineEventHandler(async (event) => {
     success: true,
     odds: refreshedOdds,
   }
-})
+  },
+)

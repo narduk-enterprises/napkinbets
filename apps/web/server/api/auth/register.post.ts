@@ -2,7 +2,8 @@ import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { users } from '#server/database/schema'
 import { hashUserPassword } from '#layer/server/utils/password'
-import { RATE_LIMIT_POLICIES, enforceRateLimitPolicy } from '#layer/server/utils/rateLimit'
+import { RATE_LIMIT_POLICIES } from '#layer/server/utils/rateLimit'
+import { definePublicMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { useAppDatabase } from '#server/utils/database'
 
 const registerSchema = z.object({
@@ -11,21 +12,16 @@ const registerSchema = z.object({
   name: z.string().min(2),
 })
 
-export default defineEventHandler(async (event) => {
+export default definePublicMutation(
+  {
+    rateLimit: RATE_LIMIT_POLICIES.authRegister,
+    parseBody: withValidatedBody(registerSchema.parse),
+  },
+  async ({ event, body }) => {
   const log = useLogger(event).child('Auth')
-  await enforceRateLimitPolicy(event, RATE_LIMIT_POLICIES.authRegister)
-
-  const body = await readBody(event)
-  const parsed = registerSchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
 
   const db = useAppDatabase(event)
-  const normalizedEmail = parsed.data.email.toLowerCase()
+  const normalizedEmail = body.email.toLowerCase()
 
   const existingUser = await db.select().from(users).where(eq(users.email, normalizedEmail)).get()
   if (existingUser) {
@@ -38,20 +34,20 @@ export default defineEventHandler(async (event) => {
 
   const firstUser = await db.select({ id: users.id }).from(users).limit(1)
   const isAdmin = firstUser.length === 0
-  const hashedPassword = await hashUserPassword(parsed.data.password)
+  const hashedPassword = await hashUserPassword(body.password)
   const newUserId = crypto.randomUUID()
 
   await db.insert(users).values({
     id: newUserId,
     email: normalizedEmail,
     passwordHash: hashedPassword,
-    name: parsed.data.name,
+    name: body.name,
     isAdmin,
   })
 
   const user = {
     id: newUserId,
-    name: parsed.data.name,
+    name: body.name,
     email: normalizedEmail,
     isAdmin,
   }
@@ -60,4 +56,5 @@ export default defineEventHandler(async (event) => {
   log.info('User registered', { email: normalizedEmail, userId: newUserId, isAdmin })
 
   return { user }
-})
+  },
+)

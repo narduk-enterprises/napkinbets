@@ -1,7 +1,5 @@
-import { createError, readBody } from 'h3'
 import { z } from 'zod'
-import { requireAuth } from '#layer/server/utils/auth'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { rewriteNapkinbetsTerms } from '#server/services/napkinbets/ai'
 
 const bodySchema = z.object({
@@ -12,18 +10,12 @@ const bodySchema = z.object({
   terms: z.string().min(12).max(600),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireAuth(event)
-  await enforceRateLimit(event, 'napkinbets-ai-terms', 8, 60_000)
+const RATE_LIMIT = { namespace: 'napkinbets-ai-terms', maxRequests: 8, windowMs: 60_000 }
 
-  const body = await readBody(event)
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
-
-  return await rewriteNapkinbetsTerms(event, parsed.data)
-})
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body }) => rewriteNapkinbetsTerms(event, body),
+)

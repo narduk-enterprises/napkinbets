@@ -1,8 +1,8 @@
+import { eq } from 'drizzle-orm'
 import { z } from 'zod'
-import { requireAdmin } from '#layer/server/utils/auth'
+import { defineAdminMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { napkinbetsFeaturedBets } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
-import { eq } from 'drizzle-orm'
 
 const schema = z.object({
   id: z.string().optional(),
@@ -19,71 +19,70 @@ const schema = z.object({
   prefillJson: z.string().default('{}'),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+const RATE_LIMIT = {
+  namespace: 'admin-featured-bets',
+  maxRequests: 10,
+  windowMs: 60_000,
+}
 
-  const body = await readBody(event)
-  const parsed = schema.safeParse(body)
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(schema.parse),
+  },
+  async ({ event, body }) => {
+    const db = useAppDatabase(event)
+    const now = new Date().toISOString()
 
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues[0]?.message ?? 'Invalid input',
-    })
-  }
+    if (body.id) {
+      const existing = await db
+        .select()
+        .from(napkinbetsFeaturedBets)
+        .where(eq(napkinbetsFeaturedBets.id, body.id))
+        .limit(1)
 
-  const db = useAppDatabase(event)
-  const now = new Date().toISOString()
-  const data = parsed.data
+      if (existing.length > 0) {
+        await db
+          .update(napkinbetsFeaturedBets)
+          .set({
+            label: body.label,
+            title: body.title,
+            subtitle: body.subtitle,
+            summary: body.summary,
+            windowLabel: body.windowLabel,
+            venueLabel: body.venueLabel,
+            accent: body.accent,
+            imageUrl: body.imageUrl,
+            sortOrder: body.sortOrder,
+            isActive: body.isActive,
+            prefillJson: body.prefillJson,
+            updatedAt: now,
+          })
+          .where(eq(napkinbetsFeaturedBets.id, body.id))
 
-  if (data.id) {
-    const existing = await db
-      .select()
-      .from(napkinbetsFeaturedBets)
-      .where(eq(napkinbetsFeaturedBets.id, data.id))
-      .limit(1)
-
-    if (existing.length > 0) {
-      await db
-        .update(napkinbetsFeaturedBets)
-        .set({
-          label: data.label,
-          title: data.title,
-          subtitle: data.subtitle,
-          summary: data.summary,
-          windowLabel: data.windowLabel,
-          venueLabel: data.venueLabel,
-          accent: data.accent,
-          imageUrl: data.imageUrl,
-          sortOrder: data.sortOrder,
-          isActive: data.isActive,
-          prefillJson: data.prefillJson,
-          updatedAt: now,
-        })
-        .where(eq(napkinbetsFeaturedBets.id, data.id))
-
-      return { ok: true, id: data.id }
+        return { ok: true, id: body.id }
+      }
     }
-  }
 
-  const id = data.id || crypto.randomUUID()
+    const id = body.id || crypto.randomUUID()
 
-  await db.insert(napkinbetsFeaturedBets).values({
-    id,
-    label: data.label,
-    title: data.title,
-    subtitle: data.subtitle,
-    summary: data.summary,
-    windowLabel: data.windowLabel,
-    venueLabel: data.venueLabel,
-    accent: data.accent,
-    imageUrl: data.imageUrl,
-    sortOrder: data.sortOrder,
-    isActive: data.isActive,
-    prefillJson: data.prefillJson,
-    createdAt: now,
-    updatedAt: now,
-  })
+    await db.insert(napkinbetsFeaturedBets).values({
+      id,
+      label: body.label,
+      title: body.title,
+      subtitle: body.subtitle,
+      summary: body.summary,
+      windowLabel: body.windowLabel,
+      venueLabel: body.venueLabel,
+      accent: body.accent,
+      imageUrl: body.imageUrl,
+      sortOrder: body.sortOrder,
+      isActive: body.isActive,
+      prefillJson: body.prefillJson,
+      createdAt: now,
+      updatedAt: now,
+    })
 
-  return { ok: true, id }
-})
+    return { ok: true, id }
+  },
+)

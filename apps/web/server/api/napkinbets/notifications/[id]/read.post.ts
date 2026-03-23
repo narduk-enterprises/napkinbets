@@ -1,11 +1,16 @@
 import { eq, and } from 'drizzle-orm'
-import { requireAuth } from '#layer/server/utils/auth'
 import { napkinbetsNotifications } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 import { createError } from 'h3'
+import { defineUserMutation } from '#layer/server/utils/mutation'
 
-export default defineEventHandler(async (event) => {
-  const user = await requireAuth(event)
+const RATE_LIMIT = { namespace: 'notifications-read', maxRequests: 60, windowMs: 60_000 }
+
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event, user }) => {
   const db = useAppDatabase(event)
   const notificationId = getRouterParam(event, 'id')
 
@@ -42,4 +47,5 @@ export default defineEventHandler(async (event) => {
     .where(and(eq(napkinbetsNotifications.id, notificationId)))
 
   return { ok: true }
-})
+  },
+)

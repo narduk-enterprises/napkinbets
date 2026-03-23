@@ -5,6 +5,9 @@ import {
   type NapkinbetsEventIngestTier,
 } from '#server/services/napkinbets/events'
 import { requireCronAuth } from '#server/utils/cron'
+import { defineCronMutation } from '#layer/server/utils/mutation'
+
+const RATE_LIMIT = { namespace: 'cron-napkinbets-events', maxRequests: 60, windowMs: 60_000 }
 
 const querySchema = z.object({
   tier: z.preprocess(
@@ -13,7 +16,11 @@ const querySchema = z.object({
   ),
 })
 
-export default defineEventHandler(async (event) => {
+export default defineCronMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
   requireCronAuth(event)
 
   const parsed = querySchema.safeParse(getQuery(event))
@@ -25,4 +32,5 @@ export default defineEventHandler(async (event) => {
   }
 
   return await refreshDiscoverEventCache(event, parsed.data.tier as NapkinbetsEventIngestTier)
-})
+  },
+)

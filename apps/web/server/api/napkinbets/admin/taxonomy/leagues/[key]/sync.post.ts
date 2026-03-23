@@ -1,16 +1,23 @@
-import { createError } from 'h3'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
-import { requireAdmin } from '#layer/server/utils/auth'
+import { createError, getRouterParam } from 'h3'
+import { defineAdminMutation } from '#layer/server/utils/mutation'
 import { syncLeagueEntities } from '#server/services/napkinbets/entities'
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'napkinbets-admin-taxonomy-sync', 10, 60_000)
+const RATE_LIMIT = {
+  namespace: 'napkinbets-admin-taxonomy-sync',
+  maxRequests: 10,
+  windowMs: 60_000,
+}
 
-  const key = getRouterParam(event, 'key')
-  if (!key) {
-    throw createError({ statusCode: 400, message: 'Missing league key.' })
-  }
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
+    const key = getRouterParam(event, 'key')
+    if (!key) {
+      throw createError({ statusCode: 400, message: 'Missing league key.' })
+    }
 
-  return await syncLeagueEntities(event, key)
-})
+    return await syncLeagueEntities(event, key)
+  },
+)

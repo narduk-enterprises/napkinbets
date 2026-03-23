@@ -1,5 +1,4 @@
-import { requireAdmin } from '#layer/server/utils/auth'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineAdminMutation, withValidatedBody } from '#layer/server/utils/mutation'
 import { napkinbetsWagers } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 import { z } from 'zod'
@@ -15,49 +14,44 @@ const bodySchema = z.object({
   slug: z.string().max(120).optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'admin-wager-create', 20, 60_000)
+const RATE_LIMIT = { namespace: 'admin-wager-create', maxRequests: 20, windowMs: 60_000 }
 
-  const db = useAppDatabase(event)
-  const body = await readBody(event)
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withValidatedBody(bodySchema.parse),
+  },
+  async ({ event, body }) => {
+    const db = useAppDatabase(event)
+    const generatedId = crypto.randomUUID()
+    const generatedSlug = body.slug || `admin-bet-${generatedId.split('-')[0]}`
 
-  const parsed = bodySchema.safeParse(body)
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((i) => i.message).join(', '),
+    await db.insert(napkinbetsWagers).values({
+      id: generatedId,
+      slug: generatedSlug,
+      title: body.title,
+      description: body.description,
+      status: body.status,
+      league: body.league,
+      eventTitle: body.eventTitle,
+
+      // Required fields defaults
+      napkinType: 'simple-bet',
+      boardType: 'manual-curated',
+      category: 'custom',
+      format: 'custom',
+      contextKey: 'community',
+      creatorName: 'Admin',
+      sideOptionsJson: '[]',
+      paymentService: 'manual',
+      terms: 'Admin Created',
+      eventState: '',
+      homeScore: '',
+      awayScore: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     })
-  }
 
-  const generatedId = crypto.randomUUID()
-  const generatedSlug = parsed.data.slug || `admin-bet-${generatedId.split('-')[0]}`
-
-  await db.insert(napkinbetsWagers).values({
-    id: generatedId,
-    slug: generatedSlug,
-    title: parsed.data.title,
-    description: parsed.data.description,
-    status: parsed.data.status,
-    league: parsed.data.league,
-    eventTitle: parsed.data.eventTitle,
-
-    // Required fields defaults
-    napkinType: 'simple-bet',
-    boardType: 'manual-curated',
-    category: 'custom',
-    format: 'custom',
-    contextKey: 'community',
-    creatorName: 'Admin',
-    sideOptionsJson: '[]',
-    paymentService: 'manual',
-    terms: 'Admin Created',
-    eventState: '',
-    homeScore: '',
-    awayScore: '',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  })
-
-  return { id: generatedId, slug: generatedSlug }
-})
+    return { id: generatedId, slug: generatedSlug }
+  },
+)

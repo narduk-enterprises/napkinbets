@@ -1,21 +1,25 @@
-import { requireAdmin } from '#layer/server/utils/auth'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { createError, getRouterParam } from 'h3'
+import { defineAdminMutation } from '#layer/server/utils/mutation'
 import { napkinbetsWagers } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
 import { eq } from 'drizzle-orm'
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'admin-wager-delete', 20, 60_000)
+const RATE_LIMIT = { namespace: 'admin-wager-delete', maxRequests: 20, windowMs: 60_000 }
 
-  const db = useAppDatabase(event)
-  const wagerId = event.context.params?.id
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
+    const db = useAppDatabase(event)
+    const wagerId = getRouterParam(event, 'id')
 
-  if (!wagerId) {
-    throw createError({ statusCode: 400, message: 'Missing wager ID' })
-  }
+    if (!wagerId) {
+      throw createError({ statusCode: 400, message: 'Missing wager ID' })
+    }
 
-  await db.delete(napkinbetsWagers).where(eq(napkinbetsWagers.id, wagerId))
+    await db.delete(napkinbetsWagers).where(eq(napkinbetsWagers.id, wagerId))
 
-  return { success: true }
-})
+    return { success: true }
+  },
+)

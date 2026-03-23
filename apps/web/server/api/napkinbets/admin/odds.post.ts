@@ -1,17 +1,20 @@
 import { refreshAllActivelyTradedOdds } from '#server/services/napkinbets/odds'
-import { requireAdmin } from '#layer/server/utils/auth'
+import { defineAdminMutation } from '#layer/server/utils/mutation'
 import { useAppDatabase } from '#server/utils/database'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
 
-export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
-  await enforceRateLimit(event, 'admin-odds', 5, 60_000)
+const RATE_LIMIT = { namespace: 'admin-odds', maxRequests: 5, windowMs: 60_000 }
 
-  const db = useAppDatabase(event)
-  const result = await refreshAllActivelyTradedOdds(db, 30)
+export default defineAdminMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
+    const db = useAppDatabase(event)
+    const result = await refreshAllActivelyTradedOdds(db, 30)
 
-  return {
-    success: true,
-    ...result,
-  }
-})
+    return {
+      success: true,
+      ...result,
+    }
+  },
+)

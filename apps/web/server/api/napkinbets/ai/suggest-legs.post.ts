@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { createError, readBody } from 'h3'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation, withOptionalValidatedBody } from '#layer/server/utils/mutation'
 import { suggestNapkinbetsLegs } from '#server/services/napkinbets/ai'
 
 const bodySchema = z.object({
@@ -21,18 +20,15 @@ const bodySchema = z.object({
     .optional(),
 })
 
-export default defineEventHandler(async (event) => {
-  await requireUserSession(event)
-  await enforceRateLimit(event, 'ai-suggest-legs', 10, 60_000)
+const RATE_LIMIT = { namespace: 'ai-suggest-legs', maxRequests: 10, windowMs: 60_000 }
 
-  const parsed = bodySchema.safeParse((await readBody(event)) ?? {})
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
-
-  const legs = await suggestNapkinbetsLegs(event, parsed.data)
-  return { legs }
-})
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+    parseBody: withOptionalValidatedBody(bodySchema.parse, {}),
+  },
+  async ({ event, body }) => {
+    const legs = await suggestNapkinbetsLegs(event, body)
+    return { legs }
+  },
+)

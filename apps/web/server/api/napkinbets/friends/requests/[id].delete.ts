@@ -1,14 +1,19 @@
 import { getRouterParam } from 'h3'
-import { enforceRateLimit } from '#layer/server/utils/rateLimit'
+import { defineUserMutation } from '#layer/server/utils/mutation'
 import { declineNapkinbetsFriendRequest } from '#server/services/napkinbets/social'
 
-export default defineEventHandler(async (event) => {
-  await enforceRateLimit(event, 'napkinbets-friends', 20, 60_000)
+const RATE_LIMIT = { namespace: 'napkinbets-friends', maxRequests: 20, windowMs: 60_000 }
 
+export default defineUserMutation(
+  {
+    rateLimit: RATE_LIMIT,
+  },
+  async ({ event }) => {
   const requestId = getRouterParam(event, 'id')
   if (!requestId) {
     throw createError({ statusCode: 400, message: 'Missing request id.' })
   }
 
   return await declineNapkinbetsFriendRequest(event, requestId)
-})
+  },
+)
