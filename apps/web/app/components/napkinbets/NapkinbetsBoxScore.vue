@@ -157,7 +157,7 @@ function _formatLocalTime(isoString: string) {
 <template>
   <div class="space-y-4">
     <UCard
-      class="napkinbets-panel napkinbets-boxscore bg-linear-to-br from-default to-muted border-default overflow-hidden"
+      class="napkinbets-panel napkinbets-boxscore bg-linear-to-br from-elevated to-muted border-default overflow-hidden"
     >
       <!-- ─── STATUS BAR ──────────────────────────────────── -->
       <div class="napkinbets-boxscore-status-bar">
