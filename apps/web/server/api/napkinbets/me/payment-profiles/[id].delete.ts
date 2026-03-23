@@ -13,11 +13,11 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const profileId = getRouterParam(event, 'id')
-  if (!profileId) {
-    throw createError({ statusCode: 400, message: 'Missing payment profile ID.' })
-  }
+    const profileId = getRouterParam(event, 'id')
+    if (!profileId) {
+      throw createError({ statusCode: 400, message: 'Missing payment profile ID.' })
+    }
 
-  return await removeUserPaymentProfile(event, profileId)
+    return await removeUserPaymentProfile(event, profileId)
   },
 )

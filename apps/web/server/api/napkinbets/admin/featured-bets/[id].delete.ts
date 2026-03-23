@@ -11,14 +11,14 @@ export default defineAdminMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const id = getRouterParam(event, 'id')
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'Missing featured bet ID' })
-  }
+    const id = getRouterParam(event, 'id')
+    if (!id) {
+      throw createError({ statusCode: 400, message: 'Missing featured bet ID' })
+    }
 
-  const db = useAppDatabase(event)
-  await db.delete(napkinbetsFeaturedBets).where(eq(napkinbetsFeaturedBets.id, id))
+    const db = useAppDatabase(event)
+    await db.delete(napkinbetsFeaturedBets).where(eq(napkinbetsFeaturedBets.id, id))
 
-  return { ok: true }
+    return { ok: true }
   },
 )

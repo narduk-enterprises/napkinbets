@@ -14,26 +14,26 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const slugOrId = getRouterParam(event, 'slug')
-  if (!slugOrId) {
-    throw createError({ statusCode: 400, message: 'Missing group slug or id.' })
-  }
+    const slugOrId = getRouterParam(event, 'slug')
+    if (!slugOrId) {
+      throw createError({ statusCode: 400, message: 'Missing group slug or id.' })
+    }
 
-  const db = useAppDatabase(event)
-  const group = await db
-    .select({ id: napkinbetsGroups.id })
-    .from(napkinbetsGroups)
-    .where(
-      UUID_REGEX.test(slugOrId)
-        ? eq(napkinbetsGroups.id, slugOrId)
-        : eq(napkinbetsGroups.slug, slugOrId),
-    )
-    .get()
+    const db = useAppDatabase(event)
+    const group = await db
+      .select({ id: napkinbetsGroups.id })
+      .from(napkinbetsGroups)
+      .where(
+        UUID_REGEX.test(slugOrId)
+          ? eq(napkinbetsGroups.id, slugOrId)
+          : eq(napkinbetsGroups.slug, slugOrId),
+      )
+      .get()
 
-  if (!group) {
-    throw createError({ statusCode: 404, message: 'Group not found.' })
-  }
+    if (!group) {
+      throw createError({ statusCode: 404, message: 'Group not found.' })
+    }
 
-  return await leaveNapkinbetsGroup(event, group.id)
+    return await leaveNapkinbetsGroup(event, group.id)
   },
 )

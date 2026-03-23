@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { data, status } = useOgImageData()
 
-const ogSections = computed(() => data.value?.sections ?? [])
+const ogSections = computed(() => data.value ?? [])
 </script>
 
 <template>
@@ -19,9 +19,9 @@ const ogSections = computed(() => data.value?.sections ?? [])
       Loading data from database...
     </div>
 
-    <div v-for="section in ogSections" :key="section.category" class="space-y-6">
+    <div v-for="section in ogSections" :key="section.title" class="space-y-6">
       <h3 class="text-lg font-semibold text-default border-b border-default pb-2">
-        {{ section.category }}
+        {{ section.title }}
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -9,11 +9,11 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const profileId = getRouterParam(event, 'id')
-  if (!profileId) {
-    throw createError({ statusCode: 400, message: 'Missing profile ID.' })
-  }
+    const profileId = getRouterParam(event, 'id')
+    if (!profileId) {
+      throw createError({ statusCode: 400, message: 'Missing profile ID.' })
+    }
 
-  return await reverifyPaymentProfile(event, profileId)
+    return await reverifyPaymentProfile(event, profileId)
   },
 )

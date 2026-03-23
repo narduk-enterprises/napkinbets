@@ -29,7 +29,7 @@ interface OgPreviewItem {
 }
 
 interface OgPreviewSection {
-  category: string
+  title: string
   items: OgPreviewItem[]
 }
 
@@ -165,7 +165,7 @@ export default defineEventHandler(async (event) => {
 
   // ── Static pages ──────────────────────────────────────────
   const pages: OgPreviewSection = {
-    category: 'Pages',
+    title: 'Pages',
     items: [
       {
         label: 'Home Page',
@@ -257,7 +257,7 @@ export default defineEventHandler(async (event) => {
   // ── Wagers ────────────────────────────────────────────────
   if (wagers.length > 0) {
     sections.push({
-      category: `Napkins (${wagers.length})`,
+      title: `Napkins (${wagers.length})`,
       items: wagers.map((w) => {
         const typeLabel = w.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool'
         const statusLabel =
@@ -290,7 +290,7 @@ export default defineEventHandler(async (event) => {
   // ── Groups ────────────────────────────────────────────────
   if (groups.length > 0) {
     sections.push({
-      category: `Groups (${groups.length})`,
+      title: `Groups (${groups.length})`,
       items: groups.map((g) => ({
         label: g.name,
         path: `/groups/${g.slug}`,
@@ -309,7 +309,7 @@ export default defineEventHandler(async (event) => {
   // ── Events ────────────────────────────────────────────────
   if (events.length > 0) {
     sections.push({
-      category: `Events (${events.length})`,
+      title: `Events (${events.length})`,
       items: events.map((e) => {
         const stateLabel = e.state === 'in' ? 'Live' : e.state === 'post' ? 'Final' : 'Upcoming'
 
@@ -344,5 +344,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return { sections }
+  return sections
 })

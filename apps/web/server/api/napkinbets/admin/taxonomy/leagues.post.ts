@@ -45,7 +45,10 @@ export default defineAdminMutation(
     const db = useAppDatabase(event)
     const now = new Date().toISOString()
     const existing = await db
-      .select({ key: napkinbetsTaxonomyLeagues.key, createdAt: napkinbetsTaxonomyLeagues.createdAt })
+      .select({
+        key: napkinbetsTaxonomyLeagues.key,
+        createdAt: napkinbetsTaxonomyLeagues.createdAt,
+      })
       .from(napkinbetsTaxonomyLeagues)
       .where(eq(napkinbetsTaxonomyLeagues.key, body.key))
       .limit(1)

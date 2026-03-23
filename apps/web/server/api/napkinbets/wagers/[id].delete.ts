@@ -9,11 +9,11 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const wagerId = getRouterParam(event, 'id')
-  if (!wagerId) {
-    throw createError({ statusCode: 400, message: 'Missing wager ID.' })
-  }
+    const wagerId = getRouterParam(event, 'id')
+    if (!wagerId) {
+      throw createError({ statusCode: 400, message: 'Missing wager ID.' })
+    }
 
-  return await clearPoolData(event, wagerId)
+    return await clearPoolData(event, wagerId)
   },
 )

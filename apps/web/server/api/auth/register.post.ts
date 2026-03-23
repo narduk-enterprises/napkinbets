@@ -18,43 +18,43 @@ export default definePublicMutation(
     parseBody: withValidatedBody(registerSchema.parse),
   },
   async ({ event, body }) => {
-  const log = useLogger(event).child('Auth')
+    const log = useLogger(event).child('Auth')
 
-  const db = useAppDatabase(event)
-  const normalizedEmail = body.email.toLowerCase()
+    const db = useAppDatabase(event)
+    const normalizedEmail = body.email.toLowerCase()
 
-  const existingUser = await db.select().from(users).where(eq(users.email, normalizedEmail)).get()
-  if (existingUser) {
-    log.warn('Registration rejected — email exists', { email: normalizedEmail })
-    throw createError({
-      statusCode: 409,
-      statusMessage: 'Email already in use',
+    const existingUser = await db.select().from(users).where(eq(users.email, normalizedEmail)).get()
+    if (existingUser) {
+      log.warn('Registration rejected — email exists', { email: normalizedEmail })
+      throw createError({
+        statusCode: 409,
+        statusMessage: 'Email already in use',
+      })
+    }
+
+    const firstUser = await db.select({ id: users.id }).from(users).limit(1)
+    const isAdmin = firstUser.length === 0
+    const hashedPassword = await hashUserPassword(body.password)
+    const newUserId = crypto.randomUUID()
+
+    await db.insert(users).values({
+      id: newUserId,
+      email: normalizedEmail,
+      passwordHash: hashedPassword,
+      name: body.name,
+      isAdmin,
     })
-  }
 
-  const firstUser = await db.select({ id: users.id }).from(users).limit(1)
-  const isAdmin = firstUser.length === 0
-  const hashedPassword = await hashUserPassword(body.password)
-  const newUserId = crypto.randomUUID()
+    const user = {
+      id: newUserId,
+      name: body.name,
+      email: normalizedEmail,
+      isAdmin,
+    }
 
-  await db.insert(users).values({
-    id: newUserId,
-    email: normalizedEmail,
-    passwordHash: hashedPassword,
-    name: body.name,
-    isAdmin,
-  })
+    await setUserSession(event, { user })
+    log.info('User registered', { email: normalizedEmail, userId: newUserId, isAdmin })
 
-  const user = {
-    id: newUserId,
-    name: body.name,
-    email: normalizedEmail,
-    isAdmin,
-  }
-
-  await setUserSession(event, { user })
-  log.info('User registered', { email: normalizedEmail, userId: newUserId, isAdmin })
-
-  return { user }
+    return { user }
   },
 )

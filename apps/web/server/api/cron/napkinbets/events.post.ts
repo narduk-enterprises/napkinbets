@@ -21,16 +21,16 @@ export default defineCronMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  requireCronAuth(event)
+    requireCronAuth(event)
 
-  const parsed = querySchema.safeParse(getQuery(event))
-  if (!parsed.success) {
-    throw createError({
-      statusCode: 400,
-      message: parsed.error.issues.map((issue) => issue.message).join(', '),
-    })
-  }
+    const parsed = querySchema.safeParse(getQuery(event))
+    if (!parsed.success) {
+      throw createError({
+        statusCode: 400,
+        message: parsed.error.issues.map((issue) => issue.message).join(', '),
+      })
+    }
 
-  return await refreshDiscoverEventCache(event, parsed.data.tier as NapkinbetsEventIngestTier)
+    return await refreshDiscoverEventCache(event, parsed.data.tier as NapkinbetsEventIngestTier)
   },
 )

@@ -42,9 +42,7 @@ export default defineUserMutation(
     await db.update(users).set(updates).where(eq(users.id, authUser.id))
 
     if (hasAvatarUpdate) {
-      await db.run(
-        sql`UPDATE users SET avatar_url = ${body.avatarUrl} WHERE id = ${authUser.id}`,
-      )
+      await db.run(sql`UPDATE users SET avatar_url = ${body.avatarUrl} WHERE id = ${authUser.id}`)
     }
 
     // Refresh the session so name changes propagate

@@ -10,14 +10,14 @@ export default defineCronMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  requireCronAuth(event)
+    requireCronAuth(event)
 
-  const db = useAppDatabase(event)
-  const result = await refreshAllActivelyTradedOdds(db, 15)
+    const db = useAppDatabase(event)
+    const result = await refreshAllActivelyTradedOdds(db, 15)
 
-  return {
-    success: true,
-    ...result,
-  }
+    return {
+      success: true,
+      ...result,
+    }
   },
 )

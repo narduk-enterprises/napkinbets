@@ -9,11 +9,11 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const requestId = getRouterParam(event, 'id')
-  if (!requestId) {
-    throw createError({ statusCode: 400, message: 'Missing request id.' })
-  }
+    const requestId = getRouterParam(event, 'id')
+    if (!requestId) {
+      throw createError({ statusCode: 400, message: 'Missing request id.' })
+    }
 
-  return await declineNapkinbetsFriendRequest(event, requestId)
+    return await declineNapkinbetsFriendRequest(event, requestId)
   },
 )

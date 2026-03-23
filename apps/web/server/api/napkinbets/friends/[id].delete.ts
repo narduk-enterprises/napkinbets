@@ -9,11 +9,11 @@ export default defineUserMutation(
     rateLimit: RATE_LIMIT,
   },
   async ({ event }) => {
-  const friendshipId = getRouterParam(event, 'id')
-  if (!friendshipId) {
-    throw createError({ statusCode: 400, message: 'Missing friendship id.' })
-  }
+    const friendshipId = getRouterParam(event, 'id')
+    if (!friendshipId) {
+      throw createError({ statusCode: 400, message: 'Missing friendship id.' })
+    }
 
-  return await removeNapkinbetsFriend(event, friendshipId)
+    return await removeNapkinbetsFriend(event, friendshipId)
   },
 )
