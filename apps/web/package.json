@@ -6,7 +6,7 @@
   "scripts": {
     "build": "nuxt build",
     "db:ready": "pnpm run db:migrate && pnpm run db:seed",
-    "dev": "pnpm run db:ready && (doppler run -- nuxt dev || nuxt dev)",
+    "dev": "(doppler run -- nuxt dev || nuxt dev)",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "config:validate": "npx tsx ../../tools/validate-env.ts",
     "db:migrate": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
@@ -38,7 +38,8 @@
     "test:e2e:admin": "playwright test --project=admin --config=../../playwright.config.ts",
     "test:e2e:routing": "playwright test --project=routing --config=../../playwright.config.ts",
     "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore",
-    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs ."
+    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs .",
+    "predev": "pnpm run db:ready"
   },
   "dependencies": {
     "@narduk-enterprises/eslint-config": "^1.0.17",
