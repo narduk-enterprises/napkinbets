@@ -70,12 +70,3 @@ CREATE INDEX IF NOT EXISTS `napkinbets_event_snapshots_event_captured_idx`
   ON `napkinbets_event_snapshots` (`event_id`, `captured_at`);
 CREATE INDEX IF NOT EXISTS `napkinbets_ingest_runs_source_tier_started_idx`
   ON `napkinbets_ingest_runs` (`source`, `tier`, `started_at`);
-
-ALTER TABLE `napkinbets_settlements`
-  ADD COLUMN `rejected_by_user_id` text REFERENCES `users`(`id`) ON DELETE SET NULL;
-
-ALTER TABLE `napkinbets_settlements`
-  ADD COLUMN `rejected_at` text;
-
-ALTER TABLE `napkinbets_settlements`
-  ADD COLUMN `rejection_note` text;
