@@ -1,11 +1,8 @@
 <!--
-  OG Image Default Template — Napkinbets branded.
+  OG Image Default Template.
 
-  Matches the app's warm cream paper palette with green accents.
-  Manrope for all text (the brand sans-serif).
-  Emoji icons rendered at 64px for social media visibility.
-
-  Nuxt OG Image v6 resolves renderers by filename suffix (.takumi.vue).
+  Nuxt OG Image v6 resolves renderers by filename suffix, so this template
+  is explicitly Takumi via `.takumi.vue`.
 -->
 <script setup lang="ts">
 withDefaults(
@@ -13,29 +10,17 @@ withDefaults(
     title?: string
     description?: string
     icon?: string
-    tag?: string
-
-    tagColor?: string
     siteName?: string
-    meta?: string
-    homeLogo?: string
-    awayLogo?: string
-    homeLabel?: string
-    awayLabel?: string
+    /** Brand color hex — defaults to emerald. Override to match your app's primary color. */
+    primaryColor?: string
   }>(),
   {
-    title: 'Napkinbets',
-    description: 'Pick a game. Start a bet. Settle after the final.',
-    icon: '🎯',
-    tag: '',
-    // eslint-disable-next-line narduk/no-inline-hex -- OG brand color default
-    tagColor: '#166534',
-    siteName: 'napkinbets',
-    meta: '',
-    homeLogo: '',
-    awayLogo: '',
-    homeLabel: '',
-    awayLabel: '',
+    title: 'Nuxt 4 Template',
+    description: 'Production-ready Nuxt 4 + Cloudflare Workers',
+    icon: '✨',
+    siteName: 'Nuxt 4 Demo',
+    // eslint-disable-next-line narduk/no-inline-hex -- OG image default brand color; Tailwind utilities are not available in component props defaults
+    primaryColor: '#10b981',
   },
 )
 </script>
@@ -46,277 +31,111 @@ withDefaults(
       width: '1200px',
       height: '630px',
       display: 'flex',
-      flexDirection: 'row',
-      fontFamily: 'Manrope, sans-serif',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: '80px',
+      background: `linear-gradient(135deg, #0a0f1a 0%, #0f1729 40%, #111d33 100%)`,
+      fontFamily: 'Inter, sans-serif',
       position: 'relative',
       overflow: 'hidden',
-      // eslint-disable-next-line narduk/no-inline-hex -- OG warm cream background
-      background: '#fff8ef',
     }"
   >
-    <!-- Left green accent strip -->
     <div
       :style="{
-        width: '8px',
-        flexShrink: '0',
-        // eslint-disable-next-line narduk/no-inline-hex -- OG green sidebar
-        background: 'linear-gradient(180deg, #166534 0%, #22c55e 50%, #166534 100%)',
+        position: 'absolute',
+        top: '-120px',
+        right: '-80px',
+        width: '500px',
+        height: '500px',
+        borderRadius: '50%',
+        background: `radial-gradient(circle, ${primaryColor}26 0%, transparent 70%)`,
       }"
     />
 
-    <!-- Main content area -->
     <div
       :style="{
-        flex: '1',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '56px 72px',
-        position: 'relative',
+        position: 'absolute',
+        bottom: '0',
+        left: '0',
+        right: '0',
+        height: '4px',
+        background: `linear-gradient(90deg, ${primaryColor}, #3b82f6, #8b5cf6)`,
+      }"
+    />
+
+    <div
+      :style="{
+        fontSize: '48px',
+        marginBottom: '24px',
       }"
     >
-      <!-- Subtle warm gradient overlay in top-right -->
-      <div
-        :style="{
-          position: 'absolute',
-          top: '-80px',
-          right: '-60px',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG warm glow
-          background: 'radial-gradient(circle, #fde8c840 0%, transparent 70%)',
-        }"
-      />
+      {{ icon }}
+    </div>
 
-      <!-- Bottom-left green glow -->
-      <div
-        :style="{
-          position: 'absolute',
-          bottom: '-100px',
-          left: '-40px',
-          width: '350px',
-          height: '350px',
-          borderRadius: '50%',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG green glow
-          background: 'radial-gradient(circle, #16653410 0%, transparent 65%)',
-        }"
-      />
+    <div
+      :style="{
+        fontSize: '56px',
+        fontWeight: '700',
+        // eslint-disable-next-line narduk/no-inline-hex -- Takumi OG image props need raw hex values; Tailwind utilities are unavailable in this render context
+        color: '#f1f5f9',
+        lineHeight: '1.15',
+        marginBottom: '16px',
+        maxWidth: '900px',
+        letterSpacing: '-0.02em',
+      }"
+    >
+      {{ title }}
+    </div>
 
-      <!-- Tag badge -->
+    <div
+      :style="{
+        fontSize: '24px',
+        fontWeight: '400',
+        // eslint-disable-next-line narduk/no-inline-hex -- Takumi OG image props need raw hex values; Tailwind utilities are unavailable in this render context
+        color: '#94a3b8',
+        lineHeight: '1.5',
+        maxWidth: '800px',
+      }"
+    >
+      {{ description }}
+    </div>
+
+    <div
+      :style="{
+        position: 'absolute',
+        bottom: '40px',
+        right: '80px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+      }"
+    >
       <div
-        v-if="tag"
         :style="{
+          width: '32px',
+          height: '32px',
+          borderRadius: '8px',
+          background: primaryColor,
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          marginBottom: '20px',
-        }"
-      >
-        <div
-          :style="{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-            padding: '6px 16px',
-            borderRadius: '9999px',
-            background: `${tagColor}12`,
-            border: `1.5px solid ${tagColor}30`,
-          }"
-        >
-          <div
-            :style="{
-              width: '7px',
-              height: '7px',
-              borderRadius: '50%',
-              background: tagColor,
-            }"
-          />
-          <span
-            :style="{
-              fontSize: '14px',
-              fontWeight: '700',
-              fontFamily: 'Manrope, sans-serif',
-              color: tagColor,
-              letterSpacing: '0.07em',
-              textTransform: 'uppercase' as const,
-            }"
-          >
-            {{ tag }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Matchup row (events with team logos) -->
-      <div
-        v-if="homeLogo || awayLogo"
-        :style="{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '18px',
-          marginBottom: '18px',
-        }"
-      >
-        <div v-if="homeLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
-          <img
-            :src="homeLogo"
-            :style="{
-              width: '52px',
-              height: '52px',
-              objectFit: 'contain',
-              borderRadius: '8px',
-            }"
-          />
-          <span
-            v-if="homeLabel"
-            :style="{
-              fontSize: '22px',
-              fontWeight: '700',
-              fontFamily: 'Manrope, sans-serif',
-              // eslint-disable-next-line narduk/no-inline-hex -- OG team name
-              color: '#0f1a24',
-            }"
-          >
-            {{ homeLabel }}
-          </span>
-        </div>
-        <span
-          :style="{
-            fontSize: '17px',
-            fontWeight: '600',
-            fontFamily: 'Manrope, sans-serif',
-            // eslint-disable-next-line narduk/no-inline-hex -- OG vs separator
-            color: '#94a3b8',
-          }"
-        >
-          vs
-        </span>
-        <div v-if="awayLogo" :style="{ display: 'flex', alignItems: 'center', gap: '10px' }">
-          <img
-            :src="awayLogo"
-            :style="{
-              width: '52px',
-              height: '52px',
-              objectFit: 'contain',
-              borderRadius: '8px',
-            }"
-          />
-          <span
-            v-if="awayLabel"
-            :style="{
-              fontSize: '22px',
-              fontWeight: '700',
-              fontFamily: 'Manrope, sans-serif',
-              // eslint-disable-next-line narduk/no-inline-hex -- OG team name
-              color: '#0f1a24',
-            }"
-          >
-            {{ awayLabel }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Icon emoji (large, visible at social card sizes) -->
-      <div
-        v-else-if="icon"
-        :style="{
-          fontSize: '64px',
-          lineHeight: '1',
-          marginBottom: '16px',
-        }"
-      >
-        {{ icon }}
-      </div>
-
-      <!-- Title -->
-      <div
-        :style="{
-          fontSize: '48px',
+          justifyContent: 'center',
+          color: 'white',
+          fontSize: '14px',
           fontWeight: '700',
-          fontFamily: 'Manrope, sans-serif',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG title ink color
-          color: '#0f1a24',
-          lineHeight: '1.15',
-          marginBottom: '14px',
-          maxWidth: '920px',
-          letterSpacing: '-0.02em',
         }"
       >
-        {{ title }}
+        N4
       </div>
-
-      <!-- Description -->
       <div
         :style="{
-          fontSize: '21px',
-          fontWeight: '400',
-          fontFamily: 'Manrope, sans-serif',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG description text
-          color: '#475569',
-          lineHeight: '1.5',
-          maxWidth: '800px',
+          fontSize: '18px',
+          fontWeight: '600',
+          // eslint-disable-next-line narduk/no-inline-hex -- Takumi OG image props need raw hex values; Tailwind utilities are unavailable in this render context
+          color: '#64748b',
         }"
       >
-        {{ description }}
-      </div>
-
-      <!-- Meta line -->
-      <div
-        v-if="meta"
-        :style="{
-          marginTop: '14px',
-          fontSize: '16px',
-          fontWeight: '700',
-          fontFamily: 'Manrope, sans-serif',
-          // eslint-disable-next-line narduk/no-inline-hex -- OG green meta text
-          color: '#166534',
-          letterSpacing: '0.01em',
-        }"
-      >
-        {{ meta }}
-      </div>
-
-      <!-- Bottom-right brand badge -->
-      <div
-        :style="{
-          position: 'absolute',
-          bottom: '24px',
-          right: '72px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-        }"
-      >
-        <div
-          :style="{
-            width: '30px',
-            height: '30px',
-            borderRadius: '8px',
-            // eslint-disable-next-line narduk/no-inline-hex -- OG brand badge
-            background: '#166534',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '12px',
-            fontWeight: '700',
-            fontFamily: 'Manrope, sans-serif',
-          }"
-        >
-          NB
-        </div>
-        <div
-          :style="{
-            fontSize: '15px',
-            fontWeight: '600',
-            fontFamily: 'Manrope, sans-serif',
-            // eslint-disable-next-line narduk/no-inline-hex -- OG brand text
-            color: '#64748b',
-            letterSpacing: '0.01em',
-          }"
-        >
-          {{ siteName }}
-        </div>
+        {{ siteName }}
       </div>
     </div>
   </div>

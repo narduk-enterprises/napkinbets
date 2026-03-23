@@ -9,9 +9,9 @@
     "dev": "pnpm run db:ready && (doppler run -- nuxt dev || nuxt dev)",
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "config:validate": "npx tsx ../../tools/validate-env.ts",
-    "db:migrate": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir drizzle",
+    "db:migrate": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
     "db:seed": "wrangler d1 execute napkinbets-db --local --file=drizzle/seed.sql && wrangler r2 object put napkinbets-uploads/seed/venmo-1.png --local --file=drizzle/seed/venmo-1.png && wrangler r2 object put napkinbets-uploads/seed/venmo-2.png --local --file=drizzle/seed/venmo-2.png && wrangler r2 object put napkinbets-uploads/seed/venmo-rejected.png --local --file=drizzle/seed/venmo-rejected.png",
-    "db:reset": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir drizzle --reset && pnpm run db:seed",
+    "db:reset": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle --reset && pnpm run db:seed",
     "db:studio": "drizzle-kit studio",
     "db:studio:local": "drizzle-kit studio --config=drizzle-local.config.ts",
     "generate": "nuxt generate",
@@ -37,10 +37,11 @@
     "test:e2e:shell": "playwright test --project=shell --config=../../playwright.config.ts",
     "test:e2e:admin": "playwright test --project=admin --config=../../playwright.config.ts",
     "test:e2e:routing": "playwright test --project=routing --config=../../playwright.config.ts",
-    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore"
+    "format:check": "prettier --check \"**/*.{ts,mts,vue,js,mjs,json,yaml,yml,css,md}\" --ignore-path ../../.gitignore",
+    "db:verify": "node node_modules/@narduk-enterprises/narduk-nuxt-template-layer/testing/verify-local-db.mjs ."
   },
   "dependencies": {
-    "@narduk-enterprises/eslint-config": "^1.0.12",
+    "@narduk-enterprises/eslint-config": "^1.0.14",
     "@narduk-enterprises/narduk-nuxt-template-layer": "workspace:*",
     "@vueuse/core": "^14.2.1",
     "drizzle-orm": "^0.45.1",
