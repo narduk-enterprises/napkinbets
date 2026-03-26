@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
 import type { NapkinbetsWager } from '../../../types/napkinbets'
 
 const props = defineProps<{

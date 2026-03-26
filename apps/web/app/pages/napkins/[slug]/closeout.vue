@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
 
 import { displayNameToInitials } from '~/utils/napkinbets-display'
 
