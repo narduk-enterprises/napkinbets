@@ -3,22 +3,24 @@ import { basename, join } from 'node:path'
 
 export const VERBATIM_SYNC_FILES = [
   'doppler.template.yaml',
+  'config/fleet-sync-repos.json',
+  'config/fleet-app-dir-overrides.json',
   '.githooks/pre-commit',
+  '.githooks/post-checkout',
+  '.githooks/post-merge',
   'tools/install-git-hooks.cjs',
   'tools/command.ts',
   'tools/gsc-verify.ts',
   'tools/update-layer.ts',
   'tools/validate.ts',
-  'tools/guardrails.ts',
+
   'tools/check-guardrails.ts',
   'tools/sync-template.ts',
   'tools/sync-core.ts',
-  'tools/ensure-skills-links.ts',
   'tools/sync-manifest.ts',
   'tools/check-drift-ci.ts',
   'tools/check-sync-health.ts',
   'tools/generate-favicons.ts',
-  'tools/init.ts',
   'tools/tail.ts',
   'tools/ship.ts',
   'tools/db-migrate.sh',
@@ -29,6 +31,7 @@ export const VERBATIM_SYNC_FILES = [
   'pnpm-workspace.yaml',
   'renovate.json',
   '.github/copilot-instructions.md',
+  '.github/prompts/ui-ux-pro-max/PROMPT.md',
   '.cursor/rules/user-global-skills.mdc',
   'apps/web/.nuxtrc',
   'apps/web/.npmrc',
@@ -40,24 +43,27 @@ export const VERBATIM_SYNC_FILES = [
 
 export const BOOTSTRAP_SYNC_FILES = ['guardrail-exceptions.json'] as const
 
+// `.template-reference` is reserved for baselines that are intentionally
+// allowed to diverge in downstream apps while still keeping a template copy to
+// diff against locally.
+export const REFERENCE_BASELINE_FILES = [
+  '.template-reference/README.md',
+  '.template-reference/AGENTS.md',
+  '.template-reference/apps/web/AGENTS.md',
+  '.template-reference/tools/AGENTS.md',
+  '.template-reference/CONTRIBUTING.md',
+  '.template-reference/playwright.config.ts',
+] as const
+
 export const RECURSIVE_SYNC_DIRECTORIES = [
   'packages/eslint-config',
+  'tools/guardrails',
   '.agents/workflows',
-  // ui-ux-pro-max payload lives under `.template-reference/ui-ux-pro-max/`.
-  // Per-agent `*/skills` dirs are local symlinks to ~/.skills (see skills:link).
-  '.agents',
-  '.agent',
-  '.codex',
-  '.github/prompts',
-  '.template-reference',
   'layers/narduk-nuxt-layer',
 ] as const
 
 export const STALE_SYNC_PATHS = [
-  '.cursor/skills/home',
-  '.codex/skills/home',
-  '.agent/skills/home',
-  '.github/skills/home',
+  '.agents/.DS_Store',
   '.github/workflows/publish-layer.yml',
   '.github/workflows/deploy-showcase.yml',
   '.github/workflows/deploy.yml',
@@ -71,6 +77,10 @@ export const STALE_SYNC_PATHS = [
   '.env',
   '.env.local',
   '.env.example',
+  '.template-reference/.DS_Store',
+  '.template-reference/build-visibility.md',
+  '.template-reference/ui-ux-pro-max',
+  'layers/narduk-nuxt-layer/coverage',
   'layers/narduk-nuxt-layer/app/utils/format.ts',
   'layers/narduk-nuxt-layer/app/utils/safeLinkTarget.ts',
   'layers/narduk-nuxt-layer/eslint.overrides.mjs',
@@ -80,19 +90,17 @@ export const GENERATED_SYNC_FILES = ['.github/workflows/ci.yml'] as const
 
 export const FLEET_ROOT_SCRIPT_PATCHES: Readonly<Record<string, string>> = {
   postinstall:
-    "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  Run pnpm run setup before doing anything else! See AGENTS.md.\\n')\"",
+    "node -e \"if(!require('fs').existsSync('.setup-complete'))console.log('\\n⚠️  New apps: provision via the control plane (see AGENTS.md). Generated starters get .setup-complete from provisioning.\\n')\"",
   dev: 'pnpm --filter web dev',
   'build:plugins': 'pnpm --filter @narduk/eslint-config build',
   prelint: 'pnpm run build:plugins',
   predev: 'node tools/check-setup.cjs',
   prebuild: 'node tools/check-setup.cjs',
   preship:
-    'node tools/check-setup.cjs && pnpm install --frozen-lockfile && pnpm exec tsx tools/check-drift-ci.ts && pnpm exec tsx tools/check-sync-health.ts && pnpm run quality:check',
+    'node tools/check-setup.cjs && pnpm install --frozen-lockfile && pnpm audit --audit-level=critical && pnpm exec tsx tools/check-drift-ci.ts && pnpm exec tsx tools/check-sync-health.ts && pnpm run quality:check',
   ship: 'pnpm exec tsx tools/ship.ts',
-  setup: 'pnpm exec tsx tools/init.ts',
   validate: 'pnpm exec tsx tools/validate.ts',
   'sync-template': 'pnpm exec tsx tools/sync-template.ts .',
-  'skills:link': 'pnpm exec tsx tools/ensure-skills-links.ts',
   'update-layer': 'pnpm exec tsx tools/update-layer.ts',
   'check:sync-health': 'pnpm exec tsx tools/check-sync-health.ts',
   'hooks:install': 'node tools/install-git-hooks.cjs',
@@ -122,7 +130,7 @@ export const FLEET_WEB_SCRIPT_PATCHES: Readonly<Record<string, string>> = {
 }
 
 const TRANSIENT_DIRECTORY_PATTERN =
-  /(^|\/)(node_modules|dist|\.turbo|\.nuxt|\.output|\.nitro|\.wrangler|\.data|__pycache__)(\/|$)/
+  /(^|\/)(node_modules|coverage|dist|\.turbo|\.nuxt|\.output|\.nitro|\.wrangler|\.data|__pycache__)(\/|$)/
 
 export function isIgnoredManagedPath(fullPath: string): boolean {
   return TRANSIENT_DIRECTORY_PATTERN.test(fullPath) || basename(fullPath) === '.DS_Store'
@@ -185,6 +193,12 @@ export function collectManagedTemplateFiles(templateRoot: string): string[] {
   const tracked = new Set<string>()
 
   for (const file of VERBATIM_SYNC_FILES) {
+    if (existsSync(join(templateRoot, file))) {
+      tracked.add(file)
+    }
+  }
+
+  for (const file of REFERENCE_BASELINE_FILES) {
     if (existsSync(join(templateRoot, file))) {
       tracked.add(file)
     }

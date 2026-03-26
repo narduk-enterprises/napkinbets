@@ -10,7 +10,7 @@
     "quality": "echo 'Turbo dependsOn handles lint + typecheck + format:check'",
     "config:validate": "npx tsx ../../tools/validate-env.ts",
     "db:migrate": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle",
-    "db:seed": "wrangler d1 execute napkinbets-db --local --file=drizzle/seed.sql && wrangler r2 object put napkinbets-uploads/seed/venmo-1.png --local --file=drizzle/seed/venmo-1.png && wrangler r2 object put napkinbets-uploads/seed/venmo-2.png --local --file=drizzle/seed/venmo-2.png && wrangler r2 object put napkinbets-uploads/seed/venmo-rejected.png --local --file=drizzle/seed/venmo-rejected.png",
+    "db:seed": "wrangler d1 execute napkinbets-db --local --file=node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle/seed.sql",
     "db:reset": "bash ../../tools/db-migrate.sh napkinbets-db --local --dir node_modules/@narduk-enterprises/narduk-nuxt-template-layer/drizzle --dir drizzle --reset && pnpm run db:seed",
     "db:studio": "drizzle-kit studio",
     "db:studio:local": "drizzle-kit studio --config=drizzle-local.config.ts",

@@ -2,13 +2,11 @@
 
 Read `AGENTS.md` at the project root for full project rules and conventions.
 
-## User skills (`~/.skills`)
+## Repo skills
 
-`pnpm run skills:link` and `pnpm run sync-template` symlink `.cursor/skills`,
-`.codex/skills`, `.agent/skills`, and `.github/skills` directly to `~/.skills`
-for Cursor, Codex, GitHub Copilot, and Google Antigravity. When a task fits a
-packaged skill there, read its `SKILL.md` and any referenced assets from that
-tree before improvising.
+If this repo ships committed skills for GitHub-facing agents, they live in
+`.github/skills/`. The template does not mirror, symlink, or repair local agent
+skill directories. Manage any local-only skills separately from this checkout.
 
 ### Installing new skills
 
@@ -20,8 +18,7 @@ npx skills add https://github.com/<owner>/<repo> --skill <name>
 /skill-create
 ```
 
-See `docs/agents/skills.md` for full architecture, fleet distribution, and the
-skills inventory.
+See `docs/agents/skills.md` for the manual-management rules.
 
 ## Architecture & Monorepo
 
@@ -65,10 +62,9 @@ skills inventory.
 - **CRITICAL**: If starting a new derived project, begin from the generated
   starter surface, not this authoring workspace. Use the control plane, a
   published starter repo, or `pnpm run export:starter -- ../my-app --force`,
-  then run `pnpm setup` inside that generated app. Verify `git remote -v` does
-  NOT point to `narduk-enterprises/narduk-nuxt-template`. If you are
-  intentionally working on the template repository itself, that remote is
-  expected.
+  then work from that generated app checkout. Verify `git remote -v` does NOT
+  point to `narduk-enterprises/narduk-nuxt-template`. If you are intentionally
+  working on the template repository itself, that remote is expected.
 - **Secrets**: Use Doppler. Secrets are consumed via `process.env.SECRET_NAME`
   in `nuxt.config.ts`.
 - Run `/check-*` and `/audit-*` AI workflows (in `.agents/workflows/`) for

@@ -3,15 +3,20 @@ description: User-global skill library path for Cursor agents
 alwaysApply: true
 ---
 
-# User skill library
+# Repo skill library
 
-Global skills live in `~/.skills`. `pnpm run skills:link` (and template sync) symlinks each agent tree to that folder:
+Committed repo skills live in `.github/skills` when that directory exists.
+Authoring-oriented or older checkouts may still keep the editable source under
+`.agents/skills`. `pnpm run skills:link` repairs the tracked agent-facing
+symlinks so every tool resolves to the committed repo skill surface, preferring
+`.github/skills` and falling back to `.agents/skills` only when needed.
 
-- `.cursor/skills` → `~/.skills`
-- `.codex/skills` → `~/.skills`
-- `.agent/skills` → `~/.skills`
-- `.github/skills` → `~/.skills`
+- `.cursor/skills` → `../.github/skills` (preferred)
+- `.codex/skills` → `../.github/skills` (preferred)
+- `.agent/skills` → `../.github/skills` (preferred)
+- `.claude/skills` → `../.github/skills` (preferred)
+- legacy fallback: `../.agents/skills`
 
-There is no repo-root `.skills` entry. The template keeps the **ui-ux-pro-max** payload under `.template-reference/ui-ux-pro-max/` for sync and workflows; copy or link it into `~/.skills/ui-ux-pro-max` if you want it in your global library.
-
-When work matches packaged guidance, read the relevant `SKILL.md` under `~/.skills/<skill-id>/` (or via the symlinks above) instead of guessing.
+When work matches packaged guidance, read the relevant `SKILL.md` under
+`.github/skills/<skill-id>/` when present, otherwise the legacy
+`.agents/skills/<skill-id>/` tree.
