@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 
 const route = useRoute()
 const { primaryLinks, publicLinks, accountLinks, isAuthenticated } = useNapkinbetsNavLinks()
@@ -37,7 +36,7 @@ const mobileSecondaryLinks = computed(() =>
 )
 
 watch(
-  () => route.fullPath,
+  () => route.path,
   () => {
     isMobileMenuOpen.value = false
   },
