@@ -5,6 +5,10 @@ import {
   getNapkinbetsGolfTemplates,
 } from '../utils/napkinbets-game-templates'
 
+definePageMeta({
+  middleware: ['guest'],
+})
+
 const { isAuthenticated } = useNapkinbetsNavLinks()
 const discoverState = await useNapkinbetsDiscover()
 const workspaceState = isAuthenticated.value
