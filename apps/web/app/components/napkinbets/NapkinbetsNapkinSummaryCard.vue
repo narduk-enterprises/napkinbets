@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NapkinbetsWager } from '../../../types/napkinbets'
+import { getNapkinbetsTemplateFormatLabel } from '../../utils/napkinbets-game-templates'
 
 const props = defineProps<{
   wager: NapkinbetsWager
@@ -39,9 +40,16 @@ const roleBadge = computed(() => {
 })
 
 const meta = computed(() =>
-  [props.wager.eventTitle || 'Custom bet', props.wager.groupName, props.wager.venueName || 'Remote']
+  [
+    props.wager.eventTitle || 'Custom game',
+    props.wager.groupName,
+    props.wager.venueName || 'Remote',
+  ]
     .filter(Boolean)
     .join(' · '),
+)
+const formatLabel = computed(() =>
+  getNapkinbetsTemplateFormatLabel(props.wager.format, props.wager.sport),
 )
 
 const hasLogos = computed(
@@ -65,6 +73,9 @@ const shortName = computed(() => {
       </UBadge>
       <UBadge :color="roleBadge.color" variant="subtle" size="xs">
         {{ roleBadge.label }}
+      </UBadge>
+      <UBadge color="neutral" variant="subtle" size="xs">
+        {{ formatLabel }}
       </UBadge>
       <UBadge v-if="wager.league" color="warning" variant="soft" size="xs">
         {{ wager.league.toUpperCase() }}

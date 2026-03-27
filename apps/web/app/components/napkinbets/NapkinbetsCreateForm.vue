@@ -7,6 +7,10 @@ import type {
   NapkinbetsGeneratedNapkin,
 } from '../../../types/napkinbets'
 import { useNapkinbetsApi } from '../../services/napkinbets-api'
+import {
+  getNapkinbetsTemplateSupportColor,
+  getNapkinbetsTemplateSupportLabel,
+} from '../../utils/napkinbets-game-templates'
 
 interface NapkinbetsCreateEventPreview {
   source: string
@@ -62,6 +66,7 @@ const {
   potTemplateOptions,
   sideTemplateOptions,
   seatPresetOptions,
+  selectedTemplate,
   selectedPotTemplate,
   selectedVenuePreset: _selectedVenuePreset,
   showCustomContextName: _showCustomContextName,
@@ -311,7 +316,9 @@ function submit() {
       <div class="space-y-3">
         <p class="napkinbets-kicker">Step 1</p>
         <h3 class="napkinbets-subsection-title">
-          {{ mode === 'event' && eventPreview ? "What's the game?" : "What's the bet?" }}
+          {{
+            mode === 'event' && eventPreview ? 'Which event anchors this game?' : 'Name this game'
+          }}
         </h3>
 
         <div
@@ -319,7 +326,7 @@ function submit() {
           class="napkinbets-surface flex flex-wrap items-center justify-between gap-3"
         >
           <div class="min-w-0 space-y-1">
-            <p class="napkinbets-surface-label">Game attached</p>
+            <p class="napkinbets-surface-label">Event attached</p>
             <p class="truncate font-semibold text-default">
               {{
                 eventPreview.awayTeamName && eventPreview.homeTeamName
@@ -339,15 +346,36 @@ function submit() {
 
         <div v-else class="space-y-3">
           <UButton to="/events" color="primary" variant="soft" icon="i-lucide-search">
-            Find a game
+            Use a live event instead
           </UButton>
-          <UFormField name="title" label="Bet title">
+          <UFormField name="title" label="Game title">
             <UInput
               v-model="formState.title"
               class="w-full"
-              placeholder="e.g. Will it rain on Saturday?, Who eats first?"
+              placeholder="e.g. Masters winner pool, Final Four confidence picks"
             />
           </UFormField>
+        </div>
+
+        <div v-if="selectedTemplate" class="napkinbets-surface space-y-3">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-1">
+              <p class="napkinbets-surface-label">Selected format</p>
+              <p class="font-semibold text-default">{{ selectedTemplate.label }}</p>
+              <p class="text-sm text-muted">{{ selectedTemplate.summary }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <UBadge
+                :color="getNapkinbetsTemplateSupportColor(selectedTemplate.support)"
+                variant="soft"
+              >
+                {{ getNapkinbetsTemplateSupportLabel(selectedTemplate.support) }}
+              </UBadge>
+              <UBadge color="neutral" variant="subtle">
+                {{ selectedTemplate.playersLabel }}
+              </UBadge>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -356,7 +384,7 @@ function submit() {
       <!-- Step 2: Bet type -->
       <div class="space-y-3">
         <p class="napkinbets-kicker">Step 2</p>
-        <h3 class="napkinbets-subsection-title">What kind of bet?</h3>
+        <h3 class="napkinbets-subsection-title">What kind of game is this?</h3>
 
         <div class="grid gap-3 sm:grid-cols-2">
           <UButton
@@ -394,11 +422,11 @@ function submit() {
       <!-- Step 3: Simple bet setup (opponent + side) -->
       <div v-if="isSimpleBet" class="space-y-4">
         <p class="napkinbets-kicker">Step 3</p>
-        <h3 class="napkinbets-subsection-title">Set up your bet</h3>
+        <h3 class="napkinbets-subsection-title">Set up the matchup</h3>
 
         <!-- Opponent -->
         <div class="space-y-3">
-          <p class="text-sm font-medium text-default">Who are you betting against?</p>
+          <p class="text-sm font-medium text-default">Who are you playing against?</p>
 
           <div v-if="friendOptions.length" class="napkinbets-chip-grid">
             <UButton
@@ -467,6 +495,9 @@ function submit() {
         <div class="space-y-3">
           <p class="text-sm font-medium text-default">Pool format</p>
           <USelect v-model="formState.format" :items="poolFormatOptions" class="w-full" />
+          <p v-if="selectedTemplate" class="text-sm text-muted">
+            {{ selectedTemplate.setupLabel }} · {{ selectedTemplate.scoringLabel }}
+          </p>
         </div>
 
         <!-- Participants -->
@@ -615,7 +646,8 @@ function submit() {
         <p class="napkinbets-kicker">Step {{ isSimpleBet ? 4 : 4 }}</p>
         <h3 class="napkinbets-subsection-title">Questions (optional)</h3>
         <p class="text-sm text-muted">
-          Add questions for participants to answer. Each question is a separate leg of the bet.
+          Add questions for participants to answer. Each question becomes a separate prompt inside
+          the game.
         </p>
 
         <!-- Existing legs -->
@@ -759,7 +791,7 @@ function submit() {
 
       <!-- Summary + Submit -->
       <div class="napkinbets-surface space-y-3">
-        <p class="napkinbets-surface-label">Ready</p>
+        <p class="napkinbets-surface-label">Ready to launch</p>
         <p class="text-sm leading-6 text-default">{{ boardSummary }}</p>
         <UButton
           type="submit"
@@ -769,7 +801,7 @@ function submit() {
           :disabled="!canSubmit"
           class="w-full justify-center"
         >
-          {{ isAuthenticated ? 'Send the bet' : 'Create account to publish' }}
+          {{ isAuthenticated ? 'Publish game' : 'Create account to publish game' }}
         </UButton>
       </div>
     </UForm>

@@ -1,4 +1,9 @@
 import type { CreateWagerInput } from '../../types/napkinbets'
+import {
+  findNapkinbetsGameTemplate,
+  getNapkinbetsDefaultTemplateKey,
+  getNapkinbetsTemplateCreatePrefill,
+} from '../utils/napkinbets-game-templates'
 
 interface NapkinbetsCreateEventPreview {
   source: string
@@ -40,25 +45,8 @@ export const NAPKINBETS_DEFAULT_CREATE_INPUT: CreateWagerInput = {
     'Friendly bets only. Napkinbets tracks the bet, reminders, and payment proof, but all transfers happen manually through your preferred payment app.',
 }
 
-const NAPKINBETS_PRESET_CREATE_INPUTS: Record<string, Partial<CreateWagerInput>> = {
-  'masters-week': {
-    title: 'Masters week group bet',
-    description:
-      'A golf-first group bet for Masters week with featured golfer lanes, low-round sweats, and manual settle-up after the final round is official.',
-    napkinType: 'pool',
-    boardType: 'manual-curated',
-    format: 'golf-draft',
-    sport: 'golf',
-    contextKey: 'tournament',
-    league: 'pga',
-    customContextName: '',
-    groupId: '',
-    sideOptions: 'Green Jacket winner\nLow Thursday round\nPlayoff yes/no',
-    potRules: 'Champion: 50\nLow round: 25\nWeekend charge: 25',
-    venueName: 'Augusta watch party or clubhouse',
-    terms:
-      'Friendly bets only. Masters week group bets settle manually after the official result posts, and payment proof still lives outside the app.',
-  },
+const NAPKINBETS_PRESET_TEMPLATE_KEYS: Record<string, string> = {
+  'masters-week': 'golf-major-challenge',
 }
 
 function getQueryString(value: QueryValue) {
@@ -88,9 +76,7 @@ function buildTitle(eventTitle: string, homeTeamName: string, awayTeamName: stri
 export function useNapkinbetsCreatePrefill() {
   const route = useRoute()
   const preset = computed(() => getQueryString(route.query.preset))
-  const requestedNapkinType = computed(() =>
-    getQueryString(route.query.napkinType) === 'pool' ? 'pool' : 'simple-bet',
-  )
+  const requestedNapkinType = computed(() => getQueryString(route.query.napkinType))
   const requestedGroupId = computed(() => getQueryString(route.query.groupId))
 
   const eventPreview = computed<NapkinbetsCreateEventPreview | null>(() => {
@@ -138,41 +124,85 @@ export function useNapkinbetsCreatePrefill() {
     return 'manual'
   })
 
+  const rawRequestedTemplate = computed(
+    () =>
+      getQueryString(route.query.template) ||
+      NAPKINBETS_PRESET_TEMPLATE_KEYS[preset.value] ||
+      getQueryString(route.query.format),
+  )
+
+  const templateKey = computed(() =>
+    getNapkinbetsDefaultTemplateKey({
+      sport: eventPreview.value?.sport,
+      templateKey: rawRequestedTemplate.value,
+      napkinType:
+        requestedNapkinType.value === 'simple-bet'
+          ? 'simple-bet'
+          : requestedNapkinType.value === 'pool'
+            ? 'pool'
+            : undefined,
+      createMode: createMode.value,
+    }),
+  )
+
+  const template = computed(() =>
+    findNapkinbetsGameTemplate(templateKey.value, eventPreview.value?.sport),
+  )
+
+  const templateDefaults = computed(() =>
+    getNapkinbetsTemplateCreatePrefill(templateKey.value, eventPreview.value?.sport),
+  )
+
+  const resolvedNapkinType = computed<'simple-bet' | 'pool'>(() => {
+    if (requestedNapkinType.value === 'simple-bet') {
+      return 'simple-bet'
+    }
+
+    if (requestedNapkinType.value === 'pool') {
+      return 'pool'
+    }
+
+    return templateDefaults.value.napkinType === 'pool' ? 'pool' : 'simple-bet'
+  })
+
   const prefill = computed<CreateWagerInput>(() => {
     const preview = eventPreview.value
-    const presetDefaults = NAPKINBETS_PRESET_CREATE_INPUTS[preset.value] ?? {}
+    const basePrefill = {
+      ...NAPKINBETS_DEFAULT_CREATE_INPUT,
+      ...templateDefaults.value,
+      groupId: requestedGroupId.value,
+      napkinType: resolvedNapkinType.value,
+      format: resolvedNapkinType.value === 'simple-bet' ? 'head-to-head' : templateKey.value,
+    }
 
     if (!preview) {
       return {
-        ...NAPKINBETS_DEFAULT_CREATE_INPUT,
-        ...presetDefaults,
-        napkinType: requestedNapkinType.value,
-        groupId: requestedGroupId.value,
+        ...basePrefill,
       }
     }
 
+    const eventModeFormat =
+      resolvedNapkinType.value === 'simple-bet' ? 'head-to-head' : templateKey.value
+    const eventTitle =
+      templateKey.value === 'head-to-head' || templateKey.value === 'winner-pool'
+        ? buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName)
+        : basePrefill.title
+    const sideOptions =
+      getQueryString(route.query.sideOptions) ||
+      (eventModeFormat === 'head-to-head' || eventModeFormat === 'winner-pool'
+        ? buildSideOptions(preview.homeTeamName, preview.awayTeamName)
+        : basePrefill.sideOptions)
+
     return {
-      ...NAPKINBETS_DEFAULT_CREATE_INPUT,
-      ...presetDefaults,
-      title: buildTitle(preview.title, preview.homeTeamName, preview.awayTeamName),
-      description:
-        preview.homeTeamName && preview.awayTeamName
-          ? `Friendly bet for ${preview.awayTeamName} at ${preview.homeTeamName}, with one clear side and manual payment confirmation after the result is official.`
-          : NAPKINBETS_DEFAULT_CREATE_INPUT.description,
-      napkinType: requestedNapkinType.value,
+      ...basePrefill,
+      title: eventTitle,
       boardType: 'event-backed',
-      format:
-        requestedNapkinType.value === 'simple-bet'
-          ? 'head-to-head'
-          : getQueryString(route.query.format) || 'sports-game',
-      sport: preview.sport || NAPKINBETS_DEFAULT_CREATE_INPUT.sport,
-      contextKey: preview.contextKey || NAPKINBETS_DEFAULT_CREATE_INPUT.contextKey,
-      league: preview.league || NAPKINBETS_DEFAULT_CREATE_INPUT.league,
-      groupId: requestedGroupId.value,
-      sideOptions:
-        getQueryString(route.query.sideOptions) ||
-        buildSideOptions(preview.homeTeamName, preview.awayTeamName),
-      venueName: preview.venueName || NAPKINBETS_DEFAULT_CREATE_INPUT.venueName,
+      format: eventModeFormat,
+      sport: preview.sport || basePrefill.sport,
+      contextKey: preview.contextKey || basePrefill.contextKey,
+      league: preview.league || basePrefill.league,
+      sideOptions,
+      venueName: preview.venueName || basePrefill.venueName,
       eventSource: preview.source || 'espn',
       eventId: preview.eventId,
       eventTitle: preview.title,
@@ -187,6 +217,8 @@ export function useNapkinbetsCreatePrefill() {
     createMode,
     eventPreview,
     prefill,
+    template,
+    templateKey,
   }
 }
 type QueryValue = string | null | Array<string | null> | undefined

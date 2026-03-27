@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { JoinWagerInput, WagerSettlementReviewInput } from '../../../../types/napkinbets'
+import { getNapkinbetsTemplateFormatLabel } from '../../../utils/napkinbets-game-templates'
 import type { NapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
 import { getNapkinbetsWagerSettlementStage } from '../../../utils/napkinbets-wager-detail'
 
@@ -45,11 +46,14 @@ const showSettleUpInHero = computed(() =>
     SETTLE_UP_VISIBLE_STAGES.includes(settlementStage.value),
   ),
 )
+const formatLabel = computed(() =>
+  wager.value ? getNapkinbetsTemplateFormatLabel(wager.value.format, wager.value.sport) : 'Game',
+)
 
 const detailMetaLine = computed(() => {
   if (!wager.value) return ''
   const parts = [
-    wager.value.eventTitle || 'Custom bet',
+    wager.value.eventTitle || 'Custom game',
     wager.value.groupName,
     [wager.value.paymentService, wager.value.paymentHandle].filter(Boolean).join(' • ') || null,
     wager.value.venueName || null,
@@ -143,12 +147,12 @@ async function handleDisputeResult(wagerId: string, reason: string) {
 }
 
 useSeo({
-  title: wager.value?.title || 'Bet',
+  title: wager.value?.title || 'Game',
   description:
-    wager.value?.description || 'View the bet, picks, reminders, and payment confirmation.',
+    wager.value?.description || 'View the game, picks, reminders, and payment confirmation.',
   ogImage: {
-    title: wager.value?.title || 'Napkinbets bet',
-    description: wager.value?.description || 'Bet detail and picks.',
+    title: wager.value?.title || 'Napkinbets game',
+    description: wager.value?.description || 'Game detail and picks.',
     icon: wager.value?.status === 'settled' ? '🏆' : '🧾',
   },
 })
@@ -157,7 +161,7 @@ useSeo({
 defineOgImage({
   component: 'OgImageDefault',
   tag: [
-    wager.value?.napkinType === 'simple-bet' ? 'Head to Head' : 'Pool',
+    formatLabel.value,
     (wager.value?.status || 'open').charAt(0).toUpperCase() +
       (wager.value?.status || 'open').slice(1),
     wager.value?.participants?.length ? `${wager.value.participants.length} players` : '',
@@ -188,9 +192,9 @@ defineOgImage({
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Bet',
+  name: 'Napkinbets Game',
   description:
-    'A detailed view of a Napkinbets bet including people, picks, reminders, and payment confirmation.',
+    'A detailed view of a Napkinbets game including people, picks, reminders, and payment confirmation.',
 })
 </script>
 
@@ -205,7 +209,7 @@ useWebPageSchema({
           ? 'i-lucide-check-circle-2'
           : 'i-lucide-circle-alert'
       "
-      :title="actions.feedback.value.type === 'success' ? 'Bet updated' : 'Bet action failed'"
+      :title="actions.feedback.value.type === 'success' ? 'Game updated' : 'Game action failed'"
       :description="actions.feedback.value.text"
     />
 
@@ -214,7 +218,7 @@ useWebPageSchema({
       color="error"
       variant="soft"
       icon="i-lucide-circle-alert"
-      title="Bet failed to load"
+      title="Game failed to load"
       :description="wagerState.error.value.message"
     />
 
@@ -256,7 +260,7 @@ useWebPageSchema({
               :loading="actions.activeAction.value === `join:${wager.id}`"
               @click="handleJoin(wager.id, acceptJoinPayload)"
             >
-              Accept bet
+              Accept game
             </UButton>
             <UButton
               color="error"
@@ -272,11 +276,11 @@ useWebPageSchema({
         </div>
       </UCard>
 
-      <!-- Pool bet: compact header (content-first, no hero panel) -->
+      <!-- Pool game: compact header (content-first, no hero panel) -->
       <div
         v-if="wager.napkinType !== 'simple-bet'"
         class="napkinbets-detail-header"
-        aria-label="Bet overview"
+        aria-label="Game overview"
       >
         <div class="napkinbets-detail-header-top">
           <h1 class="napkinbets-detail-title">{{ wager.title }}</h1>
@@ -285,7 +289,7 @@ useWebPageSchema({
               {{ wager.status }}
             </UBadge>
             <UBadge color="neutral" variant="subtle" size="xs">
-              {{ wager.format }}
+              {{ formatLabel }}
             </UBadge>
             <UBadge v-if="wager.league" color="warning" variant="soft" size="xs">
               {{ wager.league.toUpperCase() }}
@@ -311,7 +315,7 @@ useWebPageSchema({
         </p>
       </div>
 
-      <!-- Custom bet outcome calling (above the main card) -->
+      <!-- Custom game outcome calling (above the main card) -->
       <NapkinbetsOutcomeCalling
         :wager="wager"
         :can-manage="canManage"

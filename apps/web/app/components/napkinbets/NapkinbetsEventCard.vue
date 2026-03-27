@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type {
-  NapkinbetsCreatePrefillQuery,
-  NapkinbetsEventCard as NapkinbetsEvent,
-} from '../../../types/napkinbets'
+import type { NapkinbetsEventCard as NapkinbetsEvent } from '../../../types/napkinbets'
 import { useNow } from '@vueuse/core'
+import {
+  buildNapkinbetsCreateLink,
+  buildNapkinbetsCreatePrefill,
+} from '../../utils/napkinbets-create'
 
 const props = defineProps<{
   event: NapkinbetsEvent
@@ -20,48 +21,6 @@ const effectiveState = computed(() => {
   }
   return props.event.state
 })
-
-function buildCreatePrefill(event: NapkinbetsEvent): NapkinbetsCreatePrefillQuery {
-  const isMatchup = event.awayTeam.homeAway === 'away' && event.homeTeam.homeAway === 'home'
-
-  return {
-    source: event.source,
-    eventId: event.id,
-    eventTitle: event.eventTitle,
-    eventStartsAt: event.startTime,
-    eventStatus: event.status,
-    sport: event.sport,
-    contextKey: event.contextKey,
-    league: event.league,
-    venueName: event.venueName,
-    homeTeamName: isMatchup ? event.homeTeam.name : '',
-    awayTeamName: isMatchup ? event.awayTeam.name : '',
-    format: event.sport === 'golf' ? 'golf-draft' : 'sports-game',
-    sideOptions: [],
-  }
-}
-
-function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
-  return {
-    path: '/napkins/create',
-    query: {
-      createMode: 'event',
-      source: prefill.source,
-      eventId: prefill.eventId,
-      eventTitle: prefill.eventTitle,
-      eventStartsAt: prefill.eventStartsAt,
-      eventStatus: prefill.eventStatus,
-      sport: prefill.sport,
-      contextKey: prefill.contextKey,
-      league: prefill.league,
-      venueName: prefill.venueName,
-      homeTeamName: prefill.homeTeamName,
-      awayTeamName: prefill.awayTeamName,
-      format: prefill.format,
-      sideOptions: prefill.sideOptions.join('\n'),
-    },
-  }
-}
 
 function badgeLabel(team: NapkinbetsEvent['homeTeam']) {
   if (team.record) return team.record
@@ -81,7 +40,9 @@ const isMatchupEvent = computed(
 )
 const eventTeams = computed(() => [props.event.awayTeam, props.event.homeTeam])
 const insightRows = computed(() => props.event.leaders.slice(0, 1))
-const createLink = computed(() => buildCreateLink(buildCreatePrefill(props.event)))
+const createLink = computed(() =>
+  buildNapkinbetsCreateLink(buildNapkinbetsCreatePrefill(props.event)),
+)
 const timeLabel = computed(() => props.event.shortStatus || props.event.status)
 const eventDetailLink = computed(() => `/events/${encodeURIComponent(props.event.id)}`)
 const hasOdds = computed(() => Boolean(props.event.odds?.moneyline))
@@ -249,7 +210,7 @@ const countdownText = computed(() => {
       <!-- Row 7: Actions (mt-auto pushes to bottom when card has variable content) -->
       <div class="mt-auto flex flex-col gap-2 pt-2">
         <UButton :to="createLink" color="primary" size="md" block icon="i-lucide-plus">
-          Bet
+          Start game
         </UButton>
         <UButton
           :to="eventDetailLink"
@@ -257,9 +218,9 @@ const countdownText = computed(() => {
           variant="ghost"
           size="sm"
           block
-          :icon="hasOdds ? 'i-lucide-bar-chart-3' : 'i-lucide-arrow-right'"
+          icon="i-lucide-arrow-right"
         >
-          {{ hasOdds ? 'View odds' : 'View event' }}
+          Open event
         </UButton>
       </div>
     </div>

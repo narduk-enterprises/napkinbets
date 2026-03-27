@@ -5,6 +5,7 @@ import type {
   WagerSettlementInput,
 } from '../../../types/napkinbets'
 import { displayNameToInitials } from '../../utils/napkinbets-display'
+import { getNapkinbetsTemplateFormatLabel } from '../../utils/napkinbets-game-templates'
 import { getNapkinbetsWagerSettlementStage } from '../../utils/napkinbets-wager-detail'
 
 const props = defineProps<{
@@ -89,6 +90,9 @@ const isAlreadyAccepted = computed(
 )
 
 const isOneOnOne = computed(() => props.wager.napkinType === 'simple-bet')
+const formatLabel = computed(() =>
+  getNapkinbetsTemplateFormatLabel(props.wager.format, props.wager.sport),
+)
 
 type NapkinbetsBadgeColor =
   | 'error'
@@ -210,7 +214,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
     ? `Locked in as ${myParticipant.value.displayName}${myParticipant.value.sideLabel ? ` on ${myParticipant.value.sideLabel}` : ''}.`
     : props.isAuthenticated
       ? 'Follow the game here and settle up once the result is official.'
-      : 'This bet stays shareable, but settlement still waits until the final result.'
+      : 'This game stays shareable, but settlement still waits until the final result.'
   const recordedAmount = mySettlement.value
     ? formatCurrency(mySettlement.value.amountCents)
     : formatCurrency(paymentAmountCents.value)
@@ -222,7 +226,8 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         badgeColor: 'warning' as const,
         icon: 'i-lucide-hourglass',
         title: 'No payment due yet',
-        description: 'This bet is locked in, but nobody should send money until the game is final.',
+        description:
+          'This game is locked in, but nobody should send money until the result is official.',
         emphasis: participantContext,
         primaryLabel: 'Winner paid via',
         primaryValue: paymentRoute.value,
@@ -256,7 +261,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         icon: 'i-lucide-timer-reset',
         title: 'Track it now, settle later',
         description:
-          'The game is underway. Keep the bet here, but wait for the final result before paying anyone.',
+          'The game is underway. Keep it here, but wait for the final result before paying anyone.',
         emphasis: participantContext,
         primaryLabel: 'Winner paid via',
         primaryValue: paymentRoute.value,
@@ -271,7 +276,7 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         badgeLabel: 'Ready to settle',
         badgeColor: 'success' as const,
         icon: 'i-lucide-wallet-cards',
-        title: 'Result is in. Settle this bet.',
+        title: 'Result is in. Settle this game.',
         description: props.isAuthenticated
           ? 'Use the saved payment route below, then log proof in the settlement ledger once the transfer is sent.'
           : 'The result is official. Sign in to unlock payment shortcuts and record proof in the settlement ledger.',
@@ -338,9 +343,9 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
         badgeLabel: 'Settled',
         badgeColor: 'success' as const,
         icon: 'i-lucide-check-circle-2',
-        title: 'This bet is closed out',
+        title: 'This game is closed out',
         description:
-          'The wager has moved past game time and the settlement ledger reflects the final state.',
+          'The game has moved past event time and the settlement ledger reflects the final state.',
         emphasis: settlementSummary.value || participantContext,
         primaryLabel: 'Payout route',
         primaryValue: paymentRoute.value,
@@ -352,11 +357,11 @@ const nextStepCard = computed<NapkinbetsNextStepCard>(() => {
       }
     default:
       return {
-        badgeLabel: 'Bet detail',
+        badgeLabel: 'Game detail',
         badgeColor: 'neutral' as const,
         icon: 'i-lucide-scroll-text',
         title: 'Review the current state',
-        description: 'Check the scoreboard and settlement ledger for the latest bet status.',
+        description: 'Check the scoreboard and settlement ledger for the latest game status.',
         emphasis: participantContext,
         primaryLabel: 'Payment route',
         primaryValue: paymentRoute.value,
@@ -486,7 +491,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 {{ wager.status }}
               </UBadge>
               <UBadge color="neutral" variant="subtle">
-                {{ wager.format }}
+                {{ formatLabel }}
               </UBadge>
               <UBadge v-if="wager.league" color="info" variant="soft">
                 {{ wager.league.toUpperCase() }}
@@ -506,7 +511,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 >
                   {{ wager.eventTitle }}
                 </ULink>
-                <span v-else>{{ wager.eventTitle || 'Custom bet' }}</span>
+                <span v-else>{{ wager.eventTitle || 'Custom game' }}</span>
                 <span v-if="wager.groupName">{{ wager.groupName }}</span>
                 <span>{{ wager.venueName || 'Remote group' }}</span>
                 <span>Host: {{ wager.creatorName }}</span>
@@ -647,7 +652,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 </div>
               </div>
               <p v-else class="text-sm text-muted">
-                {{ isInvited ? 'Accept the bet to see the draft order.' : 'No draft order yet.' }}
+                {{ isInvited ? 'Accept the game to see the draft order.' : 'No draft order yet.' }}
               </p>
             </div>
 
@@ -685,7 +690,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 </div>
               </div>
               <p v-else class="text-sm text-muted">
-                {{ isInvited ? 'Accept the bet to see the leaderboard.' : 'No leaderboard yet.' }}
+                {{ isInvited ? 'Accept the game to see the leaderboard.' : 'No leaderboard yet.' }}
               </p>
             </div>
           </div>
@@ -743,7 +748,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 variant="soft"
                 icon="i-lucide-ticket-check"
                 title="You've been challenged"
-                :description="`${wager.creatorName} invited you to this bet as ${myParticipant!.displayName}. Accept to lock in your side, or decline to pass.`"
+                :description="`${wager.creatorName} invited you to this game as ${myParticipant!.displayName}. Accept to lock in your side, or decline to pass.`"
               />
               <div class="flex flex-wrap gap-3">
                 <UButton
@@ -752,7 +757,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                   :loading="isBusy(`join:${wager.id}`)"
                   @click="acceptInvite"
                 >
-                  Accept bet
+                  Accept game
                 </UButton>
                 <UButton
                   color="error"
@@ -772,7 +777,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                 color="success"
                 variant="soft"
                 icon="i-lucide-check-circle-2"
-                title="You're in this bet"
+                title="You're in this game"
                 :description="`Locked in as ${myParticipant!.displayName} on ${myParticipant!.sideLabel || 'Open side'}.`"
               />
             </template>
@@ -780,7 +785,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
             <!-- Not a participant yet: show generic join form (pool bets only) -->
             <template v-else-if="!isOneOnOne">
               <div class="space-y-4">
-                <h3 class="napkinbets-subsection-title">Join the bet</h3>
+                <h3 class="napkinbets-subsection-title">Join this game</h3>
                 <div class="napkinbets-chip-grid">
                   <span
                     v-for="option in wager.sideOptions"
@@ -807,7 +812,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
                     icon="i-lucide-user-plus"
                     :loading="isBusy(`join:${wager.id}`)"
                   >
-                    Join bet
+                    Join game
                   </UButton>
                 </UForm>
               </div>
@@ -820,7 +825,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
             variant="soft"
             icon="i-lucide-log-in"
             title="Sign in to join, pick, or settle"
-            description="Bet detail is shareable, but player actions and payment proof require an account."
+            description="Game detail is shareable, but player actions and payment proof require an account."
           >
             <template #actions>
               <div class="napkinbets-card-actions">
@@ -933,7 +938,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
               :class="wager.eventId ? 'pt-2 border-t border-dashed border-default mt-4' : ''"
             >
               <h4 v-if="wager.eventId" class="text-sm font-semibold text-default">
-                Other Live Games
+                Other live events
               </h4>
               <div
                 v-for="game in wager.liveGames.slice(0, 3)"
@@ -953,7 +958,7 @@ function progressBadgeColor(step: number): NapkinbetsBadgeColor {
             </div>
 
             <p v-else-if="!wager.eventId" class="napkinbets-support-copy">
-              Add a sport, league and event to this bet to see live scoreboard context here.
+              Add a sport, league, and event to this game to see live scoreboard context here.
             </p>
           </div>
 

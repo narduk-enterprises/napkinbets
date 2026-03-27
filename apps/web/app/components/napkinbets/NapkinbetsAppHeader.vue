@@ -7,13 +7,13 @@ const isMobileMenuOpen = ref(false)
 
 const headerLinks = computed(() =>
   primaryLinks.value.filter((link) =>
-    ['/dashboard', '/events', '/games', '/napkins/create'].includes(link.to),
+    ['/templates', '/events', '/guide', '/dashboard', '/napkins/create'].includes(link.to),
   ),
 )
 
 const mobilePrimaryLinks = computed(() =>
   (isAuthenticated.value ? primaryLinks.value : publicLinks.value).filter((link) =>
-    ['/events', '/games', '/napkins/create', '/dashboard', '/guide'].includes(link.to),
+    ['/templates', '/events', '/napkins/create', '/dashboard', '/guide'].includes(link.to),
   ),
 )
 
@@ -64,7 +64,7 @@ async function signOut() {
   <div class="napkinbets-header-wrap">
     <div class="napkinbets-header">
       <div class="napkinbets-header-top">
-        <NuxtLink to="/dashboard" class="napkinbets-header-brand" @click="closeMobileMenu">
+        <NuxtLink to="/" class="napkinbets-header-brand" @click="closeMobileMenu">
           <NapkinbetsLogo compact />
         </NuxtLink>
 
@@ -119,7 +119,7 @@ async function signOut() {
               Log in
             </UButton>
             <UButton to="/register" color="primary" size="sm" icon="i-lucide-user-plus">
-              Join
+              Join free
             </UButton>
           </div>
         </div>

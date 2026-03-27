@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     url: process.env.SITE_URL || 'https://napkinbets.nard.uk',
     name: 'Napkinbets',
     description:
-      'Napkinbets is a friendly event-first betting app for side bets, golf drafts, and watch-party group bets with manual settlement and live sports context.',
+      'Napkinbets is a template-first platform for casual social pools, picks, golf formats, and side games with live event context and manual settle-up.',
     defaultLocale: 'en',
   },
 

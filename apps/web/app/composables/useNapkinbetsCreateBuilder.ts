@@ -6,6 +6,12 @@ import type {
   NapkinbetsLegType,
   NapkinbetsTaxonomyResponse,
 } from '../../types/napkinbets'
+import {
+  findNapkinbetsGameTemplate,
+  getNapkinbetsCreatePoolTemplates,
+  getNapkinbetsDefaultTemplateKey,
+  isNapkinbetsGolfTemplate,
+} from '../utils/napkinbets-game-templates'
 
 interface UseNapkinbetsCreateBuilderOptions {
   prefill: ComputedRef<CreateWagerInput>
@@ -41,13 +47,6 @@ export interface LegDraft {
   numericUnit: string
   optionDraft: string
 }
-
-const POOL_FORMAT_OPTIONS = [
-  { label: 'Game winner', value: 'sports-game' },
-  { label: 'Prop picks', value: 'sports-prop' },
-  { label: 'Golf draft', value: 'golf-draft' },
-  { label: 'Custom group', value: 'custom-prop' },
-]
 
 const PAYMENT_OPTIONS = [
   { label: 'Venmo', value: 'Venmo' },
@@ -139,6 +138,7 @@ function uniqueParticipants(participants: ParticipantSeedDraft[]) {
 
 function inferPotTemplate(format: string, rules: string) {
   const normalizedRules = parseLines(rules)
+  const isGolfTemplate = isNapkinbetsGolfTemplate(format)
 
   return (
     POT_TEMPLATE_OPTIONS.find((template) => {
@@ -147,7 +147,7 @@ function inferPotTemplate(format: string, rules: string) {
       }
 
       return normalizedRules.join('|') === template.rules.join('|')
-    })?.value || (format === 'golf-draft' ? 'golf-weekend' : 'winner-take-all')
+    })?.value || (isGolfTemplate ? 'golf-weekend' : 'winner-take-all')
   )
 }
 
@@ -183,6 +183,9 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     () => options.friends.value.find((friend) => friend.id === selectedOpponentId.value) ?? null,
   )
   const isSimpleBet = computed(() => formState.napkinType === 'simple-bet')
+  const selectedTemplate = computed(() =>
+    findNapkinbetsGameTemplate(formState.format, formState.sport),
+  )
 
   const sportOptions = computed(() =>
     options.taxonomy.value.sports.map((sport) => ({
@@ -225,9 +228,9 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   )
 
   const poolFormatOptions = computed(() =>
-    POOL_FORMAT_OPTIONS.map((option) => ({
-      label: option.label,
-      value: option.value,
+    getNapkinbetsCreatePoolTemplates().map((template) => ({
+      label: template.label,
+      value: template.key,
     })),
   )
 
@@ -319,7 +322,8 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     }
 
     const title = formState.title.trim() || 'this bet'
-    return `Group bet for ${title}, with shared sides, tracked entries, and manual settle-up outside the app.`
+    const templateLabel = selectedTemplate.value?.label || 'pool game'
+    return `${templateLabel} for ${title}, with shared entries, tracked picks, and manual settle-up outside the app.`
   })
 
   const closeoutTerms = computed(() => {
@@ -567,7 +571,11 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
         formState.format = 'head-to-head'
         selectedPotTemplate.value = 'winner-take-all'
       } else if (formState.format === 'head-to-head') {
-        formState.format = options.mode.value === 'event' ? 'sports-game' : 'custom-prop'
+        formState.format = getNapkinbetsDefaultTemplateKey({
+          sport: formState.sport,
+          createMode: options.mode.value,
+          napkinType: 'pool',
+        })
       }
     },
     { immediate: true },
@@ -576,7 +584,7 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
   watch(
     () => formState.format,
     (format) => {
-      if (format === 'golf-draft' && selectedPotTemplate.value === 'main-plus-sweat') {
+      if (isNapkinbetsGolfTemplate(format) && selectedPotTemplate.value === 'main-plus-sweat') {
         selectedPotTemplate.value = 'golf-weekend'
       }
     },
@@ -607,6 +615,7 @@ export function useNapkinbetsCreateBuilder(options: UseNapkinbetsCreateBuilderOp
     groupOptions,
     friendOptions,
     poolFormatOptions,
+    selectedTemplate,
     paymentOptions,
     venueOptions,
     potTemplateOptions,

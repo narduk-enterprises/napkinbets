@@ -65,6 +65,12 @@ const filteredBets = computed(() => {
   const allowedIds = new Set(filterWagerList(wagers).map((w) => w.id))
   return allBets.value.filter(({ wager }) => allowedIds.has(wager.id))
 })
+const activeGamesCount = computed(
+  () =>
+    allBets.value.filter(({ wager }) =>
+      ['open', 'locked', 'live', 'calling', 'settling'].includes(wager.status),
+    ).length,
+)
 
 function setWagerFilter(
   v: import('../composables/useNapkinbetsWagerListFilter').NapkinbetsWagerListFilterValue,
@@ -73,15 +79,15 @@ function setWagerFilter(
 }
 
 useSeo({
-  title: 'Dashboard',
+  title: 'My games',
   description:
-    'Manage the bets you started, the ones you joined, and pending invitations waiting for your response.',
+    'See active games, pending invites, standings, and settle-up tasks in one dashboard.',
   image: '/brand/og/dashboard.webp',
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Dashboard',
-  description: 'A protected dashboard for managing bets, picks, and settle-up tasks.',
+  name: 'Napkinbets My Games',
+  description: 'A protected dashboard for managing games, picks, invites, and settle-up tasks.',
 })
 </script>
 
@@ -90,7 +96,7 @@ useWebPageSchema({
     <ClientOnly>
       <template #fallback>
         <div class="napkinbets-dashboard-content" aria-busy="true" aria-live="polite">
-          <p class="sr-only">Pulling your bets and invitations.</p>
+          <p class="sr-only">Pulling your games and invitations.</p>
           <div class="napkinbets-stats-strip">
             <USkeleton v-for="i in 5" :key="i" class="h-5 w-24 rounded-md" />
           </div>
@@ -142,7 +148,9 @@ useWebPageSchema({
           aria-busy="true"
           aria-live="polite"
         >
-          <p class="sr-only">Pulling your bets, invitations, and settlements. Loading your bets.</p>
+          <p class="sr-only">
+            Pulling your games, invitations, and settlements. Loading your dashboard.
+          </p>
           <div class="napkinbets-stats-strip">
             <USkeleton v-for="i in 5" :key="i" class="h-5 w-24 rounded-md" />
           </div>
@@ -178,6 +186,58 @@ useWebPageSchema({
         </div>
 
         <template v-else>
+          <div class="space-y-4">
+            <div class="space-y-1">
+              <p class="napkinbets-kicker">Dashboard</p>
+              <h1 class="napkinbets-section-title">My games</h1>
+              <p class="napkinbets-support-copy">
+                Start with what needs action now, then jump into templates, events, or a fresh room.
+              </p>
+            </div>
+
+            <div class="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+              <UCard class="napkinbets-panel">
+                <div class="space-y-3">
+                  <div class="space-y-1">
+                    <p class="napkinbets-kicker">Quick actions</p>
+                    <h2 class="napkinbets-subsection-title">Keep the loop moving.</h2>
+                  </div>
+                  <div class="flex flex-wrap gap-3">
+                    <UButton to="/templates" color="primary" icon="i-lucide-layout-template">
+                      Browse templates
+                    </UButton>
+                    <UButton to="/events" color="neutral" variant="soft" icon="i-lucide-radar">
+                      Browse events
+                    </UButton>
+                    <UButton
+                      to="/napkins/create"
+                      color="neutral"
+                      variant="soft"
+                      icon="i-lucide-plus"
+                    >
+                      Create game
+                    </UButton>
+                  </div>
+                </div>
+              </UCard>
+
+              <UCard class="napkinbets-panel">
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="space-y-1">
+                    <p class="napkinbets-surface-label">Active games</p>
+                    <p class="napkinbets-surface-value">{{ activeGamesCount }}</p>
+                    <p class="text-sm text-muted">Open, live, or closing out.</p>
+                  </div>
+                  <div class="space-y-1">
+                    <p class="napkinbets-surface-label">Pending invites</p>
+                    <p class="napkinbets-surface-value">{{ workspace.invitedWagers.length }}</p>
+                    <p class="text-sm text-muted">Friends waiting on a response.</p>
+                  </div>
+                </div>
+              </UCard>
+            </div>
+          </div>
+
           <!-- Compact stats: at-a-glance only -->
           <NapkinbetsDashboardStatsStrip :metrics="workspace.metrics" />
 
@@ -249,9 +309,11 @@ useWebPageSchema({
             </div>
           </div>
 
-          <!-- Your bets: main content -->
+          <!-- Main game list -->
           <section class="space-y-3" aria-labelledby="dashboard-your-bets-heading">
-            <h2 id="dashboard-your-bets-heading" class="napkinbets-section-heading">Your bets</h2>
+            <h2 id="dashboard-your-bets-heading" class="napkinbets-section-heading">
+              Active games
+            </h2>
             <NapkinbetsWagerListFilters
               :chips="filterChips"
               :model-value="activeFilter"
@@ -272,8 +334,8 @@ useWebPageSchema({
               color="neutral"
               variant="soft"
               icon="i-lucide-filter-x"
-              title="No bets match this filter"
-              description="Try a different filter or create a new napkin."
+              title="No games match this filter"
+              description="Try a different filter or start a new game from Templates."
             />
 
             <UAlert
@@ -281,8 +343,8 @@ useWebPageSchema({
               color="info"
               variant="soft"
               icon="i-lucide-ticket-plus"
-              title="No bets yet"
-              description="Start from Events first, or create a quick custom bet."
+              title="No games yet"
+              description="Start from Templates, browse Events, or create a quick custom game."
             />
           </section>
         </template>
