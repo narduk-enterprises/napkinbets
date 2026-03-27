@@ -2,8 +2,8 @@ import type { H3Event } from 'h3'
 import { eq, or } from 'drizzle-orm'
 import { napkinbetsEvents } from '#server/database/schema'
 import { useAppDatabase } from '#server/utils/database'
-import { grokChat } from '#server/utils/grok'
-import { getSystemPrompt } from '#server/utils/systemPrompts'
+import { grokChat } from '#layer/server/utils/xai'
+import { getNapkinbetsSystemPrompt } from '#server/utils/systemPrompts'
 import { loadNapkinbetsAiSettings } from '#server/services/napkinbets/settings'
 import type { NapkinbetsCachedEvent } from '#server/services/napkinbets/event-queries'
 
@@ -203,7 +203,7 @@ export async function scoreEventsWithAi(
   }
 
   const model = settings.chatModel || config.xaiModel || 'grok-3-mini'
-  const systemPrompt = await getSystemPrompt(event, 'event_importance')
+  const systemPrompt = await getNapkinbetsSystemPrompt(event, 'event_importance')
 
   // Find events needing scoring: no score yet or stale (>12h old)
   const now = new Date()

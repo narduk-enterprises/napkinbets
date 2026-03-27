@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { loadNapkinbetsAiSettings } from '#server/services/napkinbets/settings'
-import { grokChat } from '#server/utils/grok'
-import { getSystemPrompt } from '#server/utils/systemPrompts'
+import { grokChat } from '#layer/server/utils/xai'
+import { getNapkinbetsSystemPrompt } from '#server/utils/systemPrompts'
 
 async function requireAi(event: H3Event, capability: 'terms' | 'closeout' | 'napkin-generator') {
   const config = useRuntimeConfig(event)
@@ -53,7 +53,7 @@ export async function rewriteNapkinbetsTerms(
   },
 ) {
   const ai = await requireAi(event, 'terms')
-  const systemContent = await getSystemPrompt(event, 'terms_rewrite')
+  const systemContent = await getNapkinbetsSystemPrompt(event, 'terms_rewrite')
   const content = await grokChat(
     ai.apiKey,
     [
@@ -91,7 +91,7 @@ export async function buildNapkinbetsCloseoutSummary(
   },
 ) {
   const ai = await requireAi(event, 'closeout')
-  const systemContent = await getSystemPrompt(event, 'closeout_summary')
+  const systemContent = await getNapkinbetsSystemPrompt(event, 'closeout_summary')
   const content = await grokChat(
     ai.apiKey,
     [
@@ -147,7 +147,7 @@ export async function generateNapkinBet(
   },
 ): Promise<NapkinbetsGeneratedNapkin> {
   const ai = await requireAi(event, 'napkin-generator')
-  const systemContent = await getSystemPrompt(event, 'napkin_generator')
+  const systemContent = await getNapkinbetsSystemPrompt(event, 'napkin_generator')
 
   const formattedMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
     {

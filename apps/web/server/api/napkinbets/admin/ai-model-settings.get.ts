@@ -1,4 +1,5 @@
 import { loadNapkinbetsAiSettings } from '#server/services/napkinbets/settings'
+import { grokListModels } from '#layer/server/utils/xai'
 
 function buildChatModelCatalog(modelIds: string[]) {
   const chatModels = [...modelIds]

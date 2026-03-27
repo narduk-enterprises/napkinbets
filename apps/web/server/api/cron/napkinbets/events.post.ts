@@ -4,7 +4,7 @@ import {
   refreshDiscoverEventCache,
   type NapkinbetsEventIngestTier,
 } from '#server/services/napkinbets/events'
-import { requireCronAuth } from '#server/utils/cron'
+import { requireCronAuth } from '#layer/server/utils/cron'
 import { defineCronMutation } from '#layer/server/utils/mutation'
 
 const RATE_LIMIT = { namespace: 'cron-napkinbets-events', maxRequests: 60, windowMs: 60_000 }

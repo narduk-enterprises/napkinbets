@@ -1,7 +1,10 @@
 import { getHeader } from 'h3'
 import { z } from 'zod'
 import { enforceRateLimit } from '#layer/server/utils/rateLimit'
-import { normalizeDemoRedirectPath, resolveDemoSessionUser } from '#server/utils/demo'
+import {
+  normalizeNapkinbetsDemoRedirectPath,
+  resolveNapkinbetsDemoSessionUser,
+} from '#server/utils/demo'
 
 const querySchema = z.object({
   redirect: z.string().optional(),
@@ -27,8 +30,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = await getValidatedQuery(event, querySchema.parse)
-  const user = await resolveDemoSessionUser(event)
-  const redirectPath = normalizeDemoRedirectPath(query.redirect)
+  const user = await resolveNapkinbetsDemoSessionUser(event)
+  const redirectPath = normalizeNapkinbetsDemoRedirectPath(query.redirect)
 
   await setUserSession(event, { user })
 
