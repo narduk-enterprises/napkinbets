@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 const route = useRoute()
 const { primaryLinks, publicLinks, accountLinks, isAuthenticated } = useNapkinbetsNavLinks()
 const { logout } = useAuth()

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import { displayNameToInitials } from '~/utils/napkinbets-display'
 
 definePageMeta({ middleware: ['auth'] })
