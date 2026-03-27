@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CreateWagerInput } from '../../../types/napkinbets'
+import NapkinbetsTemplateCard from '../../components/napkinbets/templates/NapkinbetsTemplateCard.vue'
 import { NAPKINBETS_DEFAULT_CREATE_INPUT } from '../../composables/useNapkinbetsCreatePrefill'
 import {
   buildNapkinbetsTemplateCreateQuery,

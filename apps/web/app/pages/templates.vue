@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import NapkinbetsTemplateCard from '../components/napkinbets/templates/NapkinbetsTemplateCard.vue'
 import {
   buildNapkinbetsTemplateCreateQuery,
   getNapkinbetsContractNextTemplates,
