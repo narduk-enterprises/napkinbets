@@ -68,7 +68,11 @@ const placeholders = [
   'Over/under on how many times the ref reviews a play',
 ]
 
-const placeholder = placeholders[Math.floor(Math.random() * placeholders.length)]
+// Initialized to placeholders[0] for SSR determinism; randomized in onMounted to avoid hydration mismatch.
+const placeholder = ref(placeholders[0])
+onMounted(() => {
+  placeholder.value = placeholders[Math.floor(Math.random() * placeholders.length)]!
+})
 </script>
 
 <template>
