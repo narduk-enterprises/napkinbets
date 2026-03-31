@@ -17,7 +17,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck",
-    "deploy": "nuxt build && wrangler deploy",
+    "deploy": "node ../../tools/web-deploy.cjs",
     "prelint": "test -f .nuxt/eslint.config.mjs || nuxt prepare",
     "lint": "eslint . --max-warnings 0",
     "test:unit": "vitest run --config vitest.config.ts --project=unit",
@@ -48,7 +48,9 @@
     "drizzle-orm": "^0.45.1",
     "h3": "^1.15.5",
     "nuxt": "^4.3.1",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@supabase/auth-js": "^2.100.1",
+    "@supabase/supabase-js": "^2.100.1"
   },
   "devDependencies": {
     "@nuxt/test-utils": "^4.0.0",

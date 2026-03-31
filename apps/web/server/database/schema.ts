@@ -10,6 +10,7 @@ import { users } from '#layer/server/database/schema'
  * tables below the re-export.
  */
 export * from '#layer/server/database/schema'
+export * from '#server/database/auth-bridge-schema'
 
 // ─── Napkinbets Prototype Tables ────────────────────────────
 

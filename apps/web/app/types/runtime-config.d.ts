@@ -1,12 +1,34 @@
 declare module 'nuxt/schema' {
   interface RuntimeConfig {
-    apiSportsKey: string
-    xaiApiKey: string
-    xaiModel: string
+    appBackendPreset: 'default' | 'managed-supabase'
+    authBackend: 'local' | 'supabase'
+    authAuthorityUrl: string
+    authAnonKey: string
+    authServiceRoleKey: string
+    authStorageKey: string
+    supabaseUrl: string
+    supabasePublishableKey: string
+    supabaseServiceRoleKey: string
+    turnstileSecretKey: string
   }
 
   interface PublicRuntimeConfig {
-    aiRecommendationsEnabled: boolean
+    appBackendPreset: 'default' | 'managed-supabase'
+    authBackend: 'local' | 'supabase'
+    authAuthorityUrl: string
+    authLoginPath: string
+    authRegisterPath: string
+    authCallbackPath: string
+    authConfirmPath: string
+    authResetPath: string
+    authLogoutPath: string
+    authRedirectPath: string
+    authProviders: string[]
+    authPublicSignup: boolean
+    authRequireMfa: boolean
+    authTurnstileSiteKey: string
+    supabaseUrl: string
+    supabasePublishableKey: string
   }
 }
 
