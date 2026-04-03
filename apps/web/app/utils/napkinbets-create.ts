@@ -3,6 +3,11 @@ import type {
   NapkinbetsEventCard,
   NapkinbetsEventIdea,
 } from '../../types/napkinbets'
+import {
+  buildNapkinbetsTemplateCreateQuery,
+  getNapkinbetsDefaultTemplateKey,
+  normalizeNapkinbetsTemplateKey,
+} from './napkinbets-game-templates'
 
 interface NapkinbetsCreateLinkOptions {
   format?: string
@@ -14,6 +19,13 @@ export function buildNapkinbetsCreatePrefill(
   idea?: NapkinbetsEventIdea,
 ): NapkinbetsCreatePrefillQuery {
   const isMatchupEvent = event.awayTeam.homeAway === 'away' && event.homeTeam.homeAway === 'home'
+  const templateKey = idea?.format
+    ? normalizeNapkinbetsTemplateKey(idea.format, event.sport)
+    : getNapkinbetsDefaultTemplateKey({
+        sport: event.sport,
+        createMode: 'event',
+        napkinType: 'pool',
+      })
 
   return {
     source: event.source,
@@ -27,7 +39,7 @@ export function buildNapkinbetsCreatePrefill(
     venueName: event.venueName,
     homeTeamName: isMatchupEvent ? event.homeTeam.name : '',
     awayTeamName: isMatchupEvent ? event.awayTeam.name : '',
-    format: idea?.format || (event.sport === 'golf' ? 'golf-draft' : 'sports-game'),
+    format: templateKey,
     sideOptions: idea?.sideOptions ?? [],
   }
 }
@@ -39,20 +51,20 @@ export function buildNapkinbetsCreateLink(
   return {
     path: '/napkins/create',
     query: {
-      createMode: 'event',
-      source: prefill.source,
-      eventId: prefill.eventId,
-      eventTitle: prefill.eventTitle,
-      eventStartsAt: prefill.eventStartsAt,
-      eventStatus: prefill.eventStatus,
-      sport: prefill.sport,
-      contextKey: prefill.contextKey,
-      league: prefill.league,
-      venueName: prefill.venueName,
-      homeTeamName: prefill.homeTeamName,
-      awayTeamName: prefill.awayTeamName,
-      format: options?.format || prefill.format,
-      sideOptions: (options?.sideOptions ?? prefill.sideOptions).join('\n'),
+      ...buildNapkinbetsTemplateCreateQuery(options?.format || prefill.format, {
+        source: prefill.source,
+        eventId: prefill.eventId,
+        eventTitle: prefill.eventTitle,
+        eventStartsAt: prefill.eventStartsAt,
+        eventStatus: prefill.eventStatus,
+        sport: prefill.sport,
+        contextKey: prefill.contextKey,
+        league: prefill.league,
+        venueName: prefill.venueName,
+        homeTeamName: prefill.homeTeamName,
+        awayTeamName: prefill.awayTeamName,
+        sideOptions: (options?.sideOptions ?? prefill.sideOptions).join('\n'),
+      }),
     },
   }
 }

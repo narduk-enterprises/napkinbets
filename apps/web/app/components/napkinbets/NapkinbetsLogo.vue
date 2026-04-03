@@ -25,7 +25,7 @@ const props = withDefaults(
     <div class="min-w-0">
       <p class="napkinbets-logo-name">Napkinbets</p>
       <p v-if="props.showTagline && !props.compact" class="napkinbets-logo-tagline">
-        On the napkin, then in the room
+        Casual pools, picks, and side games
       </p>
     </div>
   </div>

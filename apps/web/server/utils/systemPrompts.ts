@@ -99,7 +99,7 @@ Include every event from the input. If you lack context for a game, use your bes
 /**
  * Get a specific system prompt, auto-seeding defaults if not in DB.
  */
-export async function getSystemPrompt(
+export async function getNapkinbetsSystemPrompt(
   event: H3Event,
   name: keyof typeof DEFAULT_SYSTEM_PROMPTS,
 ): Promise<string> {
@@ -134,7 +134,7 @@ export async function getSystemPrompt(
 /**
  * Get all system prompts, ensuring defaults are seeded in D1.
  */
-export async function getAllSystemPrompts(
+export async function getAllNapkinbetsSystemPrompts(
   event: H3Event,
 ): Promise<Array<{ name: string; content: string; description: string; updatedAt: string }>> {
   const db = useAppDatabase(event)

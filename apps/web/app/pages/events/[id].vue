@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useNapkinbetsApi } from '../../services/napkinbets-api'
 import type { NapkinbetsEventDetail, NapkinbetsEventOddsMarket } from '../../../types/napkinbets'
+import { buildNapkinbetsCreateLink } from '../../utils/napkinbets-create'
 
 const route = useRoute()
 const eventId = route.params.id as string
@@ -68,6 +69,39 @@ function formatProbability(value: number | null) {
 const isRefreshingOdds = ref(false)
 const toast = useToast()
 
+function buildIdeaLink(idea: NonNullable<NapkinbetsEventDetail['ideas']>[number]) {
+  if (!eventDetail.value) {
+    return {
+      path: '/napkins/create',
+    }
+  }
+
+  const isMatchup =
+    eventDetail.value.awayTeam.homeAway === 'away' && eventDetail.value.homeTeam.homeAway === 'home'
+
+  return buildNapkinbetsCreateLink(
+    {
+      source: eventDetail.value.source,
+      eventId: eventDetail.value.id,
+      eventTitle: eventDetail.value.eventTitle,
+      eventStartsAt: eventDetail.value.startTime,
+      eventStatus: eventDetail.value.status,
+      sport: eventDetail.value.sport,
+      contextKey: eventDetail.value.contextKey,
+      league: eventDetail.value.league,
+      venueName: eventDetail.value.venueName,
+      homeTeamName: isMatchup ? eventDetail.value.homeTeam.name : '',
+      awayTeamName: isMatchup ? eventDetail.value.awayTeam.name : '',
+      format: idea.format,
+      sideOptions: idea.sideOptions,
+    },
+    {
+      format: idea.format,
+      sideOptions: idea.sideOptions,
+    },
+  )
+}
+
 async function refreshOddsData() {
   if (isRefreshingOdds.value) return
   isRefreshingOdds.value = true
@@ -94,10 +128,13 @@ async function refreshOddsData() {
 
 useSeo({
   title: eventDetail.value?.eventTitle ?? 'Event details',
-  description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
+  description:
+    eventDetail.value?.summary ?? 'View event details, live context, and start a structured game.',
   ogImage: {
     title: eventDetail.value?.eventTitle ?? 'Event details',
-    description: eventDetail.value?.summary ?? 'View event details, odds, and start a bet.',
+    description:
+      eventDetail.value?.summary ??
+      'View event details, live context, and start a structured game.',
     icon: effectiveState.value === 'in' ? '🔴' : effectiveState.value === 'post' ? '🏁' : '⚡',
   },
 })
@@ -143,7 +180,7 @@ defineOgImage({
 
 useWebPageSchema({
   name: eventDetail.value?.eventTitle ?? 'Event Details',
-  description: eventDetail.value?.summary ?? 'Event details with odds and betting context.',
+  description: eventDetail.value?.summary ?? 'Event details with odds and game-format context.',
 })
 </script>
 
@@ -355,7 +392,7 @@ useWebPageSchema({
           <UCard v-if="eventDetail.ideas?.length" class="napkinbets-panel">
             <div class="space-y-3">
               <div class="space-y-2">
-                <p class="napkinbets-kicker">Bet ideas</p>
+                <p class="napkinbets-kicker">Recommended formats</p>
                 <h2 class="napkinbets-subsection-title">Start from a template</h2>
               </div>
               <div v-for="idea in eventDetail.ideas" :key="idea.title" class="napkinbets-note-row">
@@ -364,29 +401,13 @@ useWebPageSchema({
                   <p class="text-sm text-muted">{{ idea.description }}</p>
                 </div>
                 <UButton
-                  :to="{
-                    path: '/napkins/create',
-                    query: {
-                      createMode: 'event',
-                      source: eventDetail.source,
-                      eventId: eventDetail.id,
-                      eventTitle: eventDetail.eventTitle,
-                      eventStartsAt: eventDetail.startTime,
-                      eventStatus: eventDetail.status,
-                      sport: eventDetail.sport,
-                      contextKey: eventDetail.contextKey,
-                      league: eventDetail.league,
-                      venueName: eventDetail.venueName,
-                      format: idea.format,
-                      sideOptions: idea.sideOptions.join('\n'),
-                    },
-                  }"
+                  :to="buildIdeaLink(idea)"
                   color="primary"
                   variant="soft"
                   size="sm"
-                  icon="i-lucide-ticket-plus"
+                  icon="i-lucide-layout-template"
                 >
-                  Use this
+                  Use format
                 </UButton>
               </div>
             </div>

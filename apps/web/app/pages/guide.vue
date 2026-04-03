@@ -1,117 +1,192 @@
 <script setup lang="ts">
-const termCards = [
+const terminologyCards = [
   {
-    term: 'Event',
+    term: 'Template',
     summary:
-      'The real-world game, round, or matchup. This should be the first thing you pick whenever it exists.',
+      'The reusable game format. Start here when you know the shape of the competition you want to run.',
   },
   {
-    term: 'Bet',
+    term: 'Game',
     summary:
-      'The thing you create from an event. It holds the people, the side, the stake, the status, and the settle-up record.',
+      'A live instance created from a template. It holds players, picks, standings, and settle-up.',
   },
   {
-    term: 'One-on-one bet',
-    summary: 'The default. One stake, one opponent, and one clear side.',
-  },
-  {
-    term: 'Group bet',
-    summary: 'Use this only when there are several people or several outcomes to track.',
-  },
-  {
-    term: 'Friend',
-    summary: 'Someone you bet with often. Save them once so one-on-one bets are faster next time.',
+    term: 'Pool',
+    summary: 'A multiplayer game with shared standings, side questions, or payout splits.',
   },
   {
     term: 'Group',
-    summary:
-      'A recurring room of people. It gives a group bet a home before anyone starts picking sides.',
+    summary: 'A recurring room for friends, office pools, golf trips, or watch-party communities.',
   },
   {
-    term: 'Side',
-    summary: 'One possible outcome on the bet, like Celtics, Lakers, Yes, or No.',
+    term: 'Event',
+    summary:
+      'The real-world sports or entertainment event that can anchor a game when live context helps.',
+  },
+  {
+    term: 'Pick',
+    summary: 'The specific choice or answer a player makes inside the game.',
+  },
+  {
+    term: 'Entry',
+    summary: 'A player seat inside a multiplayer game.',
   },
   {
     term: 'Settle-up',
     summary:
-      'The last step. Napkinbets records proof and reminders, but the actual transfer still happens in Venmo, PayPal, Cash App, or Zelle.',
-  },
-  {
-    term: 'Napkin',
-    summary:
-      'Mostly an internal Napkinbets word for the shared bet page. If you see it in a URL or older screen, just read it as bet.',
+      'The proof and confirmation layer after a result is official. Money still moves off-platform.',
   },
 ] as const
 
-const relationshipSteps = [
-  'Pick an event first whenever one exists.',
-  'Create a bet from that event.',
-  'Choose one-on-one by default, or group bet if several people are involved.',
-  'Add friends or pick a group.',
-  'Lock the sides and the stake.',
-  'Track the result, then record settle-up proof.',
+const quickMap = [
+  'Choose a template when you know the format.',
+  'Browse events when live context should anchor the game.',
+  'Create the game and invite the group.',
+  'Track picks and standings in one place.',
+  'Settle manually after the official result is posted.',
+] as const
+
+const faqItems = [
+  {
+    question: 'What should I start with if I am brand new?',
+    answer:
+      'Start with Templates if you know the game format, or Events if you want a real matchup or tournament to anchor the game.',
+  },
+  {
+    question: 'What is the difference between a template and a game?',
+    answer:
+      'A template is the reusable shell. A game is the live instance your group joins and plays.',
+  },
+  {
+    question: 'Why does the app still mention napkins or wagers sometimes?',
+    answer:
+      'Those are legacy internal terms from the original build. The product language is now centered on templates, games, pools, picks, and groups.',
+  },
+  {
+    question: 'Does Napkin Bets move money?',
+    answer:
+      'No. It keeps the competition organized and records proof, but payment still happens through the apps your group already uses.',
+  },
 ] as const
 
 useSeo({
-  title: 'Help',
+  title: 'How Napkin Bets works',
   description:
-    'A simple guide to events, bets, one-on-one bets, group bets, and how the main objects fit together.',
+    'Understand templates, games, pools, groups, picks, and manual settle-up in plain English.',
   ogImage: {
-    title: 'How Napkinbets works',
-    description: 'Events, bets, settle-up — in plain English.',
+    title: 'How Napkin Bets works',
+    description: 'Templates first, games second, settle-up after the final.',
     icon: '📘',
   },
 })
 
 useWebPageSchema({
-  name: 'Napkinbets Help',
-  description: 'A knowledge base for Napkinbets concepts, terms, and object relationships.',
+  name: 'How Napkin Bets works',
+  description: 'A simple guide to the Napkin Bets product model, terminology, and player flow.',
+  type: 'FAQPage',
 })
+
+useFAQSchema([...faqItems])
 </script>
 
 <template>
   <div class="napkinbets-page">
     <div class="napkinbets-hero">
       <div class="space-y-4">
-        <p class="napkinbets-kicker">Help</p>
-        <h1 class="napkinbets-section-title">How the product works in plain English.</h1>
+        <p class="napkinbets-kicker">How it works</p>
+        <h1 class="napkinbets-section-title">One product, one mental model.</h1>
         <p class="napkinbets-hero-lede">
-          The app got too abstract. This is the compact map of what each word means and which ones
-          you can safely ignore.
+          Napkin Bets is a template-first platform for casual social games. This page locks the
+          language, the flow, and the few concepts players actually need to understand.
         </p>
       </div>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
+    <div class="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
       <UCard class="napkinbets-panel">
         <div class="space-y-4">
           <div class="space-y-1">
-            <p class="napkinbets-kicker">Fast mental model</p>
-            <h2 class="napkinbets-subsection-title">The hierarchy</h2>
+            <p class="napkinbets-kicker">Fast map</p>
+            <h2 class="napkinbets-subsection-title">The basic flow</h2>
           </div>
 
-          <div class="space-y-3">
-            <div
-              v-for="(step, index) in relationshipSteps"
-              :key="step"
-              class="napkinbets-surface flex items-start gap-3"
-            >
-              <div
-                class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary"
-              >
-                {{ index + 1 }}
-              </div>
-              <p class="text-sm leading-6 text-default">{{ step }}</p>
+          <div class="napkinbets-process-list">
+            <div v-for="(item, index) in quickMap" :key="item" class="napkinbets-process-item">
+              <div class="napkinbets-process-step">{{ index + 1 }}</div>
+              <p class="text-sm leading-6 text-default">{{ item }}</p>
             </div>
           </div>
         </div>
       </UCard>
 
       <div class="grid gap-4 sm:grid-cols-2">
-        <UCard v-for="card in termCards" :key="card.term" class="napkinbets-panel">
+        <UCard v-for="card in terminologyCards" :key="card.term" class="napkinbets-panel">
           <div class="space-y-2">
             <p class="napkinbets-kicker">{{ card.term }}</p>
             <p class="text-sm leading-6 text-default">{{ card.summary }}</p>
+          </div>
+        </UCard>
+      </div>
+    </div>
+
+    <div class="napkinbets-section-stack">
+      <div class="space-y-1">
+        <p class="napkinbets-kicker">Start points</p>
+        <h2 class="napkinbets-section-title">When to use each path.</h2>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-3">
+        <UCard class="napkinbets-panel">
+          <div class="space-y-2">
+            <h3 class="napkinbets-subsection-title">Templates</h3>
+            <p class="napkinbets-support-copy">
+              Use this when the format is the main question. Great for winner pools, golf
+              challenges, event prediction pools, and repeat group play.
+            </p>
+            <UButton to="/templates" color="primary" icon="i-lucide-layout-template">
+              Browse templates
+            </UButton>
+          </div>
+        </UCard>
+
+        <UCard class="napkinbets-panel">
+          <div class="space-y-2">
+            <h3 class="napkinbets-subsection-title">Events</h3>
+            <p class="napkinbets-support-copy">
+              Use this when a real matchup, tournament, or live schedule should anchor the game.
+            </p>
+            <UButton to="/events" color="neutral" variant="soft" icon="i-lucide-radar">
+              Browse events
+            </UButton>
+          </div>
+        </UCard>
+
+        <UCard class="napkinbets-panel">
+          <div class="space-y-2">
+            <h3 class="napkinbets-subsection-title">Groups</h3>
+            <p class="napkinbets-support-copy">
+              Use groups when the same people come back every week, every tournament, or every golf
+              trip.
+            </p>
+            <UButton to="/groups" color="neutral" variant="soft" icon="i-lucide-users-round">
+              Open groups
+            </UButton>
+          </div>
+        </UCard>
+      </div>
+    </div>
+
+    <div class="napkinbets-section-stack">
+      <div class="space-y-1">
+        <p class="napkinbets-kicker">FAQ</p>
+        <h2 class="napkinbets-section-title">Short answers to the confusing parts.</h2>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-2">
+        <UCard v-for="item in faqItems" :key="item.question" class="napkinbets-panel">
+          <div class="space-y-2">
+            <h3 class="napkinbets-subsection-title">{{ item.question }}</h3>
+            <p class="napkinbets-support-copy">{{ item.answer }}</p>
           </div>
         </UCard>
       </div>

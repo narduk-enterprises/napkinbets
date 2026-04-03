@@ -1,34 +1,10 @@
 <script setup lang="ts">
-import type {
-  NapkinbetsCreatePrefillQuery,
-  NapkinbetsDiscoverySpotlight,
-} from '../../../types/napkinbets'
+import type { NapkinbetsDiscoverySpotlight } from '../../../types/napkinbets'
+import { buildNapkinbetsCreateLink } from '../../utils/napkinbets-create'
 
 const props = defineProps<{
   spotlight: NapkinbetsDiscoverySpotlight
 }>()
-
-function buildCreateLink(prefill: NapkinbetsCreatePrefillQuery) {
-  return {
-    path: '/napkins/create',
-    query: {
-      createMode: 'event',
-      source: prefill.source,
-      eventId: prefill.eventId,
-      eventTitle: prefill.eventTitle,
-      eventStartsAt: prefill.eventStartsAt,
-      eventStatus: prefill.eventStatus,
-      sport: prefill.sport,
-      contextKey: prefill.contextKey,
-      league: prefill.league,
-      venueName: prefill.venueName,
-      homeTeamName: prefill.homeTeamName,
-      awayTeamName: prefill.awayTeamName,
-      format: prefill.format,
-      sideOptions: prefill.sideOptions.join('\n'),
-    },
-  }
-}
 
 const assetList = computed(() => props.spotlight.assets.slice(0, 3))
 const editorialAsset = computed(
@@ -40,7 +16,7 @@ const cardClass = computed(() => [
   'napkinbets-spotlight-card',
   `napkinbets-spotlight-card-${props.spotlight.accent}`,
 ])
-const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
+const createLink = computed(() => buildNapkinbetsCreateLink(props.spotlight.prefill))
 </script>
 
 <template>
@@ -88,10 +64,10 @@ const createLink = computed(() => buildCreateLink(props.spotlight.prefill))
 
     <div class="napkinbets-card-actions">
       <UButton :to="createLink" color="primary" size="sm" icon="i-lucide-ticket-plus">
-        Start bet
+        Start game
       </UButton>
       <UButton to="/events" color="neutral" size="sm" icon="i-lucide-arrow-right">
-        See games
+        Browse events
       </UButton>
     </div>
   </UCard>

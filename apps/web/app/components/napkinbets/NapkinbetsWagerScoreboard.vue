@@ -26,7 +26,7 @@ const isFinished = computed(
 )
 
 // Calculate Pick Distribution (Home vs Away)
-// Only applies if it's an event-backed bet where the choices usually align with the teams
+// Only applies if it's an event-backed game where the choices usually align with the teams
 const homeTeamPicksCount = computed(() => {
   return props.wager.picks.filter(
     (p) => p.pickLabel === props.wager.homeTeamName || p.pickValue === props.wager.homeTeamName,
@@ -158,9 +158,9 @@ const winnerInfo = computed(() => {
       <template #description>
         <div class="space-y-2 mt-1">
           <p>
-            <strong>{{ winnerInfo.displayName }}</strong> won this bet on
+            <strong>{{ winnerInfo.displayName }}</strong> won this game on
             <strong>{{ winnerInfo.sideLabel }}</strong
-            >. Use the settlement ledger below to close out the bet.
+            >. Use the settlement ledger below to close out the game.
           </p>
         </div>
       </template>
@@ -194,14 +194,14 @@ const winnerInfo = computed(() => {
       color="success"
       variant="soft"
       icon="i-lucide-party-popper"
-      title="Event Completed!"
+      title="Event complete"
       class="border border-success/20 napkinbets-panel"
     >
       <template #description>
         <div class="space-y-2 mt-1">
           <p>
             Ensure all your picks are logged correctly, and record your payments using the manual
-            settlement ledger below to close out the bet.
+            settlement ledger below to close out the game.
           </p>
         </div>
       </template>

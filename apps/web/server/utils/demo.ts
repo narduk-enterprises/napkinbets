@@ -7,14 +7,16 @@ import { useAppDatabase } from '#server/utils/database'
 const DEMO_USER_EMAIL = 'demo@napkinbets.app'
 const DEFAULT_DEMO_REDIRECT_PATH = '/dashboard'
 
-export interface DemoSessionUser {
+export interface NapkinbetsDemoSessionUser {
   id: string
   email: string
   name: string | null
   isAdmin: boolean | null
 }
 
-export async function resolveDemoSessionUser(event: H3Event): Promise<DemoSessionUser> {
+export async function resolveNapkinbetsDemoSessionUser(
+  event: H3Event,
+): Promise<NapkinbetsDemoSessionUser> {
   await ensureSeedData(event)
 
   const db = useAppDatabase(event)
@@ -35,7 +37,7 @@ export async function resolveDemoSessionUser(event: H3Event): Promise<DemoSessio
   }
 }
 
-export function normalizeDemoRedirectPath(input: unknown): string {
+export function normalizeNapkinbetsDemoRedirectPath(input: unknown): string {
   if (typeof input !== 'string') {
     return DEFAULT_DEMO_REDIRECT_PATH
   }

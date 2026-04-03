@@ -18,17 +18,18 @@ useNapkinbetsAutoRefresh(discoverState.refresh, 30_000)
 useSeo({
   title: 'Browse live and upcoming games',
   description:
-    'Browse live and upcoming games, then start a bet from the game instead of typing everything by hand.',
+    'Browse live and upcoming sports events, then attach the right pool or side-game format with real context.',
   ogImage: {
     title: 'Browse live and upcoming games',
-    description: 'Pick a game, then start a bet.',
+    description: 'Start from a real event when the format needs live context.',
     icon: '📡',
   },
 })
 
 useWebPageSchema({
   name: 'Napkinbets Games',
-  description: 'A sports schedule browser for starting friendly bets from live and upcoming games.',
+  description:
+    'A sports schedule browser for attaching real live context to winner pools, golf formats, and social game templates.',
 })
 </script>
 
@@ -38,12 +39,21 @@ useWebPageSchema({
       <div class="napkinbets-hero-grid napkinbets-hero-grid-discovery">
         <div class="space-y-2">
           <p class="napkinbets-kicker">Events</p>
-          <h1 class="napkinbets-section-title">Pick a game, then start a bet.</h1>
+          <h1 class="napkinbets-section-title">
+            Start from a real event when live context matters.
+          </h1>
           <p class="napkinbets-hero-lede">
-            Choose a live or upcoming game, then fill in the people, side, and stake.
+            Use the schedule when a matchup, tournament, or golf event should anchor the pool,
+            picks, and standings.
           </p>
-          <UButton to="/games" color="neutral" variant="soft" size="sm" icon="i-lucide-list">
-            View all as timeline
+          <UButton
+            to="/templates"
+            color="neutral"
+            variant="soft"
+            size="sm"
+            icon="i-lucide-layout-template"
+          >
+            Browse templates
           </UButton>
         </div>
 
@@ -75,7 +85,7 @@ useWebPageSchema({
     <div v-if="discover.spotlights.length" class="napkinbets-section-stack">
       <div class="space-y-0.5">
         <h2 class="napkinbets-section-title">Featured</h2>
-        <p class="napkinbets-section-description">Big events worth a closer look</p>
+        <p class="napkinbets-section-description">Big events worth turning into a group game</p>
       </div>
 
       <div class="napkinbets-scroll-strip">

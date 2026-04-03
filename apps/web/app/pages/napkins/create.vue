@@ -1,15 +1,21 @@
 <script setup lang="ts">
 import type { CreateWagerInput } from '../../../types/napkinbets'
+import NapkinbetsTemplateCard from '../../components/napkinbets/templates/NapkinbetsTemplateCard.vue'
 import { NAPKINBETS_DEFAULT_CREATE_INPUT } from '../../composables/useNapkinbetsCreatePrefill'
+import {
+  buildNapkinbetsTemplateCreateQuery,
+  getNapkinbetsFeaturedTemplates,
+} from '../../utils/napkinbets-game-templates'
 
 const route = useRoute()
 const { loggedIn, user } = useUserSession()
-const { createMode, prefill, eventPreview } = useNapkinbetsCreatePrefill()
+const { createMode, prefill, eventPreview, template } = useNapkinbetsCreatePrefill()
 const { data: taxonomy } = await useNapkinbetsTaxonomy()
 const actions = useNapkinbetsActions(async () => Promise.resolve())
 const paymentProfilesState = loggedIn.value ? await useNapkinbetsPaymentProfiles() : null
 const friendsStore = useNapkinbetsFriendsStore()
 const groupsStore = useNapkinbetsGroupsStore()
+const featuredTemplates = getNapkinbetsFeaturedTemplates()
 
 if (loggedIn.value) {
   await callOnce(
@@ -89,6 +95,8 @@ const _quickGameStatusLabel = computed(() => {
     .join(' • ')
 })
 
+const selectedTemplate = computed(() => template.value)
+
 async function handleCreate(payload: CreateWagerInput) {
   if (!loggedIn.value) {
     await navigateTo('/register')
@@ -102,16 +110,23 @@ async function handleCreate(payload: CreateWagerInput) {
 }
 
 useSeo({
-  title: 'Start a bet',
+  title: 'Create a game',
   description:
-    'Start a one-on-one or group bet from a real event or a custom room without typing everything by hand.',
+    'Pick a structured format, attach an event when useful, and publish a social game without typing the whole setup from scratch.',
   image: '/brand/og/create.webp',
 })
 
 useWebPageSchema({
-  name: 'Start a bet',
-  description: 'A creation workflow for building a new one-on-one or group bet on Napkinbets.',
+  name: 'Create a game',
+  description: 'A creation workflow for building a new social game or pool on Napkin Bets.',
 })
+
+function buildTemplateLink(templateKey: string) {
+  return {
+    path: '/napkins/create',
+    query: buildNapkinbetsTemplateCreateQuery(templateKey),
+  }
+}
 </script>
 
 <template>
@@ -119,12 +134,63 @@ useWebPageSchema({
     <div class="napkinbets-hero">
       <div class="space-y-3">
         <p class="napkinbets-kicker">Create</p>
-        <h1 class="napkinbets-section-title">Create a Napkin</h1>
+        <h1 class="napkinbets-section-title">
+          {{ selectedTemplate?.label || 'Create a game' }}
+        </h1>
         <p class="napkinbets-hero-lede">
-          Pick a game or make it up — choose your side, challenge a friend.
+          {{
+            selectedTemplate?.summary ||
+            'Pick a structured format, customize a few rules, and launch the game with a clean join path.'
+          }}
         </p>
       </div>
     </div>
+
+    <div class="napkinbets-section-stack">
+      <div class="flex items-end justify-between gap-3">
+        <div class="space-y-1">
+          <p class="napkinbets-kicker">Start from a format</p>
+          <h2 class="napkinbets-section-title">Use the strongest templates first.</h2>
+        </div>
+        <UButton to="/templates" color="neutral" variant="soft" icon="i-lucide-arrow-right">
+          All templates
+        </UButton>
+      </div>
+
+      <div class="grid gap-4 xl:grid-cols-3">
+        <NapkinbetsTemplateCard
+          v-for="templateCard in featuredTemplates"
+          :key="templateCard.key"
+          :template="templateCard"
+          :to="buildTemplateLink(templateCard.key)"
+          cta-label="Use this format"
+        />
+      </div>
+    </div>
+
+    <UAlert
+      v-if="selectedTemplate?.support === 'contract-next'"
+      color="warning"
+      variant="soft"
+      icon="i-lucide-construction"
+      title="This format is contract-ready, not bespoke-yet"
+      description="The product model is locked for this format, but the richer purpose-built shell is still coming. Use the structured draft below as the current best path."
+    />
+
+    <UAlert
+      v-if="selectedTemplate?.eventBackedPreferred && !eventPreview"
+      color="info"
+      variant="soft"
+      icon="i-lucide-radar"
+      title="This format works best when attached to an event"
+      description="You can still draft it manually, but the cleanest version starts from the Events browser so the matchup or tournament context comes with it."
+    >
+      <template #actions>
+        <UButton to="/events" color="neutral" variant="soft" icon="i-lucide-arrow-right">
+          Browse events
+        </UButton>
+      </template>
+    </UAlert>
 
     <UAlert
       v-if="actions.feedback.value"
@@ -145,7 +211,7 @@ useWebPageSchema({
       variant="soft"
       icon="i-lucide-shield-alert"
       title="Account required"
-      description="You can preview the form, but you need an account to publish a bet."
+      description="You can preview the flow, but you need an account to publish a game."
     />
 
     <NapkinbetsCreateForm

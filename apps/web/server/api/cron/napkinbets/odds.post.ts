@@ -1,5 +1,5 @@
 import { refreshAllActivelyTradedOdds } from '#server/services/napkinbets/odds'
-import { requireCronAuth } from '#server/utils/cron'
+import { requireCronAuth } from '#layer/server/utils/cron'
 import { useAppDatabase } from '#server/utils/database'
 import { defineCronMutation } from '#layer/server/utils/mutation'
 
